@@ -538,7 +538,13 @@ public static class SqlObjectExtensions
     [Pure]
     public static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
     {
-        return SqlNode.Column( column.Name, column.TypeDefinition, column.IsNullable, column.DefaultValue, column.Computation );
+        return SqlNode.Column(
+            column.Name,
+            column.TypeDefinition,
+            column.IsNullable,
+            column.DefaultValue,
+            column.Computation,
+            column.Identity );
     }
 
     /// <summary>

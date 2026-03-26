@@ -34,6 +34,11 @@ public interface ISqlColumnBuilderCollection : IReadOnlyCollection<ISqlColumnBui
     ISqlColumnTypeDefinition DefaultTypeDefinition { get; }
 
     /// <summary>
+    /// Specifies current identity column.
+    /// </summary>
+    ISqlColumnBuilder? Identity { get; }
+
+    /// <summary>
     /// Checks whether a column with the provided <paramref name="name"/> exists.
     /// </summary>
     /// <param name="name">Name to check.</param>

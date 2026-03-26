@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         string name,
         TypeNullability type,
         SqlExpressionNode? defaultValue,
-        SqlColumnComputation? computation)
+        SqlColumnComputation? computation,
+        SqlColumnIdentity? identity)
         : base( SqlNodeType.ColumnDefinition )
     {
         Name = name;
@@ -33,6 +34,7 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         TypeDefinition = null;
         DefaultValue = defaultValue;
         Computation = computation;
+        Identity = identity;
     }
 
     internal SqlColumnDefinitionNode(
@@ -40,7 +42,8 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         ISqlColumnTypeDefinition typeDefinition,
         bool isNullable,
         SqlExpressionNode? defaultValue,
-        SqlColumnComputation? computation)
+        SqlColumnComputation? computation,
+        SqlColumnIdentity? identity)
         : base( SqlNodeType.ColumnDefinition )
     {
         Name = name;
@@ -48,6 +51,7 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         TypeDefinition = typeDefinition;
         DefaultValue = defaultValue;
         Computation = computation;
+        Identity = identity;
     }
 
     /// <summary>
@@ -74,4 +78,9 @@ public class SqlColumnDefinitionNode : SqlNodeBase
     /// Column's optional computation.
     /// </summary>
     public SqlColumnComputation? Computation { get; }
+
+    /// <summary>
+    /// Column's optional identity definition.
+    /// </summary>
+    public SqlColumnIdentity? Identity { get; }
 }

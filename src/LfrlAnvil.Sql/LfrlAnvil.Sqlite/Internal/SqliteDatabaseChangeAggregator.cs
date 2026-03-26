@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -105,8 +105,12 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
         {
             case SqlObjectType.Column:
             {
+                var column = ReinterpretCast.To<SqliteColumnBuilder>( obj );
                 var name = Changes.GetOriginalValue( obj, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( obj.Name );
-                RemovedColumns.Add( name, ReinterpretCast.To<SqliteColumnBuilder>( obj ) );
+                RemovedColumns.Add( name, column );
+                if ( column.Identity is not null )
+                    RequiresReconstruction = true;
+
                 break;
             }
             case SqlObjectType.Index:

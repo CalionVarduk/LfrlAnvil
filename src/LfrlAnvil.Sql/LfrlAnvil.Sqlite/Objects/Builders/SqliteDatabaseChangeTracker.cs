@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
@@ -28,7 +27,6 @@ using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Internal;
-using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -271,7 +269,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
     private void AddCreateTableAction(SqliteTableBuilder table)
     {
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
 
         var interpreter = CreateNodeInterpreter();
         interpreter.VisitCreateTable( table.ToCreateNode() );
@@ -318,7 +316,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         if ( ! changeAggregator.HasChanged )
             return;
 
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
         changeAggregator.UpdateReconstructionRequirement( table );
 
         var interpreter = CreateNodeInterpreter();
@@ -385,7 +383,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
         foreach ( var column in changeAggregator.CreatedColumns )
         {
-            if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null )
+            if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null && column.Identity is null )
                 column.UpdateDefaultValueBasedOnDataType();
         }
 
@@ -404,7 +402,9 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
             if ( changeAggregator.CreatedColumns.Contains( column ) )
             {
-                selections[i++] = (column.DefaultValue ?? SqlNode.Null()).As( column.Name );
+                if ( column.Identity is null )
+                    selections[i++] = (column.DefaultValue ?? SqlNode.Null()).As( column.Name );
+
                 continue;
             }
 
@@ -434,7 +434,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
                             originalIsNullable ) )
                     .CastTo( column.TypeDefinition );
 
-            if ( originalIsNullable && ! column.IsNullable )
+            if ( originalIsNullable && ! column.IsNullable && column.Identity is null )
                 oldDataField = oldDataField.Coalesce( column.DefaultValue ?? column.TypeDefinition.DefaultValue );
 
             selections[i++] = oldDataField.As( column.Name );
@@ -664,14 +664,6 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         AppendSqlCommandEnd( interpreter );
         interpreter.VisitRenameTable( SqlNode.RenameTable( temporaryTable.Info, table.Info.Name ) );
         AppendSqlCommandEnd( interpreter );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ValidateTable(SqliteTableBuilder table)
-    {
-        if ( table.Constraints.TryGetPrimaryKey() is null )
-            ExceptionThrower.Throw(
-                SqlHelpers.CreateObjectBuilderException( table.Database, ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 
     [Pure]

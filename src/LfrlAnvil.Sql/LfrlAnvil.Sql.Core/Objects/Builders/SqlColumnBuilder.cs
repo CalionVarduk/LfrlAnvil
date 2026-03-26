@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
         IsNullable = false;
         DefaultValue = null;
         Computation = null;
+        Identity = null;
     }
 
     /// <inheritdoc cref="ISqlColumnBuilder.Table" />
@@ -63,6 +64,9 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
 
     /// <inheritdoc />
     public SqlColumnComputation? Computation { get; private set; }
+
+    /// <inheritdoc />
+    public SqlColumnIdentity? Identity { get; private set; }
 
     /// <inheritdoc cref="ISqlColumnBuilder.ReferencedComputationColumns" />
     public SqlObjectBuilderArray<SqlColumnBuilder> ReferencedComputationColumns =>
@@ -150,6 +154,20 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
         return this;
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilder.SetIdentity(SqlColumnIdentity?)" />
+    public SqlColumnBuilder SetIdentity(SqlColumnIdentity? identity)
+    {
+        ThrowIfRemoved();
+        var change = BeforeIdentityChange( identity );
+        if ( change.IsCancelled )
+            return this;
+
+        var originalValue = Identity;
+        Identity = change.NewValue;
+        AfterIdentityChange( originalValue );
+        return this;
+    }
+
     /// <inheritdoc />
     [Pure]
     public SqlOrderByNode Asc()
@@ -204,6 +222,9 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
             return SqlPropertyChange.Cancel<bool>();
 
         ThrowIfReferenced();
+        if ( newValue )
+            ThrowIfCannotBeNullable();
+
         return newValue;
     }
 
@@ -266,6 +287,7 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
         if ( Computation is null )
         {
             ThrowIfReferenced();
+            ThrowIfCannotBeGenerated();
             SetComputationColumnReferences( ValidateComputationExpression( newValue.Value.Expression ) );
             SetDefaultValue( null );
             return newValue;
@@ -288,6 +310,40 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     protected virtual void AfterComputationChange(SqlColumnComputation? originalValue)
     {
         AddComputationChange( this, originalValue );
+    }
+
+    /// <summary>
+    /// Callback invoked just before <see cref="Identity"/> change is processed.
+    /// </summary>
+    /// <param name="newValue">Value to set.</param>
+    /// <returns><see cref="SqlPropertyChange{T}"/> instance associated with <see cref="Identity"/> change attempt.</returns>
+    /// <exception cref="SqlObjectBuilderException">When <see cref="Identity"/> of this column cannot be changed.</exception>
+    protected virtual SqlPropertyChange<SqlColumnIdentity?> BeforeIdentityChange(SqlColumnIdentity? newValue)
+    {
+        if ( newValue == Identity )
+            return SqlPropertyChange.Cancel<SqlColumnIdentity?>();
+
+        if ( Identity is null )
+        {
+            ThrowIfCannotBeIdentity();
+            SetComputation( null );
+            SetDefaultValue( null );
+            MarkAsNullable( false );
+            Table.Columns.Identity = this;
+        }
+        else if ( newValue is null )
+            Table.Columns.Identity = null;
+
+        return newValue;
+    }
+
+    /// <summary>
+    /// Callback invoked just after <see cref="Identity"/> change has been processed.
+    /// </summary>
+    /// <param name="originalValue">Original value.</param>
+    protected virtual void AfterIdentityChange(SqlColumnIdentity? originalValue)
+    {
+        AddIdentityChange( this, originalValue );
     }
 
     /// <inheritdoc />
@@ -407,12 +463,56 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     /// Throws an exception when <see cref="DefaultValue"/> cannot be non-null.
     /// </summary>
     /// <exception cref="SqlObjectBuilderException">When <see cref="DefaultValue"/> cannot be non-null.</exception>
-    /// <remarks><see cref="Computation"/> must be null.</remarks>
+    /// <remarks><see cref="Computation"/> and <see cref="Identity"/> must be null.</remarks>
     protected void ThrowIfCannotHaveDefaultValue()
     {
+        var errors = Chain<string>.Empty;
         if ( Computation is not null )
+            errors = errors.Extend( ExceptionResources.GeneratedColumnCannotHaveDefaultValue );
+
+        if ( Identity is not null )
+            errors = errors.Extend( ExceptionResources.IdentityColumnCannotHaveDefaultValue );
+
+        if ( errors.Count > 0 )
+            ExceptionThrower.Throw( SqlHelpers.CreateObjectBuilderException( Database, errors ) );
+    }
+
+    /// <summary>
+    /// Throws an exception when <see cref="IsNullable"/> cannot be <b>true</b>.
+    /// </summary>
+    /// <exception cref="SqlObjectBuilderException">When <see cref="IsNullable"/> cannot be <b>true</b>.</exception>
+    /// <remarks><see cref="Identity"/> must be null.</remarks>
+    protected void ThrowIfCannotBeNullable()
+    {
+        if ( Identity is not null )
             ExceptionThrower.Throw(
-                SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.GeneratedColumnCannotHaveDefaultValue ) );
+                SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.IdentityColumnCannotBeNullable ) );
+    }
+
+    /// <summary>
+    /// Throws an exception when <see cref="Computation"/> cannot be non-null.
+    /// </summary>
+    /// <exception cref="SqlObjectBuilderException">When <see cref="Computation"/> cannot be non-null.</exception>
+    /// <remarks><see cref="Identity"/> must be null.</remarks>
+    protected void ThrowIfCannotBeGenerated()
+    {
+        if ( Identity is not null )
+            ExceptionThrower.Throw(
+                SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.IdentityColumnCannotBeGenerated ) );
+    }
+
+    /// <summary>
+    /// Throws an exception when <see cref="Identity"/> cannot be non-null.
+    /// </summary>
+    /// <exception cref="SqlObjectBuilderException">When <see cref="Identity"/> cannot be non-null.</exception>
+    /// <remarks>No other table's column can be identity.</remarks>
+    protected void ThrowIfCannotBeIdentity()
+    {
+        if ( Table.Columns.Identity is not null )
+            ExceptionThrower.Throw(
+                SqlHelpers.CreateObjectBuilderException(
+                    Database,
+                    ExceptionResources.IdentityColumnAlreadyExists( Table.Columns.Identity ) ) );
     }
 
     /// <summary>
@@ -457,11 +557,12 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     /// Assigns <see cref="ISqlColumnTypeDefinition.DefaultValue"/> of the current <see cref="TypeDefinition"/>
     /// to the <see cref="DefaultValue"/> without notifying the change tracker.
     /// </summary>
-    /// <remarks>This method assumes that the current <see cref="Computation"/> is null.</remarks>
+    /// <remarks>This method assumes that current <see cref="Computation"/> and <see cref="Identity"/> are null.</remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void SetDefaultValueBasedOnDataType()
     {
         Assume.IsNull( Computation );
+        Assume.IsNull( Identity );
         DefaultValue = TypeDefinition.DefaultValue;
     }
 
@@ -488,5 +589,10 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     ISqlColumnBuilder ISqlColumnBuilder.SetComputation(SqlColumnComputation? computation)
     {
         return SetComputation( computation );
+    }
+
+    ISqlColumnBuilder ISqlColumnBuilder.SetIdentity(SqlColumnIdentity? identity)
+    {
+        return SetIdentity( identity );
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ public sealed class SqliteColumnBuilderCollection : SqlColumnBuilderCollection
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.Table" />
     public new SqliteTableBuilder Table => ReinterpretCast.To<SqliteTableBuilder>( base.Table );
+
+    /// <inheritdoc cref="SqlColumnBuilderCollection.Identity" />
+    public new SqliteColumnBuilder? Identity => ReinterpretCast.To<SqliteColumnBuilder>( base.Identity );
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.SetDefaultTypeDefinition(SqlColumnTypeDefinition)" />
     public new SqliteColumnBuilderCollection SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)

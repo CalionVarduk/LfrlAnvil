@@ -68,6 +68,51 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Creation_ShouldPrepareCorrectStatement_WithIdentity()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c5 = sut.Columns.Create( "C5" );
+        var ix1 = sut.Constraints.CreateIndex( sut.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var ix2 = sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() )
+            .Index;
+
+        var c6 = sut.Columns.Create( "C6" ).MarkAsNullable();
+        sut.Constraints.CreateIndex( sut.Columns.Create( "C3" ).Asc(), sut.Columns.Create( "C4" ).Desc() );
+        sut.Constraints.CreateForeignKey( ix1, ix2 );
+        sut.Constraints.CreateCheck( sut.Node["C1"] > SqlNode.Literal( 0 ) );
+        c5.SetComputation( SqlColumnComputation.Virtual( sut.Columns.Get( "C1" ).Node + SqlNode.Literal( 1 ) ) );
+        c6.SetComputation( SqlColumnComputation.Stored( sut.Columns.Get( "C2" ).Node * sut.Columns.Get( "C5" ).Node ) );
+
+        var actions = schema.Database.GetLastPendingActions( 0 );
+
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                schema.Database.Changes.ModifiedTables.TestSetEqual( [ sut ] ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            CREATE TABLE "foo_T" (
+                              "C5" ANY NOT NULL GENERATED ALWAYS AS ("C1" + 1) VIRTUAL,
+                              "C1" INTEGER NOT NULL,
+                              "C2" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                              "C6" ANY GENERATED ALWAYS AS ("C2" * "C5") STORED,
+                              "C3" ANY NOT NULL,
+                              "C4" ANY NOT NULL,
+                              CONSTRAINT "foo_FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo_T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                              CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
+                            );
+                            """,
+                            "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
+                            "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -93,6 +138,25 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Exact<SqlObjectBuilderException>( e => Assertion.All(
                     e.Dialect.TestEquals( SqliteDialect.Instance ),
                     e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Creation_ShouldThrowSqlObjectBuilderException_WhenTableHasIdentityColumnAndInvalidPrimaryKey()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Columns.Create( "A" );
+        var b = sut.Columns.Create( "B" );
+        sut.Columns.Create( "C" ).SetIdentity( SqlColumnIdentity.Default );
+        sut.Constraints.SetPrimaryKey( a.Asc(), b.Asc() );
+
+        var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqliteDialect.Instance ),
+                    e.Errors.Count.TestEquals( 2 ) ) ) )
             .Go();
     }
 
@@ -1028,6 +1092,41 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "ALTER TABLE \"foo_U\" DROP COLUMN \"C4\";",
                     "ALTER TABLE \"foo_U\" RENAME COLUMN \"C3\" TO \"X\";",
                     "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);" )
+            ] )
+            .Go();
+    }
+
+    [Fact]
+    public void ReconstructionChanges_ShouldGenerateCorrectScript_WithIdentityColumn()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() );
+        var c = sut.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        c.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        actions.Select( ac => ac.Sql )
+            .TestSequence(
+            [
+                (sql, _) => sql.TestSatisfySql(
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                      "C1" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "C2" ANY NOT NULL DEFAULT (123)
+                    );
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("C1", "C2")
+                    SELECT
+                      "foo_T"."C1",
+                      "foo_T"."C2" AS "C2"
+                    FROM "foo_T";
+                    """,
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" )
             ] )
             .Go();
     }

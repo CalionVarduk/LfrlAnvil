@@ -866,6 +866,9 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             if ( ! node.Type.IsNullable )
                 Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
         }
+
+        if ( node.Identity is not null )
+            Context.Sql.AppendSpace().Append( "AUTO_INCREMENT" );
     }
 
     /// <inheritdoc />

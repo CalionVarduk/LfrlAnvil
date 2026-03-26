@@ -618,6 +618,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitChildWrappedInParentheses( node.Computation.Value.Expression );
             Context.Sql.AppendSpace().Append( storage );
         }
+
+        if ( node.Identity is not null )
+            Context.Sql.AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( "AUTOINCREMENT" );
     }
 
     /// <inheritdoc />
@@ -691,6 +694,16 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     /// <inheritdoc />
     public override void VisitCreateTable(SqlCreateTableNode node)
     {
+        var hasIdentityColumn = false;
+        foreach ( var c in node.Columns )
+        {
+            if ( c.Identity is not null )
+            {
+                hasIdentityColumn = true;
+                break;
+            }
+        }
+
         using ( TempIgnoreAllRecordSets() )
         {
             Context.Sql.Append( "CREATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -699,11 +712,19 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
             AppendDelimitedRecordSetInfo( node.Info );
             Context.Sql.AppendSpace().Append( '(' );
-            VisitCreateTableDefinition( node );
-            Context.AppendIndent().Append( ')' ).AppendSpace().Append( "WITHOUT" ).AppendSpace().Append( "ROWID" );
+            VisitCreateTableDefinition( node, hasIdentityColumn );
+            Context.AppendIndent().Append( ')' );
+
+            if ( ! hasIdentityColumn )
+                Context.Sql.AppendSpace().Append( "WITHOUT" ).AppendSpace().Append( "ROWID" );
 
             if ( Options.IsStrictModeEnabled )
-                Context.Sql.AppendComma().AppendSpace().Append( "STRICT" );
+            {
+                if ( ! hasIdentityColumn )
+                    Context.Sql.AppendComma();
+
+                Context.Sql.AppendSpace().Append( "STRICT" );
+            }
         }
     }
 

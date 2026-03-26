@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,40 +62,46 @@ public abstract class SqlObjectChangeDescriptor : IEquatable<SqlObjectChangeDesc
         new SqlObjectChangeDescriptor<SqlColumnComputation?>( nameof( Computation ), 5 );
 
     /// <summary>
+    /// Represents a change in column's <see cref="ISqlColumnBuilder.Identity"/> property.
+    /// </summary>
+    public static readonly SqlObjectChangeDescriptor<SqlColumnIdentity?> Identity =
+        new SqlObjectChangeDescriptor<SqlColumnIdentity?>( nameof( Identity ), 6 );
+
+    /// <summary>
     /// Represents a change in index's <see cref="ISqlIndexBuilder.IsUnique"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<bool> IsUnique =
-        new SqlObjectChangeDescriptor<bool>( nameof( IsUnique ), 6 );
+        new SqlObjectChangeDescriptor<bool>( nameof( IsUnique ), 7 );
 
     /// <summary>
     /// Represents a change in index's <see cref="ISqlIndexBuilder.IsVirtual"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<bool> IsVirtual =
-        new SqlObjectChangeDescriptor<bool>( nameof( IsVirtual ), 7 );
+        new SqlObjectChangeDescriptor<bool>( nameof( IsVirtual ), 8 );
 
     /// <summary>
     /// Represents a change in index's <see cref="ISqlIndexBuilder.Filter"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<SqlConditionNode?> Filter =
-        new SqlObjectChangeDescriptor<SqlConditionNode?>( nameof( Filter ), 8 );
+        new SqlObjectChangeDescriptor<SqlConditionNode?>( nameof( Filter ), 9 );
 
     /// <summary>
     /// Represents a change in index's <see cref="ISqlIndexBuilder.PrimaryKey"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?> PrimaryKey =
-        new SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?>( nameof( PrimaryKey ), 9 );
+        new SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?>( nameof( PrimaryKey ), 10 );
 
     /// <summary>
     /// Represents a change in foreign key's <see cref="ISqlForeignKeyBuilder.OnDeleteBehavior"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<ReferenceBehavior> OnDeleteBehavior =
-        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnDeleteBehavior ), 10 );
+        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnDeleteBehavior ), 11 );
 
     /// <summary>
     /// Represents a change in foreign key's <see cref="ISqlForeignKeyBuilder.OnUpdateBehavior"/> property.
     /// </summary>
     public static readonly SqlObjectChangeDescriptor<ReferenceBehavior> OnUpdateBehavior =
-        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnUpdateBehavior ), 11 );
+        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnUpdateBehavior ), 12 );
 
     internal SqlObjectChangeDescriptor(string description, int key)
     {

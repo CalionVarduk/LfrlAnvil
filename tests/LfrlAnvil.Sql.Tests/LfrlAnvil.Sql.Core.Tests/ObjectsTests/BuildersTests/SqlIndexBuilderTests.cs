@@ -390,7 +390,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsUnique' (System.Boolean) FROM False);
                         """
                     ] ) )
             .Go();
@@ -416,7 +416,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsUnique' (System.Boolean) FROM True);
                         """
                     ] ) )
             .Go();
@@ -566,7 +566,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'IsVirtual' (System.Boolean) FROM False);
                         """
                     ] ) )
             .Go();
@@ -592,7 +592,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'IsVirtual' (System.Boolean) FROM True);
                         """
                     ] ) )
             .Go();
@@ -753,7 +753,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                          ALTER [Index] foo.IX_T_C2A ([9] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
                         """
                     ] ) )
             .Go();
@@ -783,7 +783,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));
+                          ALTER [Index] foo.IX_T_C2A ([9] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));
                         """
                     ] ) )
             .Go();
@@ -1275,7 +1275,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsUnique' (System.Boolean) FROM False);
                         """
                     ] ) )
             .Go();
@@ -1301,7 +1301,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                          ALTER [Index] foo.IX_T_C2A ([8] : 'IsVirtual' (System.Boolean) FROM False);
                         """
                     ] ) )
             .Go();
@@ -1341,7 +1341,7 @@ public class SqlIndexBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                          ALTER [Index] foo.IX_T_C2A ([9] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
                         """
                     ] ) )
             .Go();

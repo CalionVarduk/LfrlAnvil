@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,6 +48,9 @@ public static class ExceptionResources
     public const string PartialIndexCannotBeVirtual = "Partial index cannot be virtual.";
     public const string GeneratedColumnCannotHaveDefaultValue = "Generated column cannot have a default value.";
     public const string GeneratedColumnCannotReferenceSelf = "Generated column cannot reference self.";
+    public const string IdentityColumnCannotHaveDefaultValue = "Identity column cannot have a default value.";
+    public const string IdentityColumnCannotBeNullable = "Identity column cannot be nullable.";
+    public const string IdentityColumnCannotBeGenerated = "Identity column cannot be generated.";
     public const string ForeignKeyOriginIndexAndReferencedIndexAreTheSame = "Foreign key origin index and referenced index are the same.";
 
     public const string ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
@@ -180,6 +183,27 @@ public static class ExceptionResources
     public static string UnrecognizedTypeDefinition(ISqlColumnTypeDefinition definition)
     {
         return $"Column type definition {definition} is unrecognized in this database.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IdentityColumnAlreadyExists(ISqlColumnBuilder column)
+    {
+        return $"{column} is already marked as identity.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string PrimaryKeyDoesNotContainIdentityColumn(ISqlColumnBuilder column)
+    {
+        return $"Primary key does not contain required identity {column}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string PrimaryKeyWithIdentityColumnMustHaveExactlyOneColumn(ISqlTableBuilder table)
+    {
+        return $"Primary key for {table} with defined identity column must have exactly one column.";
     }
 
     [Pure]

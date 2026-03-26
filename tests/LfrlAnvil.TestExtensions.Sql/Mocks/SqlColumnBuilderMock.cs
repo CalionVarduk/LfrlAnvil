@@ -41,4 +41,10 @@ public sealed class SqlColumnBuilderMock : SqlColumnBuilder
         base.SetComputation( computation );
         return this;
     }
+
+    public new SqlColumnBuilderMock SetIdentity(SqlColumnIdentity? identity)
+    {
+        base.SetIdentity( identity );
+        return this;
+    }
 }

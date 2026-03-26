@@ -414,7 +414,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
                         """
                     ] ) )
             .Go();
@@ -521,7 +521,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([12] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
                         """
                     ] ) )
             .Go();
@@ -1048,7 +1048,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
                         """
                     ] ) )
             .Go();
@@ -1075,7 +1075,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                     [
                         """
                         ALTER [Table] foo.T
-                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                          ALTER [ForeignKey] foo.FK_T_C2_REF_T ([12] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
                         """
                     ] ) )
             .Go();

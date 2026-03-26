@@ -2170,7 +2170,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     /// Visits components of an <see cref="SqlCreateTableNode"/>.
     /// </summary>
     /// <param name="node">Node to visit.</param>
-    protected void VisitCreateTableDefinition(SqlCreateTableNode node)
+    /// <param name="ignorePrimaryKey">Optional flag which allows to ignore the primary key. Equal to <b>false</b> by default.</param>
+    protected void VisitCreateTableDefinition(SqlCreateTableNode node, bool ignorePrimaryKey = false)
     {
         using ( Context.TempIndentIncrease() )
         {
@@ -2181,7 +2182,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 Context.Sql.AppendComma();
             }
 
-            if ( node.PrimaryKey is not null )
+            if ( node.PrimaryKey is not null && ! ignorePrimaryKey )
             {
                 Context.AppendIndent();
                 VisitPrimaryKeyDefinition( node.PrimaryKey );
@@ -2202,7 +2203,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 Context.Sql.AppendComma();
             }
 
-            if ( node.Columns.Count > 0 || node.PrimaryKey is not null || node.ForeignKeys.Count > 0 || node.Checks.Count > 0 )
+            if ( node.Columns.Count > 0
+                || (node.PrimaryKey is not null && ! ignorePrimaryKey)
+                || node.ForeignKeys.Count > 0
+                || node.Checks.Count > 0 )
                 Context.Sql.ShrinkBy( 1 );
         }
     }

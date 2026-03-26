@@ -112,6 +112,24 @@ public partial class PostgreSqlNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretColumnDefinition_WithIdentity()
+        {
+            var sut = CreateInterpreter();
+            var typeDef = sut.TypeDefinitions.GetByDataType( PostgreSqlDataType.VarChar );
+            sut.Visit( SqlNode.Column( "a", typeDef, identity: SqlColumnIdentity.Default ) );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" VARCHAR NOT NULL GENERATED ALWAYS AS IDENTITY" ).Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretColumnDefinition_WithIdentity_AndCache()
+        {
+            var sut = CreateInterpreter();
+            var typeDef = sut.TypeDefinitions.GetByDataType( PostgreSqlDataType.VarChar );
+            sut.Visit( SqlNode.Column( "a", typeDef, identity: new SqlColumnIdentity( 123 ) ) );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" VARCHAR NOT NULL GENERATED ALWAYS AS IDENTITY (CACHE 123)" ).Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretPrimaryKeyDefinition()
         {
             var sut = CreateInterpreter();

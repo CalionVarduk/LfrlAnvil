@@ -706,6 +706,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<string>( isNullable: false ) ),
                 sut.TypeDefinition.TestNull(),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : System.String" ) )
             .Go();
     }
@@ -723,6 +724,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<string>( isNullable: true ) ),
                 sut.TypeDefinition.TestNull(),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : Nullable<System.String>" ) )
             .Go();
     }
@@ -741,6 +743,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<string>() ),
                 sut.TypeDefinition.TestNull(),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" ) )
             .Go();
     }
@@ -759,6 +762,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<int>( isNullable: false ) ),
                 sut.TypeDefinition.TestRefEquals( typeDef ),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : System.Int32" ) )
             .Go();
     }
@@ -777,6 +781,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<int>( isNullable: true ) ),
                 sut.TypeDefinition.TestRefEquals( typeDef ),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : Nullable<System.Int32>" ) )
             .Go();
     }
@@ -796,6 +801,7 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestNull(),
                 sut.Type.TestEquals( TypeNullability.Create<int>() ),
                 sut.TypeDefinition.TestRefEquals( typeDef ),
+                sut.Identity.TestNull(),
                 text.TestEquals( "[foo] : System.Int32 DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" ) )
             .Go();
     }
@@ -816,7 +822,46 @@ public partial class BaseExpressionsTests : TestsBase
                 sut.Computation.TestEquals( computation ),
                 sut.Type.TestEquals( TypeNullability.Create<string>() ),
                 sut.TypeDefinition.TestNull(),
+                sut.Identity.TestNull(),
                 text.TestEquals( $"[foo] : System.String GENERATED (\"abc\" : System.String) {storage.ToString().ToUpperInvariant()}" ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Column_ShouldCreateColumnDefinitionNode_WithIdentity()
+    {
+        var typeDef = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
+        var sut = SqlNode.Column( "foo", typeDef, identity: SqlColumnIdentity.Default );
+        var text = sut.ToString();
+
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<int>() ),
+                sut.TypeDefinition.TestRefEquals( typeDef ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                text.TestEquals( "[foo] : System.Int32 IDENTITY" ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Column_ShouldCreateColumnDefinitionNode_WithIdentity_AndCache()
+    {
+        var typeDef = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
+        var sut = SqlNode.Column( "foo", typeDef, identity: new SqlColumnIdentity( 123 ) );
+        var text = sut.ToString();
+
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ColumnDefinition ),
+                sut.Name.TestEquals( "foo" ),
+                sut.DefaultValue.TestNull(),
+                sut.Computation.TestNull(),
+                sut.Type.TestEquals( TypeNullability.Create<int>() ),
+                sut.TypeDefinition.TestRefEquals( typeDef ),
+                sut.Identity.TestEquals( new SqlColumnIdentity( 123 ) ),
+                text.TestEquals( "[foo] : System.Int32 IDENTITY CACHE 123" ) )
             .Go();
     }
 

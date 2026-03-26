@@ -284,7 +284,7 @@ public partial class SqlTableBuilderTests : TestsBase
         var otherTable = schema.Objects.CreateTable( "U" );
         var otherPk = otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "D1" ).Asc() );
         var sut = schema.Objects.CreateTable( "T" );
-        var c1 = sut.Columns.Create( "C1" );
+        var c1 = sut.Columns.Create( "C1" ).SetIdentity( SqlColumnIdentity.Default );
         var c2 = sut.Columns.Create( "C2" );
         var pk = sut.Constraints.SetPrimaryKey( c1.Asc() );
         var ix = sut.Constraints.CreateIndex( c2.Asc() );
@@ -308,6 +308,7 @@ public partial class SqlTableBuilderTests : TestsBase
                 sut.IsRemoved.TestTrue(),
                 sut.ReferencingObjects.TestEmpty(),
                 sut.Columns.TestEmpty(),
+                sut.Columns.Identity.TestNull(),
                 sut.Constraints.TestEmpty(),
                 sut.Constraints.TryGetPrimaryKey().TestNull(),
                 c1.IsRemoved.TestTrue(),

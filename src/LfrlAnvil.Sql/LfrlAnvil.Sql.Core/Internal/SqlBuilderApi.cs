@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -331,6 +331,17 @@ public abstract class SqlBuilderApi
     protected static void AddComputationChange(SqlColumnBuilder target, SqlColumnComputation? originalValue)
     {
         target.Database.Changes.ComputationChanged( target, originalValue );
+    }
+
+    /// <summary>
+    /// Registers a column's <see cref="SqlColumnBuilder.Identity"/> change event in the related database's change tracker.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
+    /// <param name="originalValue">Column's <see cref="SqlColumnBuilder.Identity"/> value before the change.</param>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void AddIdentityChange(SqlColumnBuilder target, SqlColumnIdentity? originalValue)
+    {
+        target.Database.Changes.IdentityChanged( target, originalValue );
     }
 
     /// <summary>

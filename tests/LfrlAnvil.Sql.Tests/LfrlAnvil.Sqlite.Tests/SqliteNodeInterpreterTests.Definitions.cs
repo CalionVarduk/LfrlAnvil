@@ -83,6 +83,15 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretColumnDefinition_WithIdentity()
+        {
+            var sut = CreateInterpreter();
+            var typeDef = sut.TypeDefinitions.GetByDataType( SqliteDataType.Text );
+            sut.Visit( SqlNode.Column( "a", typeDef, identity: SqlColumnIdentity.Default ) );
+            sut.Context.Sql.ToString().TestEquals( "\"a\" TEXT NOT NULL PRIMARY KEY AUTOINCREMENT" ).Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretPrimaryKeyDefinition()
         {
             var sut = CreateInterpreter();
@@ -243,6 +252,90 @@ public partial class SqliteNodeInterpreterTests
                        CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
                      ) WITHOUT ROWID, STRICT
                      """ )
+                .Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretCreateTable_WithIdentityColumn()
+        {
+            var sut = CreateInterpreter();
+            var node = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "foo", "bar" ),
+                new[]
+                {
+                    SqlNode.Column<int>( "x", identity: SqlColumnIdentity.Default ),
+                    SqlNode.Column<string>( "y", isNullable: true ),
+                    SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+                },
+                constraintsProvider: t =>
+                {
+                    var qux = SqlNode.RawRecordSet( "qux" );
+                    return SqlCreateTableConstraints.Empty
+                        .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), new[] { t["x"].Asc() } ) )
+                        .WithForeignKeys(
+                            SqlNode.ForeignKey(
+                                SqlSchemaObjectName.Create( "FK_foobar_REF_qux" ),
+                                new SqlDataFieldNode[] { t["y"] },
+                                qux,
+                                new SqlDataFieldNode[] { qux["y"] } ) )
+                        .WithChecks( SqlNode.Check( SqlSchemaObjectName.Create( "CHK_foobar" ), t["z"] > SqlNode.Literal( 100.0 ) ) );
+                } );
+
+            sut.Visit( node );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    CREATE TABLE "foo_bar" (
+                      "x" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "y" TEXT,
+                      "z" REAL NOT NULL DEFAULT (10.5),
+                      CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
+                    )
+                    """ )
+                .Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretCreateTable_WithIdentityColumn_AndStrict()
+        {
+            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableStrictMode() );
+            var node = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "foo", "bar" ),
+                new[]
+                {
+                    SqlNode.Column<int>( "x", identity: SqlColumnIdentity.Default ),
+                    SqlNode.Column<string>( "y", isNullable: true ),
+                    SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+                },
+                constraintsProvider: t =>
+                {
+                    var qux = SqlNode.RawRecordSet( "qux" );
+                    return SqlCreateTableConstraints.Empty
+                        .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), new[] { t["x"].Asc() } ) )
+                        .WithForeignKeys(
+                            SqlNode.ForeignKey(
+                                SqlSchemaObjectName.Create( "FK_foobar_REF_qux" ),
+                                new SqlDataFieldNode[] { t["y"] },
+                                qux,
+                                new SqlDataFieldNode[] { qux["y"] } ) )
+                        .WithChecks( SqlNode.Check( SqlSchemaObjectName.Create( "CHK_foobar" ), t["z"] > SqlNode.Literal( 100.0 ) ) );
+                } );
+
+            sut.Visit( node );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    CREATE TABLE "foo_bar" (
+                      "x" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                      "y" TEXT,
+                      "z" REAL NOT NULL DEFAULT (10.5),
+                      CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
+                    ) STRICT
+                    """ )
                 .Go();
         }
 

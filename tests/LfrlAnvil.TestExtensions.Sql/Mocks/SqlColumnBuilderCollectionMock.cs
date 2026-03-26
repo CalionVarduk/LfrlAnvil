@@ -11,6 +11,7 @@ public sealed class SqlColumnBuilderCollectionMock : SqlColumnBuilderCollection
         : base( typeDefinition ) { }
 
     public new SqlTableBuilderMock Table => ReinterpretCast.To<SqlTableBuilderMock>( base.Table );
+    public new SqlColumnBuilderMock? Identity => ReinterpretCast.To<SqlColumnBuilderMock>( base.Identity );
 
     public new SqlColumnBuilderCollectionMock SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)
     {

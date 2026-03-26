@@ -18,6 +18,7 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
@@ -25,6 +26,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
+using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -349,6 +351,16 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     }
 
     /// <summary>
+    /// Callback for registration of column's <see cref="SqlColumnBuilder.Identity"/> property change.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
+    /// <param name="originalValue">Column's <see cref="SqlColumnBuilder.Identity"/> before the change.</param>
+    protected virtual void AddIdentityChange(SqlColumnBuilder target, SqlColumnIdentity? originalValue)
+    {
+        AddChange( target.Table, target, SqlObjectChangeDescriptor.Identity, originalValue, target.Identity );
+    }
+
+    /// <summary>
     /// Callback for registration of index's <see cref="SqlIndexBuilder.IsUnique"/> property change.
     /// </summary>
     /// <param name="target">Modified index.</param>
@@ -542,6 +554,43 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     }
 
     /// <summary>
+    /// Performs basic table's primary key validation.
+    /// </summary>
+    /// <param name="table">Table to validate.</param>
+    /// <exception cref="SqlObjectBuilderException">When table's primary key is invalid.</exception>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void ValidatePrimaryKey(SqlTableBuilder table)
+    {
+        var primaryKey = table.Constraints.TryGetPrimaryKey();
+        if ( primaryKey is null )
+            ExceptionThrower.Throw(
+                SqlHelpers.CreateObjectBuilderException( table.Database, ExceptionResources.PrimaryKeyIsMissing( table ) ) );
+
+        if ( table.Columns.Identity is null )
+            return;
+
+        var errors = Chain<string>.Empty;
+        if ( primaryKey.Index.Columns.Expressions.Count > 1 )
+            errors = errors.Extend( ExceptionResources.PrimaryKeyWithIdentityColumnMustHaveExactlyOneColumn( table ) );
+
+        var hasIdentityColumn = false;
+        foreach ( var c in primaryKey.Index.Columns )
+        {
+            if ( ReferenceEquals( c, table.Columns.Identity ) )
+            {
+                hasIdentityColumn = true;
+                break;
+            }
+        }
+
+        if ( ! hasIdentityColumn )
+            errors = errors.Extend( ExceptionResources.PrimaryKeyDoesNotContainIdentityColumn( table.Columns.Identity ) );
+
+        if ( errors.Count > 0 )
+            ExceptionThrower.Throw( SqlHelpers.CreateObjectBuilderException( table.Database, errors ) );
+    }
+
+    /// <summary>
     /// Sets <see cref="Mode"/> and marks this change tracker as attached.
     /// </summary>
     /// <param name="mode">Mode to set.</param>
@@ -604,6 +653,13 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         Assume.NotEquals( target.Computation ?? default, originalValue ?? default );
         if ( IsActive )
             AddComputationChange( target, originalValue );
+    }
+
+    internal void IdentityChanged(SqlColumnBuilder target, SqlColumnIdentity? originalValue)
+    {
+        Assume.False( target.Identity == originalValue );
+        if ( IsActive )
+            AddIdentityChange( target, originalValue );
     }
 
     internal void IsUniqueChanged(SqlIndexBuilder target, bool originalValue)

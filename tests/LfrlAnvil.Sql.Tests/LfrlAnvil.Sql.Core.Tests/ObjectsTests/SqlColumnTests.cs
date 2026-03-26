@@ -34,6 +34,7 @@ public class SqlColumnTests : TestsBase
                 sut.HasDefaultValue.TestFalse(),
                 sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType( type ) ),
                 sut.ComputationStorage.TestNull(),
+                sut.Identity.TestNull(),
                 sut.Node.TestRefEquals( table.Node["C"] ),
                 sut.ToString().TestEquals( "[Column] common.T.C" ) )
             .Go();
@@ -61,6 +62,7 @@ public class SqlColumnTests : TestsBase
                 sut.HasDefaultValue.TestTrue(),
                 sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
                 sut.ComputationStorage.TestNull(),
+                sut.Identity.TestNull(),
                 sut.Node.TestRefEquals( table.Node["C"] ),
                 sut.ToString().TestEquals( "[Column] common.T.C" ) )
             .Go();
@@ -90,6 +92,37 @@ public class SqlColumnTests : TestsBase
                 sut.HasDefaultValue.TestFalse(),
                 sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
                 sut.ComputationStorage.TestEquals( storage ),
+                sut.Identity.TestNull(),
+                sut.Node.TestRefEquals( table.Node["C"] ),
+                sut.ToString().TestEquals( "[Column] common.T.C" ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( 123 )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WithIdentity(int? cache)
+    {
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.Columns.Create( "C" ).SetIdentity( new SqlColumnIdentity( cache ) );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Get( "C" ).Asc() );
+
+        var db = SqlDatabaseMock.Create( schemaBuilder.Database );
+        var table = db.Schemas.Default.Objects.GetTable( "T" );
+
+        ISqlColumn sut = table.Columns.Get( "C" );
+
+        Assertion.All(
+                sut.Database.TestRefEquals( db ),
+                sut.Table.TestRefEquals( table ),
+                sut.Type.TestEquals( SqlObjectType.Column ),
+                sut.Name.TestEquals( "C" ),
+                sut.IsNullable.TestFalse(),
+                sut.HasDefaultValue.TestFalse(),
+                sut.TypeDefinition.TestRefEquals( db.TypeDefinitions.GetByType<object>() ),
+                sut.ComputationStorage.TestNull(),
+                sut.Identity.TestEquals( new SqlColumnIdentity( cache ) ),
                 sut.Node.TestRefEquals( table.Node["C"] ),
                 sut.ToString().TestEquals( "[Column] common.T.C" ) )
             .Go();

@@ -50,6 +50,11 @@ public interface ISqlColumn : ISqlObject
     SqlColumnComputationStorage? ComputationStorage { get; }
 
     /// <summary>
+    /// Specifies column's identity definition.
+    /// </summary>
+    SqlColumnIdentity? Identity { get; }
+
+    /// <summary>
     /// Underlying <see cref="SqlColumnNode"/> instance that represents this column.
     /// </summary>
     SqlColumnNode Node { get; }

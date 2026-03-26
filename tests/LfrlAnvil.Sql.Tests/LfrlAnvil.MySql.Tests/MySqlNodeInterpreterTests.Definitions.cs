@@ -118,6 +118,15 @@ public partial class MySqlNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretColumnDefinition_WithIdentity()
+        {
+            var sut = CreateInterpreter();
+            var typeDef = sut.TypeDefinitions.GetByDataType( MySqlDataType.VarChar );
+            sut.Visit( SqlNode.Column( "a", typeDef, identity: SqlColumnIdentity.Default ) );
+            sut.Context.Sql.ToString().TestEquals( "`a` VARCHAR(65535) NOT NULL AUTO_INCREMENT" ).Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretPrimaryKeyDefinition()
         {
             var sut = CreateInterpreter();

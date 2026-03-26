@@ -1514,6 +1514,7 @@ public static partial class SqlNode
     /// <param name="isNullable">Specifies whether this column should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="defaultValue">Column's optional default value. Equal to null by default.</param>
     /// <param name="computation">Column's optional computation. Equal to null by default.</param>
+    /// <param name="identity">Column's optional identity definition. Equal to null by default.</param>
     /// <typeparam name="T">Column's runtime type.</typeparam>
     /// <returns>New <see cref="SqlColumnDefinitionNode"/> instance.</returns>
     [Pure]
@@ -1522,10 +1523,11 @@ public static partial class SqlNode
         string name,
         bool isNullable = false,
         SqlExpressionNode? defaultValue = null,
-        SqlColumnComputation? computation = null)
+        SqlColumnComputation? computation = null,
+        SqlColumnIdentity? identity = null)
         where T : notnull
     {
-        return Column( name, TypeNullability.Create<T>( isNullable ), defaultValue, computation );
+        return Column( name, TypeNullability.Create<T>( isNullable ), defaultValue, computation, identity );
     }
 
     /// <summary>
@@ -1535,15 +1537,17 @@ public static partial class SqlNode
     /// <param name="type">Column's runtime type.</param>
     /// <param name="defaultValue">Column's optional default value. Equal to null by default.</param>
     /// <param name="computation">Column's optional computation. Equal to null by default.</param>
+    /// <param name="identity">Column's optional identity definition. Equal to null by default.</param>
     /// <returns>New <see cref="SqlColumnDefinitionNode"/> instance.</returns>
     [Pure]
     public static SqlColumnDefinitionNode Column(
         string name,
         TypeNullability type,
         SqlExpressionNode? defaultValue = null,
-        SqlColumnComputation? computation = null)
+        SqlColumnComputation? computation = null,
+        SqlColumnIdentity? identity = null)
     {
-        return new SqlColumnDefinitionNode( name, type, defaultValue, computation );
+        return new SqlColumnDefinitionNode( name, type, defaultValue, computation, identity );
     }
 
     /// <summary>
@@ -1554,6 +1558,7 @@ public static partial class SqlNode
     /// <param name="isNullable">Specifies whether this column should be nullable. Equal to <b>false</b> by default.</param>
     /// <param name="defaultValue">Column's optional default value. Equal to null by default.</param>
     /// <param name="computation">Column's optional computation. Equal to null by default.</param>
+    /// <param name="identity">Column's optional identity definition. Equal to null by default.</param>
     /// <returns>New <see cref="SqlColumnDefinitionNode"/> instance.</returns>
     [Pure]
     public static SqlColumnDefinitionNode Column(
@@ -1561,9 +1566,10 @@ public static partial class SqlNode
         ISqlColumnTypeDefinition typeDefinition,
         bool isNullable = false,
         SqlExpressionNode? defaultValue = null,
-        SqlColumnComputation? computation = null)
+        SqlColumnComputation? computation = null,
+        SqlColumnIdentity? identity = null)
     {
-        return new SqlColumnDefinitionNode( name, typeDefinition, isNullable, defaultValue, computation );
+        return new SqlColumnDefinitionNode( name, typeDefinition, isNullable, defaultValue, computation, identity );
     }
 
     /// <summary>

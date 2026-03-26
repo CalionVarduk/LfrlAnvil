@@ -52,6 +52,11 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     SqlColumnComputation? Computation { get; }
 
     /// <summary>
+    /// Underlying optional <see cref="SqlColumnIdentity"/> of this column.
+    /// </summary>
+    SqlColumnIdentity? Identity { get; }
+
+    /// <summary>
     /// Collection of columns referenced by this column's <see cref="Computation"/>.
     /// </summary>
     IReadOnlyCollection<ISqlColumnBuilder> ReferencedComputationColumns { get; }
@@ -97,6 +102,18 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     /// <exception cref="SqlObjectBuilderException">When computation cannot be changed.</exception>
     /// <remarks>Changing the computation to non-null will reset the <see cref="DefaultValue"/> to null.</remarks>
     ISqlColumnBuilder SetComputation(SqlColumnComputation? computation);
+
+    /// <summary>
+    /// Changes <see cref="Identity"/> value of this column.
+    /// </summary>
+    /// <param name="identity">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
+    /// <exception cref="SqlObjectBuilderException">When identity cannot be changed.</exception>
+    /// <remarks>
+    /// Changing the identity to non-null will reset the <see cref="DefaultValue"/> and <see cref="Computation"/> to null,
+    /// and set <see cref="IsNullable"/> to <b>false</b>.
+    /// </remarks>
+    ISqlColumnBuilder SetIdentity(SqlColumnIdentity? identity);
 
     /// <summary>
     /// Creates a new <see cref="SqlOrderByNode"/> instance from this column with <see cref="OrderBy.Asc"/> ordering.

@@ -545,6 +545,52 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndSchemaHasTableWithIdentityColumn()
+    {
+        var db = SqliteDatabaseBuilderMock.Create();
+        var sut = db.Schemas.Create( "foo" );
+
+        var table = sut.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = db.GetPendingActionCount();
+        db.Changes.ClearModifiedTables();
+        var result = sut.SetName( "bar" );
+        var actions = db.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                db.Changes.ModifiedTables.TestSetEqual( [ table ] ),
+                table.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T" ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"bar_T\";" ),
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            CREATE TABLE "__bar_T__{GUID}__" (
+                              "C" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                              "C2" ANY NOT NULL
+                            );
+                            """,
+                            """
+                            INSERT INTO "__bar_T__{GUID}__" ("C", "C2")
+                            SELECT
+                              "bar_T"."C",
+                              "bar_T"."C2"
+                            FROM "bar_T";
+                            """,
+                            "DROP TABLE \"bar_T\";",
+                            "ALTER TABLE \"__bar_T__{GUID}__\" RENAME TO \"bar_T\";" )
+                    ] ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( " " )]
     [InlineData( "\"" )]

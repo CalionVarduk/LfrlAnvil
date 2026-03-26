@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         _table = null;
         _map = new Dictionary<string, SqlColumnBuilder>( SqlHelpers.NameComparer );
         DefaultTypeDefinition = defaultTypeDefinition;
+        Identity = null;
     }
 
     /// <inheritdoc cref="ISqlColumnBuilderCollection.Table" />
@@ -52,11 +53,15 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     /// <inheritdoc cref="ISqlColumnBuilderCollection.DefaultTypeDefinition" />
     public SqlColumnTypeDefinition DefaultTypeDefinition { get; private set; }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.Identity" />
+    public SqlColumnBuilder? Identity { get; protected internal set; }
+
     /// <inheritdoc />
     public int Count => _map.Count;
 
     ISqlTableBuilder ISqlColumnBuilderCollection.Table => Table;
     ISqlColumnTypeDefinition ISqlColumnBuilderCollection.DefaultTypeDefinition => DefaultTypeDefinition;
+    ISqlColumnBuilder? ISqlColumnBuilderCollection.Identity => Identity;
 
     /// <inheritdoc cref="ISqlColumnBuilderCollection.SetDefaultTypeDefinition(ISqlColumnTypeDefinition)" />
     public SqlColumnBuilderCollection SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)
@@ -177,19 +182,22 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
             throw SqlHelpers.CreateObjectBuilderException( Table.Database, ExceptionResources.NameIsAlreadyTaken( columnRef, newName ) );
 
         columnRef = column;
-        Remove( column );
+        _map.Remove( column.Name );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Remove(SqlColumnBuilder column)
     {
         _map.Remove( column.Name );
+        if ( ReferenceEquals( Identity, column ) )
+            Identity = null;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void Clear()
     {
         _map.Clear();
+        Identity = null;
     }
 
     [Pure]

@@ -607,6 +607,23 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.MarkAsNullable() );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldDoNothing_WhenNewValueEqualsOldValue()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -847,6 +864,23 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
         action.Test( exc => exc.TestType()
                 .Exact<SqlObjectBuilderException>( e => Assertion.All(
@@ -1259,6 +1293,315 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldDoNothing_WhenNewValueEqualsOldValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        var originalIdentity = sut.Identity;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetIdentity( SqlColumnIdentity.Default );
+        var result = sut.SetIdentity( originalIdentity );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldUpdateIdentity_WhenNewValueIsDifferentFromOldValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( new SqlColumnIdentity( 123 ) );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( new SqlColumnIdentity( 123 ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM SqlColumnIdentity { AutoIncrementCache =  });
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldUpdateIdentity_WhenNewValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestNull(),
+                table.Columns.Identity.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM SqlColumnIdentity { AutoIncrementCache =  });
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldUpdateIdentity_WhenOldValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                table.Columns.Identity.TestRefEquals( sut ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetDefaultValue_WhenNewValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM "123" : System.Int32)
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetComputation_WhenNewValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.Computation.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = "1" : System.Int32, Storage = Virtual })
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetIsNullable_WhenNewValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).MarkAsNullable();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.IsNullable.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM True)
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldBePossible_WhenColumnIsUsedInIndex()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldBePossible_WhenColumnIsUsedInView()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        schema.Objects.CreateView( "V", table.Node.ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.SetIdentity( SqlColumnIdentity.Default ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldThrowSqlObjectBuilderException_WhenTableAlreadyContainsIdentityColumn()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var other = table.Columns.Create( "C1" ).SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( other.Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var action = Lambda.Of( () => sut.SetIdentity( SqlColumnIdentity.Default ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( SqlDialectMock.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void Remove_ShouldRemoveColumnAndClearReferencedComputationColumns()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -1275,6 +1618,36 @@ public class SqlColumnBuilderTests : TestsBase
                 table.Columns.TryGet( sut.Name ).TestNull(),
                 sut.ReferencedComputationColumns.TestEmpty(),
                 sut.Computation.TestNull(),
+                sut.IsRemoved.TestTrue(),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          REMOVE [Column] foo.T.C2;
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveIdentityColumn()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var other = table.Columns.Create( "C1" );
+        var pk = table.Constraints.SetPrimaryKey( other.Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.Remove();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.TryGet( sut.Name ).TestNull(),
+                table.Columns.Identity.TestNull(),
                 sut.IsRemoved.TestTrue(),
                 other.ReferencingObjects.TestSequence(
                     [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) ] ),
@@ -1642,6 +2015,32 @@ public class SqlColumnBuilderTests : TestsBase
                         """
                         ALTER [Table] foo.T
                           ALTER [Column] foo.T.C2 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);
+                        """
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void ISqlColumnBuilder_SetIdentity_ShouldBeEquivalentToSetIdentity()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = (( ISqlColumnBuilder )sut).SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        """
+                        ALTER [Table] foo.T
+                          ALTER [Column] foo.T.C2 ([6] : 'Identity' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnIdentity]) FROM <null>);
                         """
                     ] ) )
             .Go();

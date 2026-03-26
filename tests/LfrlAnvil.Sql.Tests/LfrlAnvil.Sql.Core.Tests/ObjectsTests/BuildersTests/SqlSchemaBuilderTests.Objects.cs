@@ -29,6 +29,7 @@ public partial class SqlSchemaBuilderTests
                     result.Columns.TestEmpty(),
                     result.Columns.Table.TestRefEquals( result ),
                     result.Columns.DefaultTypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<object>() ),
+                    result.Columns.Identity.TestNull(),
                     result.Constraints.TestEmpty(),
                     result.Constraints.Table.TestRefEquals( result ),
                     result.Constraints.TryGetPrimaryKey().TestNull(),
@@ -47,6 +48,7 @@ public partial class SqlSchemaBuilderTests
                     (( ISqlColumnBuilderCollection )result.Columns).Table.TestRefEquals( result.Columns.Table ),
                     (( ISqlColumnBuilderCollection )result.Columns).DefaultTypeDefinition.TestRefEquals(
                         result.Columns.DefaultTypeDefinition ),
+                    (( ISqlColumnBuilderCollection )result.Columns).Identity.TestRefEquals( result.Columns.Identity ),
                     (( ISqlConstraintBuilderCollection )result.Constraints).Table.TestRefEquals( result.Constraints.Table ),
                     sut.Count.TestEquals( 1 ),
                     sut.TestSetEqual( [ result ] ) )
@@ -122,6 +124,7 @@ public partial class SqlSchemaBuilderTests
                     result.Columns.TestEmpty(),
                     result.Columns.Table.TestRefEquals( result ),
                     result.Columns.DefaultTypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<object>() ),
+                    result.Columns.Identity.TestNull(),
                     result.Constraints.TestEmpty(),
                     result.Constraints.Table.TestRefEquals( result ),
                     result.Constraints.TryGetPrimaryKey().TestNull(),
@@ -140,6 +143,7 @@ public partial class SqlSchemaBuilderTests
                     (( ISqlColumnBuilderCollection )result.Columns).Table.TestRefEquals( result.Columns.Table ),
                     (( ISqlColumnBuilderCollection )result.Columns).DefaultTypeDefinition.TestRefEquals(
                         result.Columns.DefaultTypeDefinition ),
+                    (( ISqlColumnBuilderCollection )result.Columns).Identity.TestRefEquals( result.Columns.Identity ),
                     (( ISqlConstraintBuilderCollection )result.Constraints).Table.TestRefEquals( result.Constraints.Table ),
                     sut.Count.TestEquals( 1 ),
                     sut.TestSetEqual( [ result ] ) )

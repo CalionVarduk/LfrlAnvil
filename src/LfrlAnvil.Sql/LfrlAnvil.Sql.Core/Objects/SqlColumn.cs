@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public abstract class SqlColumn : SqlObject, ISqlColumn
         IsNullable = builder.IsNullable;
         HasDefaultValue = builder.DefaultValue is not null;
         ComputationStorage = builder.Computation?.Storage;
+        Identity = builder.Identity;
         TypeDefinition = builder.TypeDefinition;
         _node = null;
     }
@@ -53,6 +54,9 @@ public abstract class SqlColumn : SqlObject, ISqlColumn
 
     /// <inheritdoc />
     public SqlColumnComputationStorage? ComputationStorage { get; }
+
+    /// <inheritdoc />
+    public SqlColumnIdentity? Identity { get; }
 
     /// <inheritdoc cref="ISqlColumn.TypeDefinition" />
     public SqlColumnTypeDefinition TypeDefinition { get; }

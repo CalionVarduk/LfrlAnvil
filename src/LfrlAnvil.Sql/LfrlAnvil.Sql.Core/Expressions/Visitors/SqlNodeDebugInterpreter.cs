@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -744,6 +744,16 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace();
             VisitChild( node.Computation.Value.Expression );
             Context.Sql.AppendSpace().Append( node.Computation.Value.Storage.ToString().ToUpperInvariant() );
+        }
+
+        if ( node.Identity is not null )
+        {
+            Context.Sql.AppendSpace().Append( "IDENTITY" );
+            if ( node.Identity.Value.AutoIncrementCache is not null )
+                Context.Sql.AppendSpace()
+                    .Append( "CACHE" )
+                    .AppendSpace()
+                    .Append( node.Identity.Value.AutoIncrementCache.Value.ToString( CultureInfo.InvariantCulture ) );
         }
     }
 

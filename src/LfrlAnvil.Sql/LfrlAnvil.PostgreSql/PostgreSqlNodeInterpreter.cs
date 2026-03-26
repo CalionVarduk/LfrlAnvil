@@ -15,6 +15,7 @@
 using System;
 using System.Data;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.PostgreSql.Internal;
@@ -733,6 +734,17 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace().Append( "ALWAYS" ).AppendSpace().Append( "AS" ).AppendSpace();
             VisitChildWrappedInParentheses( node.Computation.Value.Expression );
             Context.Sql.AppendSpace().Append( storage );
+        }
+
+        if ( node.Identity is not null )
+        {
+            Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace().Append( "ALWAYS" ).AppendSpace().Append( "AS" ).AppendSpace();
+            Context.Sql.Append( "IDENTITY" );
+            if ( node.Identity.Value.AutoIncrementCache is not null )
+            {
+                var cache = node.Identity.Value.AutoIncrementCache.Value.ToString( CultureInfo.InvariantCulture );
+                Context.Sql.AppendSpace().Append( '(' ).Append( "CACHE" ).AppendSpace().Append( cache ).Append( ')' );
+            }
         }
     }
 
