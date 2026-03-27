@@ -378,4 +378,41 @@ public static class PostgreSqlHelpers
         interpreter.Context.Sql.AppendSpace().Append( "SET" ).AppendSpace().Append( "CACHE" ).AppendSpace();
         interpreter.Context.Sql.Append( cache.Value.ToString( CultureInfo.InvariantCulture ) ).AppendComma();
     }
+
+    internal static void AppendRestartIdentitySequence(
+        SqlNodeInterpreter interpreter,
+        SqlRecordSetInfo table,
+        string column,
+        ISqlDataType columnDataType)
+    {
+        interpreter.Context.Sql.Append( "DO" ).AppendSpace().Append( '$' ).Append( '$' ).AppendLine();
+        interpreter.Context.Sql.Append( "DECLARE" );
+
+        using ( interpreter.Context.TempIndentIncrease() )
+            interpreter.Context.AppendIndent().Append( "val" ).AppendSpace().Append( columnDataType.Name ).AppendSemicolon().AppendLine();
+
+        interpreter.Context.Sql.Append( "BEGIN" );
+
+        using ( interpreter.Context.TempIndentIncrease() )
+        {
+            interpreter.Context.AppendIndent().Append( "SELECT" ).AppendSpace().Append( "COALESCE" ).Append( '(' );
+            interpreter.Context.Sql.Append( "MAX" ).Append( '(' );
+            interpreter.AppendDelimitedName( column );
+            interpreter.Context.Sql.Append( ')' ).AppendComma().AppendSpace().Append( '0' ).Append( ')' ).AppendSpace().Append( '+' );
+            interpreter.Context.Sql.AppendSpace().Append( '1' ).AppendSpace().Append( "FROM" ).AppendSpace();
+            interpreter.AppendDelimitedRecordSetInfo( table );
+            interpreter.Context.Sql.AppendSpace().Append( "INTO" ).AppendSpace().Append( "val" ).AppendSemicolon();
+
+            interpreter.Context.AppendIndent().Append( "EXECUTE" ).AppendSpace().Append( "format" ).Append( '(' );
+            interpreter.Context.Sql.Append( '\'' ).Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+            interpreter.AppendDelimitedRecordSetInfo( table );
+            interpreter.Context.Sql.AppendSpace().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+            interpreter.AppendDelimitedName( column );
+            interpreter.Context.Sql.AppendSpace().Append( "RESTART" ).AppendSpace().Append( "WITH" ).AppendSpace();
+            interpreter.Context.Sql.Append( '%' ).Append( 's' ).Append( '\'' ).AppendComma().AppendSpace();
+            interpreter.Context.Sql.Append( "val" ).Append( ')' ).AppendSemicolon().AppendLine();
+        }
+
+        interpreter.Context.Sql.Append( "END" ).AppendSpace().Append( '$' ).Append( '$' );
+    }
 }

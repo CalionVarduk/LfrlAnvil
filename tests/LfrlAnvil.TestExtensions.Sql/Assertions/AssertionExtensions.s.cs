@@ -23,7 +23,9 @@ public static class AssertionExtensions
                     .Replace( ")", "\\)" )
                     .Replace( ".", "\\." )
                     .Replace( "*", "\\*" )
-                    .Replace( "+", "\\+" ),
+                    .Replace( "+", "\\+" )
+                    .Replace( "$", "\\$" )
+                    .Replace( "%", "\\%" ),
                 "\\r{0,1}\\n[ ]*" );
 
             regexes[i] = new Regex( '^' + pattern + '$', RegexOptions.Singleline );

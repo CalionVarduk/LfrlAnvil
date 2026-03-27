@@ -272,7 +272,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                                 ALTER COLUMN "C1" ADD GENERATED ALWAYS AS IDENTITY,
                                 ADD COLUMN "C3" BYTEA,
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C1");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C1"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C1\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2021,7 +2032,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
     {
         var schema = PostgreSqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C2" ).SetType<int>();
+        var sut = table.Columns.Create( "C2" ).SetType<long>();
         table.Constraints.SetPrimaryKey( sut.Asc() );
         table.Columns.Create( "C1" );
 
@@ -2040,7 +2051,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                             """
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY;
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT8;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2075,7 +2097,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                                 ALTER COLUMN "C2" DROP DEFAULT,
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY,
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2113,7 +2146,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY,
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2148,7 +2192,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                                 ALTER COLUMN "C2" SET NOT NULL,
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY,
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2182,7 +2237,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY,
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }
@@ -2216,7 +2282,18 @@ public class PostgreSqlColumnBuilderTests : TestsBase
                             ALTER TABLE "foo"."T"
                                 ALTER COLUMN "C2" ADD GENERATED ALWAYS AS IDENTITY (CACHE 123),
                                 ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
-                            """ )
+                            """,
+                            """
+                            DO $$
+                            DECLARE
+                              val INT4;
+                            """,
+                            """
+                            BEGIN
+                              SELECT COALESCE(MAX("C2"), 0) + 1 FROM "foo"."T" INTO val;
+                            """,
+                            "EXECUTE format('ALTER TABLE \"foo\".\"T\" ALTER COLUMN \"C2\" RESTART WITH %s', val);",
+                            "END $$;" )
                     ] ) )
             .Go();
     }

@@ -327,6 +327,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 PostgreSqlHelpers.AppendAlterTableHeader( interpreter, table.Info );
             }
 
+            PostgreSqlColumnBuilder? modifiedIdentityColumn = null;
             foreach ( var modification in changeAggregator.ModifiedColumns )
             {
                 var originalIsNullable = this.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.IsNullable )
@@ -399,10 +400,13 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                     using ( interpreter.Context.TempIndentIncrease() )
                     {
                         if ( originalIdentity is null )
+                        {
+                            modifiedIdentityColumn = modification.Column;
                             PostgreSqlHelpers.AppendAlterTableAddColumnIdentity(
                                 interpreter,
                                 modification.Column.Name,
                                 modification.Column.Identity.Value );
+                        }
                         else
                             PostgreSqlHelpers.AppendAlterTableSetColumnIdentityCache(
                                 interpreter,
@@ -452,6 +456,18 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
             if ( isAltered )
             {
                 interpreter.Context.Sql.ShrinkBy( 1 );
+                AppendSqlCommandEnd( interpreter );
+            }
+
+            if ( modifiedIdentityColumn is not null )
+            {
+                Assume.True( isAltered );
+                PostgreSqlHelpers.AppendRestartIdentitySequence(
+                    interpreter,
+                    table.Info,
+                    modifiedIdentityColumn.Name,
+                    modifiedIdentityColumn.TypeDefinition.DataType );
+
                 AppendSqlCommandEnd( interpreter );
             }
         }
