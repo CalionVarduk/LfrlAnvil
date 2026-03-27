@@ -70,6 +70,54 @@ public partial class MySqlTableBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Creation_ShouldPrepareCorrectStatement_WithIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c5 = sut.Columns.Create( "C5" );
+        var ix1 = sut.Constraints.CreateIndex( sut.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var ix2 = sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() )
+            .Index;
+
+        var c6 = sut.Columns.Create( "C6" ).MarkAsNullable();
+        sut.Constraints.CreateIndex( sut.Columns.Create( "C3" ).SetType<long>().Asc(), sut.Columns.Create( "C4" ).SetType<long>().Desc() );
+        sut.Constraints.CreateForeignKey( ix1, ix2 );
+        sut.Constraints.CreateCheck( sut.Node["C1"] > SqlNode.Literal( 0 ) );
+        c5.SetComputation( SqlColumnComputation.Virtual( sut.Columns.Get( "C1" ).Node + SqlNode.Literal( 1 ) ) );
+        c6.SetComputation( SqlColumnComputation.Stored( sut.Columns.Get( "C2" ).Node * sut.Columns.Get( "C5" ).Node ) );
+
+        var actions = schema.Database.GetLastPendingActions( 1 );
+
+        Assertion.All(
+                schema.Objects.TryGet( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "T" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            CREATE TABLE `foo`.`T` (
+                              `C1` INT NOT NULL,
+                              `C2` INT NOT NULL AUTO_INCREMENT,
+                              `C3` BIGINT NOT NULL,
+                              `C4` BIGINT NOT NULL,
+                              `C5` LONGBLOB GENERATED ALWAYS AS (`C1` + 1) VIRTUAL NOT NULL,
+                              `C6` LONGBLOB GENERATED ALWAYS AS (`C2` * `C5`) STORED,
+                              CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC),
+                              CONSTRAINT `CHK_T_{GUID}` CHECK (`C1` > 0)
+                            );
+                            """,
+                            "CREATE INDEX `IX_T_C1A` ON `foo`.`T` (`C1` ASC);",
+                            "CREATE INDEX `IX_T_C3A_C4D` ON `foo`.`T` (`C3` ASC, `C4` DESC);",
+                            """
+                            ALTER TABLE `foo`.`T`
+                                ADD CONSTRAINT `FK_T_C1_REF_T` FOREIGN KEY (`C1`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -95,6 +143,25 @@ public partial class MySqlTableBuilderTests : TestsBase
                 .Exact<SqlObjectBuilderException>( e => Assertion.All(
                     e.Dialect.TestEquals( MySqlDialect.Instance ),
                     e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Creation_ShouldThrowSqlObjectBuilderException_WhenTableHasIdentityColumnAndInvalidPrimaryKey()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Columns.Create( "A" );
+        var b = sut.Columns.Create( "B" );
+        sut.Columns.Create( "C" ).SetIdentity( SqlColumnIdentity.Default );
+        sut.Constraints.SetPrimaryKey( a.Asc(), b.Asc() );
+
+        var action = Lambda.Of( () => schema.Database.Changes.CompletePendingChanges() );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 2 ) ) ) )
             .Go();
     }
 

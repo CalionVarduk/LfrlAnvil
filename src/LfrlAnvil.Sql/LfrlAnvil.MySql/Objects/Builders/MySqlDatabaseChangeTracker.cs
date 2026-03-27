@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
-using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
@@ -26,7 +25,6 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
@@ -232,7 +230,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 
     private void AddCreateTableAction(MySqlTableBuilder table)
     {
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
 
         var interpreter = CreateNodeInterpreter();
         var createTable = table.ToCreateNode( includeForeignKeys: false, sortComputedColumns: true );
@@ -319,7 +317,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         if ( ! changeAggregator.HasChanged )
             return;
 
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
         changeAggregator.PrepareColumnsForAlteration( table );
         changeAggregator.PrepareForeignKeysForAlteration();
 
@@ -389,7 +387,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 
                 foreach ( var column in changeAggregator.CreatedColumns )
                 {
-                    if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null )
+                    if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null && column.Identity is null )
                         column.UpdateDefaultValueBasedOnDataType();
 
                     MySqlHelpers.AppendAlterTableAddColumn( interpreter, column.ToDefinitionNode() );
@@ -485,13 +483,5 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         interpreter.VisitCreateView( view.ToCreateNode() );
         var sql = GetSqlAndClearContext( interpreter );
         AddSqlAction( sql );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ValidateTable(MySqlTableBuilder table)
-    {
-        if ( table.Constraints.TryGetPrimaryKey() is null )
-            ExceptionThrower.Throw(
-                SqlHelpers.CreateObjectBuilderException( table.Database, ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -64,6 +64,14 @@ public sealed class MySqlColumnBuilder : SqlColumnBuilder
     public new MySqlColumnBuilder SetComputation(SqlColumnComputation? computation)
     {
         base.SetComputation( computation );
+        return this;
+    }
+
+    /// <inheritdoc cref="SqlColumnBuilder.SetIdentity(SqlColumnIdentity?)" />
+    /// <remarks>MySql ignores <see cref="SqlColumnIdentity.AutoIncrementCache"/> property.</remarks>
+    public new MySqlColumnBuilder SetIdentity(SqlColumnIdentity? identity)
+    {
+        base.SetIdentity( identity is not null ? SqlColumnIdentity.Default : null );
         return this;
     }
 

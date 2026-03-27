@@ -134,6 +134,35 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Creation_ShouldMarkTableForAlteration_WhenColumnIsIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.Get( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "C2" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                ADD COLUMN `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
     public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -160,6 +189,115 @@ public class MySqlColumnBuilderTests : TestsBase
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL,
                                 ADD COLUMN `C3` LONGBLOB;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithRemovedIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var removed = table.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        var pk = table.Constraints.SetPrimaryKey( removed.Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        pk.Remove();
+        removed.SetName( "C3" ).Remove();
+        table.Columns.Create( "C3" ).MarkAsNullable();
+        var sut = table.Columns.Create( "C1" ).SetType<long>();
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.Get( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "C1" ),
+                sut.DefaultValue.TestNull(),
+                removed.IsRemoved.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C1` `C1` BIGINT NOT NULL,
+                                ADD COLUMN `C3` LONGBLOB,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C1` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithCreatedIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var removed = table.Columns.Create( "C1" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C2" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        removed.SetName( "C3" ).Remove();
+        table.Columns.Create( "C3" ).MarkAsNullable();
+        var sut = table.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.Get( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "C1" ),
+                sut.DefaultValue.TestNull(),
+                removed.IsRemoved.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C1` `C1` INT NOT NULL AUTO_INCREMENT,
+                                ADD COLUMN `C3` LONGBLOB,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C1` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithPreservedIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var removed = table.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        var pk = table.Constraints.SetPrimaryKey( removed.Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        pk.Remove();
+        removed.SetName( "C3" ).Remove();
+        table.Columns.Create( "C3" ).MarkAsNullable();
+        var sut = table.Columns.Create( "C1" ).SetType<long>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.Get( sut.Name ).TestRefEquals( sut ),
+                sut.Name.TestEquals( "C1" ),
+                sut.DefaultValue.TestNull(),
+                removed.IsRemoved.TestTrue(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C1` `C1` BIGINT NOT NULL AUTO_INCREMENT,
+                                ADD COLUMN `C3` LONGBLOB,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C1` ASC);
                             """ )
                     ] ) )
             .Go();
@@ -345,6 +483,42 @@ public class MySqlColumnBuilderTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName_WithIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        var pk = table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C2" );
+        var node = sut.Node;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        pk.Remove();
+        var result = sut.SetName( "bar" );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                table.Columns.TryGet( "bar" ).TestRefEquals( sut ),
+                table.Columns.TryGet( "C1" ).TestNull(),
+                node.Name.TestEquals( "bar" ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C1` `bar` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`bar` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( "" )]
     [InlineData( " " )]
@@ -498,6 +672,39 @@ public class MySqlColumnBuilderTests : TestsBase
                             """
                             ALTER TABLE `foo`.`T`
                                 CHANGE COLUMN `C2` `C2` INT NOT NULL;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetType_ShouldUpdateTypeAndSetDefaultValueToNull_WhenNewTypeIsDifferentFromOldType_WithIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C1" ).SetType<string>().SetIdentity( SqlColumnIdentity.Default );
+        var pk = table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        pk.Remove();
+        var result = sut.SetType<int>();
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.TypeDefinition.TestRefEquals( schema.Database.TypeDefinitions.GetByType<int>() ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C1` `C1` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C1` ASC);
                             """ )
                     ] ) )
             .Go();
@@ -822,6 +1029,23 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.MarkAsNullable() );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldDoNothing_WhenNewValueEqualsOldValue()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -1068,6 +1292,23 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
         action.Test( exc => exc.TestType()
                 .Exact<SqlObjectBuilderException>( e => Assertion.All(
@@ -1530,6 +1771,333 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsIdentity()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetIdentity( SqlColumnIdentity.Default );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldDoNothing_WhenNewValueEqualsOldValue()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C1" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>();
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C1" );
+        var originalIdentity = sut.Identity;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetIdentity( SqlColumnIdentity.Default );
+        var result = sut.SetIdentity( originalIdentity );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actions.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldDoNothing_WhenNewValueIsDifferentFromOldValueDueToCache()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C1" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( new SqlColumnIdentity( 123 ) );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql ).TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldUpdateIdentity_WhenNewValueIsNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C1" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestNull(),
+                table.Columns.Identity.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldUpdateIdentity_WhenOldValueIsNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>();
+        table.Constraints.SetPrimaryKey( sut.Asc() );
+        table.Columns.Create( "C1" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                table.Columns.Identity.TestRefEquals( sut ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL AUTO_INCREMENT;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetDefaultValue_WhenNewValueIsNotNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetDefaultValue( 123 );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( result.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.DefaultValue.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetComputation_WhenNewValueIsNotNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( result.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.Computation.TestNull(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                DROP COLUMN `C2`,
+                                ADD COLUMN `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldResetIsNullable_WhenNewValueIsNotNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().MarkAsNullable();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( result.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                sut.IsNullable.TestFalse(),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldBePossible_WhenColumnIsUsedInIndex()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetType<int>();
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( result.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldBePossible_WhenColumnIsUsedInView()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetType<int>();
+        schema.Objects.CreateView( "V", table.Node.ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( result.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Identity.TestEquals( SqlColumnIdentity.Default ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                CHANGE COLUMN `C2` `C2` INT NOT NULL AUTO_INCREMENT,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.SetIdentity( SqlColumnIdentity.Default ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SetIdentity_ShouldThrowSqlObjectBuilderException_WhenTableAlreadyContainsIdentityColumn()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var other = table.Columns.Create( "C1" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        table.Constraints.SetPrimaryKey( other.Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var action = Lambda.Of( () => sut.SetIdentity( SqlColumnIdentity.Default ) );
+
+        action.Test( exc => exc.TestType()
+                .Exact<SqlObjectBuilderException>( e => Assertion.All(
+                    e.Dialect.TestEquals( MySqlDialect.Instance ),
+                    e.Errors.Count.TestEquals( 1 ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void Remove_ShouldRemoveColumn()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -1556,6 +2124,42 @@ public class MySqlColumnBuilderTests : TestsBase
                             """
                             ALTER TABLE `foo`.`T`
                                 DROP COLUMN `C2`;
+                            """ )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveIdentityColumn()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C2" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default );
+        var pk = table.Constraints.SetPrimaryKey( sut.Asc() );
+        var other = table.Columns.Create( "C1" ).SetType<int>();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        pk.Remove();
+        sut.SetName( "bar" ).Remove();
+        pk = table.Constraints.SetPrimaryKey( other.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                table.Columns.Contains( sut.Name ).TestFalse(),
+                table.Columns.Identity.TestNull(),
+                sut.ReferencedComputationColumns.TestEmpty(),
+                sut.IsRemoved.TestTrue(),
+                other.ReferencingObjects.TestSequence(
+                    [ SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) ] ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql(
+                            """
+                            ALTER TABLE `foo`.`T`
+                                DROP PRIMARY KEY,
+                                DROP COLUMN `C2`,
+                                ADD CONSTRAINT `PK_T` PRIMARY KEY (`C1` ASC);
                             """ )
                     ] ) )
             .Go();

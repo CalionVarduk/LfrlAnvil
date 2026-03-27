@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ public sealed class MySqlColumnBuilderCollection : SqlColumnBuilderCollection
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.Table" />
     public new MySqlTableBuilder Table => ReinterpretCast.To<MySqlTableBuilder>( base.Table );
+
+    /// <inheritdoc cref="SqlColumnBuilderCollection.Identity" />
+    public new MySqlColumnBuilder? Identity => ReinterpretCast.To<MySqlColumnBuilder>( base.Identity );
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.SetDefaultTypeDefinition(SqlColumnTypeDefinition)" />
     public new MySqlColumnBuilderCollection SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)

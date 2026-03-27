@@ -251,6 +251,49 @@ public partial class MySqlNodeInterpreterTests
                 .Go();
         }
 
+        [Fact]
+        public void Visit_ShouldInterpretCreateTable_WithIdentityColumn()
+        {
+            var sut = CreateInterpreter();
+            var node = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "foo", "bar" ),
+                new[]
+                {
+                    SqlNode.Column<int>( "x", identity: SqlColumnIdentity.Default ),
+                    SqlNode.Column<string>( "y", isNullable: true ),
+                    SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+                },
+                constraintsProvider: t =>
+                {
+                    var qux = SqlNode.RawRecordSet( "qux" );
+                    return SqlCreateTableConstraints.Empty
+                        .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), new[] { t["x"].Asc() } ) )
+                        .WithForeignKeys(
+                            SqlNode.ForeignKey(
+                                SqlSchemaObjectName.Create( "FK_foobar_REF_qux" ),
+                                new SqlDataFieldNode[] { t["y"] },
+                                qux,
+                                new SqlDataFieldNode[] { qux["y"] } ) )
+                        .WithChecks( SqlNode.Check( SqlSchemaObjectName.Create( "CHK_foobar" ), t["z"] > SqlNode.Literal( 100.0 ) ) );
+                } );
+
+            sut.Visit( node );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    CREATE TABLE `foo`.`bar` (
+                      `x` INT NOT NULL AUTO_INCREMENT,
+                      `y` LONGTEXT,
+                      `z` DOUBLE NOT NULL DEFAULT 10.5,
+                      CONSTRAINT `PK_foobar` PRIMARY KEY (`x` ASC),
+                      CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`y`) REFERENCES qux (`y`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT `CHK_foobar` CHECK (`z` > 100.0)
+                    )
+                    """ )
+                .Go();
+        }
+
         [Theory]
         [InlineData( false, "`foo`.`bar`" )]
         [InlineData( true, "`foo`" )]

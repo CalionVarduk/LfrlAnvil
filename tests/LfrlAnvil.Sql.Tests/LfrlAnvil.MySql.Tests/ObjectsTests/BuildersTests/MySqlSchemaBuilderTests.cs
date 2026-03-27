@@ -285,6 +285,36 @@ public partial class MySqlSchemaBuilderTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndSchemaHasTableWithIdentityColumn()
+    {
+        var db = MySqlDatabaseBuilderMock.Create();
+        var sut = db.Schemas.Create( "foo" );
+
+        var table = sut.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = db.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = db.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                table.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T" ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence(
+                    [
+                        (sql, _) => sql.TestSatisfySql( "CREATE SCHEMA `bar`;" ),
+                        (sql, _) => sql.TestSatisfySql( "ALTER TABLE `foo`.`T` RENAME TO `bar`.`T`;" ),
+                        (sql, _) => sql.TestSatisfySql( "DROP SCHEMA `foo`;" )
+                    ] ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( "" )]
     [InlineData( " " )]
