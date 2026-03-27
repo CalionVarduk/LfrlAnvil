@@ -16,12 +16,14 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
+using LfrlAnvil.Sql.Objects.Builders;
 using Npgsql;
 
 namespace LfrlAnvil.PostgreSql.Internal;
@@ -344,5 +346,36 @@ public static class PostgreSqlHelpers
             interpreter.Visit( value );
 
         interpreter.Context.Sql.Append( ')' ).AppendComma();
+    }
+
+    internal static void AppendAlterTableDropColumnIdentity(SqlNodeInterpreter interpreter, string name)
+    {
+        interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendSpace().Append( "DROP" ).AppendSpace().Append( "IDENTITY" ).AppendComma();
+    }
+
+    internal static void AppendAlterTableAddColumnIdentity(SqlNodeInterpreter interpreter, string name, SqlColumnIdentity identity)
+    {
+        interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendSpace().Append( "ADD" ).AppendSpace().Append( "GENERATED" ).AppendSpace();
+        interpreter.Context.Sql.Append( "ALWAYS" ).AppendSpace().Append( "AS" ).AppendSpace().Append( "IDENTITY" );
+        if ( identity.AutoIncrementCache is not null )
+        {
+            var cache = identity.AutoIncrementCache.Value.ToString( CultureInfo.InvariantCulture );
+            interpreter.Context.Sql.AppendSpace().Append( '(' ).Append( "CACHE" ).AppendSpace().Append( cache ).Append( ')' );
+        }
+
+        interpreter.Context.Sql.AppendComma();
+    }
+
+    internal static void AppendAlterTableSetColumnIdentityCache(SqlNodeInterpreter interpreter, string name, int? cache)
+    {
+        cache ??= 1;
+        interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendSpace().Append( "SET" ).AppendSpace().Append( "CACHE" ).AppendSpace();
+        interpreter.Context.Sql.Append( cache.Value.ToString( CultureInfo.InvariantCulture ) ).AppendComma();
     }
 }

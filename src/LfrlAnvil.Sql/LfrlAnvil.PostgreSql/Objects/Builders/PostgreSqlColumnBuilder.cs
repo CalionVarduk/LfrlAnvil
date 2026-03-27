@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,6 +66,13 @@ public sealed class PostgreSqlColumnBuilder : SqlColumnBuilder
     public new PostgreSqlColumnBuilder SetComputation(SqlColumnComputation? computation)
     {
         base.SetComputation( computation );
+        return this;
+    }
+
+    /// <inheritdoc cref="SqlColumnBuilder.SetIdentity(SqlColumnIdentity?)" />
+    public new PostgreSqlColumnBuilder SetIdentity(SqlColumnIdentity? identity)
+    {
+        base.SetIdentity( identity );
         return this;
     }
 

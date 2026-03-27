@@ -265,6 +265,24 @@ public partial class PostgreSqlTableBuilderTests
         }
 
         [Fact]
+        public void Remove_ShouldRemoveIdentityColumn()
+        {
+            var schema = PostgreSqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Columns;
+            var column = sut.Create( "C" ).SetIdentity( SqlColumnIdentity.Default );
+
+            var result = sut.Remove( "C" );
+
+            Assertion.All(
+                    result.TestTrue(),
+                    sut.TryGet( column.Name ).TestNull(),
+                    sut.Identity.TestNull(),
+                    column.IsRemoved.TestTrue() )
+                .Go();
+        }
+
+        [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnDoesNotExist()
         {
             var schema = PostgreSqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );

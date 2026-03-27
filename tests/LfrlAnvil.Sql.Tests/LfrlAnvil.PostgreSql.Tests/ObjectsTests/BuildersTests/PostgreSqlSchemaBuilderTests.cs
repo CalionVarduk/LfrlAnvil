@@ -162,6 +162,31 @@ public partial class PostgreSqlSchemaBuilderTests : TestsBase
             .Go();
     }
 
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldNameAndSchemaHasTableWithIdentityColumn()
+    {
+        var db = PostgreSqlDatabaseBuilderMock.Create();
+        var sut = db.Schemas.Create( "foo" );
+
+        var table = sut.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).SetType<int>().SetIdentity( SqlColumnIdentity.Default ).Asc() );
+        table.Columns.Create( "C2" );
+
+        var actionCount = db.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = db.GetLastPendingActions( actionCount );
+
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.Name.TestEquals( "bar" ),
+                db.Schemas.TryGet( "bar" ).TestRefEquals( sut ),
+                db.Schemas.TryGet( "foo" ).TestNull(),
+                table.Info.TestEquals( SqlRecordSetInfo.Create( "bar", "T" ) ),
+                actions.Select( a => a.Sql )
+                    .TestSequence( [ (sql, _) => sql.TestSatisfySql( "ALTER SCHEMA \"foo\" RENAME TO \"bar\";" ) ] ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( "" )]
     [InlineData( " " )]

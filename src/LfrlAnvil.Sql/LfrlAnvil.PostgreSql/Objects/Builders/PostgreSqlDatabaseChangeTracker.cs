@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.Sql;
@@ -27,7 +26,6 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.PostgreSql.Objects.Builders;
 
@@ -154,7 +152,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 
     private void AddCreateTableAction(PostgreSqlTableBuilder table)
     {
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
 
         var interpreter = CreateNodeInterpreter();
         var createTable = table.ToCreateNode();
@@ -210,7 +208,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         if ( ! changeAggregator.HasChanged )
             return;
 
-        ValidateTable( table );
+        ValidatePrimaryKey( table );
         changeAggregator.PrepareColumnsForAlteration( table );
 
         var interpreter = CreateNodeInterpreter();
@@ -340,14 +338,24 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 var originalDefaultValue = this.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.DefaultValue )
                     .GetValueOrDefault( modification.Source.DefaultValue );
 
+                var originalIdentity = this.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.Identity )
+                    .GetValueOrDefault( modification.Source.Identity );
+
                 var isNullableChanged = originalIsNullable != modification.Column.IsNullable;
                 var isDataTypeChanged = ! originalDataType.Equals( modification.Column.TypeDefinition.DataType );
                 var isDefaultValueChanged = ! ReferenceEquals( originalDefaultValue, modification.Column.DefaultValue );
+                var isIdentityChanged = originalIdentity != modification.Column.Identity;
 
-                if ( ! isAltered && (isNullableChanged || isDataTypeChanged || isDefaultValueChanged) )
+                if ( ! isAltered && (isNullableChanged || isDataTypeChanged || isDefaultValueChanged || isIdentityChanged) )
                 {
                     isAltered = true;
                     PostgreSqlHelpers.AppendAlterTableHeader( interpreter, table.Info );
+                }
+
+                if ( isIdentityChanged && modification.Column.Identity is null )
+                {
+                    using ( interpreter.Context.TempIndentIncrease() )
+                        PostgreSqlHelpers.AppendAlterTableDropColumnIdentity( interpreter, modification.Column.Name );
                 }
 
                 if ( isDefaultValueChanged && originalDefaultValue is not null )
@@ -385,6 +393,23 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                             modification.Column.Name,
                             modification.Column.DefaultValue );
                 }
+
+                if ( isIdentityChanged && modification.Column.Identity is not null )
+                {
+                    using ( interpreter.Context.TempIndentIncrease() )
+                    {
+                        if ( originalIdentity is null )
+                            PostgreSqlHelpers.AppendAlterTableAddColumnIdentity(
+                                interpreter,
+                                modification.Column.Name,
+                                modification.Column.Identity.Value );
+                        else
+                            PostgreSqlHelpers.AppendAlterTableSetColumnIdentityCache(
+                                interpreter,
+                                modification.Column.Name,
+                                modification.Column.Identity.Value.AutoIncrementCache );
+                    }
+                }
             }
 
             var containsGeneratedColumn = false;
@@ -396,7 +421,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                     continue;
                 }
 
-                if ( column.DefaultValue is null && ! column.IsNullable )
+                if ( column.DefaultValue is null && ! column.IsNullable && column.Identity is null )
                     column.UpdateDefaultValueBasedOnDataType();
 
                 using ( interpreter.TempIgnoreAllRecordSets() )
@@ -584,13 +609,5 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         interpreter.VisitRenameTable( SqlNode.RenameTable( originalInfo, table.Info.Name ) );
         var sql = GetSqlAndClearContext( interpreter );
         AddSqlAction( sql );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void ValidateTable(PostgreSqlTableBuilder table)
-    {
-        if ( table.Constraints.TryGetPrimaryKey() is null )
-            ExceptionThrower.Throw(
-                SqlHelpers.CreateObjectBuilderException( table.Database, ExceptionResources.PrimaryKeyIsMissing( table ) ) );
     }
 }

@@ -36,7 +36,12 @@ public readonly record struct SqlColumnIdentity
     public SqlColumnIdentity(int? autoIncrementCache = null)
     {
         if ( autoIncrementCache is not null )
-            Ensure.IsGreaterThan( autoIncrementCache.Value, 0 );
+        {
+            if ( autoIncrementCache.Value == 1 )
+                autoIncrementCache = null;
+            else
+                Ensure.IsGreaterThan( autoIncrementCache.Value, 0 );
+        }
 
         AutoIncrementCache = autoIncrementCache;
     }

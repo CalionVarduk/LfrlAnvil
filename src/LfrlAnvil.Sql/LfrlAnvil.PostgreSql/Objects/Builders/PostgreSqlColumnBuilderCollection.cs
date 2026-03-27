@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ public sealed class PostgreSqlColumnBuilderCollection : SqlColumnBuilderCollecti
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.Table" />
     public new PostgreSqlTableBuilder Table => ReinterpretCast.To<PostgreSqlTableBuilder>( base.Table );
+
+    /// <inheritdoc cref="SqlColumnBuilderCollection.Identity" />
+    public new PostgreSqlColumnBuilder? Identity => ReinterpretCast.To<PostgreSqlColumnBuilder>( base.Identity );
 
     /// <inheritdoc cref="SqlColumnBuilderCollection.SetDefaultTypeDefinition(SqlColumnTypeDefinition)" />
     public new PostgreSqlColumnBuilderCollection SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)

@@ -47,15 +47,13 @@ project idea:
 
 ### Sql: Refinements
 
-- Add possibility do create/drop sequences, no alter
-  - should be convertible to expressions, e.g. for default column values
 - Add support for optional WHERE clause in upsert node
   - sqlite and postgresql have the same syntax:
     - UPDATE SET ..., ... WHERE [expr]
   - mysql doesn't support this
     - add options to interpreter: throw, ignore or add-anyway
 - check a parameter binder options issue when using From with expression which returns null
-- add WHERE and HAVING template nodes
+- add WHERE and HAVING and ORDER BY template nodes
   - allow to prepare a query/statement sql template
   - which can be easily replaced with an actual sql
   - add extension methods for sql executors to replace templates?
@@ -105,6 +103,10 @@ Low priority/probably won't do:
 - IncludedColumns for IXs
   - for now, only postgresql can use those
   - requires a blocking collection of referenced columns
+- support for virtual generated columns in postgresql
+  - alter column drop expression doesn't work on them
+  - would probably have to drop column => create column with new storage type
+  - impacts new identity columns with old virtual storage
 
 ### Reactive: Refinements
 
