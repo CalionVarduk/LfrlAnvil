@@ -15,6 +15,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Visitors;
@@ -83,6 +84,30 @@ public sealed class SqlPlaceholderNodeReplacementContext : SqlNodeMutatorContext
         public Builder Add(SqlConditionPlaceholderNode placeholder, SqlConditionNode replacement)
         {
             _replacements.Add( (placeholder, replacement) );
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a placeholder and its replacement to this builder.
+        /// </summary>
+        /// <param name="placeholder">Placeholder node to replace.</param>
+        /// <param name="replacement">Sort trait node to replace the placeholder with.</param>
+        /// <returns><b>this</b>.</returns>
+        public Builder Add(SqlSortTraitPlaceholderNode placeholder, SqlSortTraitNode? replacement)
+        {
+            _replacements.Add( (placeholder, replacement ?? SqlNode.SortTrait()) );
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a placeholder and its replacement to this builder.
+        /// </summary>
+        /// <param name="placeholder">Collection of ordering definitions.</param>
+        /// <param name="ordering">Sort trait node to replace the placeholder with.</param>
+        /// <returns><b>this</b>.</returns>
+        public Builder Add(SqlSortTraitPlaceholderNode placeholder, params SqlOrderByNode[] ordering)
+        {
+            _replacements.Add( (placeholder, SqlNode.SortTrait( ordering )) );
             return this;
         }
 

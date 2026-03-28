@@ -50,5 +50,17 @@ public static partial class SqlNode
         {
             return new SqlConditionPlaceholderNode( identifier, wrapInParentheses );
         }
+
+        /// <summary>
+        /// Creates a new <see cref="SqlSortTraitPlaceholderNode"/> instance.
+        /// </summary>
+        /// <param name="identifier">Optional custom placeholder identifier.</param>
+        /// <param name="includeOrderBy">Specifies whether to include the ORDER BY prefix. Equal to <b>true</b> by default.</param>
+        /// <returns>New <see cref="SqlSortTraitPlaceholderNode"/> instance.</returns>
+        [Pure]
+        public static SqlSortTraitPlaceholderNode SortTrait(string? identifier = null, bool includeOrderBy = true)
+        {
+            return new SqlSortTraitPlaceholderNode( identifier, includeOrderBy );
+        }
     }
 }

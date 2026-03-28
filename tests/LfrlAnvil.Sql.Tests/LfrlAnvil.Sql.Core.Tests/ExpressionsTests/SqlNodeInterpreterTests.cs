@@ -48,6 +48,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var limit = SqlNode.Literal( 11 );
         var offset = SqlNode.Literal( 21 );
         var over = SqlNode.WindowTrait( windows1 );
+        var sortPlaceholder = SqlNode.Placeholders.SortTrait();
         var custom1 = new SqlTraitNodeMock();
         var custom2 = new SqlTraitNodeMock();
 
@@ -69,9 +70,11 @@ public class SqlNodeInterpreterTests : TestsBase
                 SqlNode.LimitTrait( SqlNode.Literal( 10 ) ),
                 SqlNode.SortTrait( ordering2 ),
                 SqlNode.WindowDefinitionTrait( windows2 ),
+                SqlNode.Placeholders.SortTrait(),
                 SqlNode.CommonTableExpressionTrait( cte1 ),
                 custom2,
                 SqlNode.OffsetTrait( SqlNode.Literal( 20 ) ),
+                sortPlaceholder,
                 SqlNode.LimitTrait( limit ),
                 over,
                 SqlNode.CommonTableExpressionTrait( cte2 ),
@@ -94,9 +97,10 @@ public class SqlNodeInterpreterTests : TestsBase
                 result.Windows.Count.TestEquals( 2 ),
                 result.Windows.ElementAtOrDefault( 0 ).TestSequence( [ windows1 ] ),
                 result.Windows.ElementAtOrDefault( 1 ).TestSequence( [ windows2 ] ),
-                result.Ordering.Count.TestEquals( 2 ),
-                result.Ordering.ElementAtOrDefault( 0 ).TestSequence( [ ordering1 ] ),
-                result.Ordering.ElementAtOrDefault( 1 ).TestSequence( [ ordering2 ] ),
+                result.Ordering.Nodes.Count.TestEquals( 2 ),
+                result.Ordering.Nodes.ElementAtOrDefault( 0 ).TestSequence( [ ordering1 ] ),
+                result.Ordering.Nodes.ElementAtOrDefault( 1 ).TestSequence( [ ordering2 ] ),
+                result.Ordering.Placeholder.TestRefEquals( sortPlaceholder ),
                 result.Limit.TestRefEquals( limit ),
                 result.Offset.TestRefEquals( offset ),
                 result.Custom.Count.TestEquals( 3 ),
@@ -121,6 +125,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
         var over = SqlNode.WindowTrait( windows.Windows[0] );
+        var sortPlaceholder = SqlNode.Placeholders.SortTrait();
         var custom = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
@@ -137,8 +142,10 @@ public class SqlNodeInterpreterTests : TestsBase
                 SqlNode.SortTrait( ordering2 ),
                 SqlNode.CommonTableExpressionTrait( cte1 ),
                 custom,
+                SqlNode.Placeholders.SortTrait(),
                 SqlNode.OffsetTrait( SqlNode.Literal( 20 ) ),
                 SqlNode.LimitTrait( limit ),
+                sortPlaceholder,
                 SqlNode.CommonTableExpressionTrait( cte2 ),
                 SqlNode.OffsetTrait( offset )
             } );
@@ -150,9 +157,10 @@ public class SqlNodeInterpreterTests : TestsBase
                 result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ cte1 ] ),
                 result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ cte2 ] ),
                 result.ContainsRecursiveCommonTableExpression.TestFalse(),
-                result.Ordering.Count.TestEquals( 2 ),
-                result.Ordering.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
-                result.Ordering.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Ordering.Nodes.Count.TestEquals( 2 ),
+                result.Ordering.Nodes.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
+                result.Ordering.Nodes.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Ordering.Placeholder.TestRefEquals( sortPlaceholder ),
                 result.Limit.TestRefEquals( limit ),
                 result.Offset.TestRefEquals( offset ),
                 result.Custom.Count.TestEquals( 7 ),
@@ -178,6 +186,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var over = SqlNode.WindowTrait( windows.Windows[0] );
         var ordering1 = SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) );
         var ordering2 = SqlNode.OrderByDesc( SqlNode.RawExpression( "C" ) );
+        var sortPlaceholder = SqlNode.Placeholders.SortTrait();
         var custom = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
@@ -190,10 +199,12 @@ public class SqlNodeInterpreterTests : TestsBase
                 SqlNode.FilterTrait( SqlNode.RawCondition( "C > 11" ), isConjunction: true ),
                 over,
                 windows,
+                SqlNode.Placeholders.SortTrait(),
                 SqlNode.SortTrait( ordering1 ),
                 limit,
                 cte,
                 SqlNode.SortTrait( ordering2 ),
+                sortPlaceholder,
                 SqlNode.FilterTrait( SqlNode.RawCondition( "E > 12" ), isConjunction: false ),
                 custom,
                 offset
@@ -205,9 +216,10 @@ public class SqlNodeInterpreterTests : TestsBase
                 result.Distinct.TestNotNull(),
                 (result.Filter?.ToString()).TestEquals( "((A > 10) AND (C > 11)) OR (E > 12)" ),
                 (result.Window?.ToString()).TestEquals( "[W] AS (ORDER BY (C) ASC)" ),
-                result.Ordering.Count.TestEquals( 2 ),
-                result.Ordering.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
-                result.Ordering.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Ordering.Nodes.Count.TestEquals( 2 ),
+                result.Ordering.Nodes.ElementAtOrDefault( 0 ).ToArray().TestSequence( [ ordering1 ] ),
+                result.Ordering.Nodes.ElementAtOrDefault( 1 ).ToArray().TestSequence( [ ordering2 ] ),
+                result.Ordering.Placeholder.TestRefEquals( sortPlaceholder ),
                 result.Custom.Count.TestEquals( 7 ),
                 result.Custom.ElementAtOrDefault( 0 ).TestRefEquals( aggregation ),
                 result.Custom.ElementAtOrDefault( 1 ).TestRefEquals( aggregationFilter ),

@@ -1142,6 +1142,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     /// <inheritdoc />
+    public virtual void VisitSortTraitPlaceholder(SqlSortTraitPlaceholderNode node)
+    {
+        if ( node.IncludeOrderBy )
+            Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+
+        Context.Sql.Append( node.SqlPlaceholder );
+    }
+
+    /// <inheritdoc />
     public virtual void VisitCustom(SqlNodeBase node)
     {
         throw new UnrecognizedSqlNodeException( this, node );
@@ -1320,7 +1329,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var aggregations = @base.Aggregations.ToExtendable();
         var aggregationFilter = @base.AggregationFilter;
         var windows = @base.Windows.ToExtendable();
-        var ordering = @base.Ordering.ToExtendable();
+        var ordering = @base.Ordering.Nodes.ToExtendable();
+        var sortPlaceholder = @base.Ordering.Placeholder;
         var limit = @base.Limit;
         var offset = @base.Offset;
         var custom = @base.Custom.ToExtendable();
@@ -1403,6 +1413,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
                     break;
                 }
+                case SqlNodeType.SortTraitPlaceholder:
+                {
+                    sortPlaceholder = ReinterpretCast.To<SqlSortTraitPlaceholderNode>( trait );
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1419,7 +1434,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             aggregations,
             aggregationFilter,
             windows,
-            ordering,
+            new SqlSortTraitInfo( ordering, sortPlaceholder ),
             limit,
             offset,
             custom );
@@ -1448,7 +1463,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     {
         var commonTableExpressions = @base.CommonTableExpressions.ToExtendable();
         var containsRecursiveCommonTableExpression = @base.ContainsRecursiveCommonTableExpression;
-        var ordering = @base.Ordering.ToExtendable();
+        var ordering = @base.Ordering.Nodes.ToExtendable();
+        var sortPlaceholder = @base.Ordering.Placeholder;
         var limit = @base.Limit;
         var offset = @base.Offset;
         var custom = @base.Custom.ToExtendable();
@@ -1486,6 +1502,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
                     break;
                 }
+                case SqlNodeType.SortTraitPlaceholder:
+                {
+                    sortPlaceholder = ReinterpretCast.To<SqlSortTraitPlaceholderNode>( trait );
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1494,7 +1515,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlQueryTraits( commonTableExpressions, containsRecursiveCommonTableExpression, ordering, limit, offset, custom );
+        return new SqlQueryTraits(
+            commonTableExpressions,
+            containsRecursiveCommonTableExpression,
+            new SqlSortTraitInfo( ordering, sortPlaceholder ),
+            limit,
+            offset,
+            custom );
     }
 
     /// <summary>
@@ -1521,7 +1548,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var distinct = @base.Distinct;
         var filter = @base.Filter;
         var window = @base.Window;
-        var ordering = @base.Ordering.ToExtendable();
+        var ordering = @base.Ordering.Nodes.ToExtendable();
+        var sortPlaceholder = @base.Ordering.Placeholder;
         var custom = @base.Custom.ToExtendable();
 
         foreach ( var trait in traits )
@@ -1558,6 +1586,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
                     break;
                 }
+                case SqlNodeType.SortTraitPlaceholder:
+                {
+                    sortPlaceholder = ReinterpretCast.To<SqlSortTraitPlaceholderNode>( trait );
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1566,7 +1599,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlAggregateFunctionTraits( distinct, filter, window, ordering, custom );
+        return new SqlAggregateFunctionTraits( distinct, filter, window, new SqlSortTraitInfo( ordering, sortPlaceholder ), custom );
     }
 
     /// <summary>
@@ -2121,26 +2154,32 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     /// <summary>
-    /// Visits an optional collection of ordering <see cref="SqlOrderByNode"/> instances.
+    /// Visits optional information about sort traits.
     /// </summary>
-    /// <param name="ordering">Collection of nodes to visit.</param>
-    protected void VisitOptionalOrderingRange(Chain<ReadOnlyArray<SqlOrderByNode>> ordering)
+    /// <param name="ordering">Sort trait info to visit.</param>
+    protected void VisitOptionalOrderingRange(SqlSortTraitInfo ordering)
     {
-        if ( ordering.Count == 0 )
+        if ( ordering.Nodes.Count == 0 && ordering.Placeholder is null )
             return;
 
-        Context.AppendIndent().Append( "ORDER BY" ).AppendSpace();
-
-        foreach ( var orderByRange in ordering )
+        Context.AppendIndent();
+        if ( ordering.Nodes.Count > 0 )
         {
-            foreach ( var orderBy in orderByRange )
-            {
-                VisitOrderBy( orderBy );
-                Context.Sql.AppendComma().AppendSpace();
-            }
-        }
+            Context.Sql.Append( "ORDER BY" ).AppendSpace();
 
-        Context.Sql.ShrinkBy( 2 );
+            foreach ( var orderByRange in ordering.Nodes )
+            {
+                foreach ( var orderBy in orderByRange )
+                {
+                    VisitOrderBy( orderBy );
+                    Context.Sql.AppendComma().AppendSpace();
+                }
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+        else if ( ordering.Placeholder is not null )
+            VisitSortTraitPlaceholder( ordering.Placeholder );
     }
 
     /// <summary>

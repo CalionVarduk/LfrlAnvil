@@ -1091,5 +1091,8 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     public virtual void VisitConditionPlaceholder(SqlConditionPlaceholderNode node) { }
 
     /// <inheritdoc />
+    public virtual void VisitSortTraitPlaceholder(SqlSortTraitPlaceholderNode node) { }
+
+    /// <inheritdoc />
     public virtual void VisitCustom(SqlNodeBase node) { }
 }

@@ -47,13 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- add WHERE and HAVING and ORDER BY template nodes
-  - allow to prepare a query/statement sql template
-  - which can be easily replaced with an actual sql
-  - add extension methods for sql executors to replace templates?
-  - or maybe add methods to interpreters that return an sql template
-    - not as string but as an object which contains sql string template
-    - and a collection of placeholder nodes
 - add parameterized statement executor
   - simple struct with generic parameter binder and sql string
   - also has ExecuteAsync method which accepts a db command and parameters

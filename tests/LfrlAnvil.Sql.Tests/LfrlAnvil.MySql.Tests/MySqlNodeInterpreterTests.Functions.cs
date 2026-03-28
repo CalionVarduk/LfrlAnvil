@@ -653,6 +653,17 @@ public partial class MySqlNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretStringConcatAggregateFunction_WithSortTraitPlaceholder()
+        {
+            var sut = CreateInterpreter();
+            sut.Visit( SqlNode.RawExpression( "foo.a" ).StringConcat().AddTrait( SqlNode.Placeholders.SortTrait( "foo" ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals( "GROUP_CONCAT((foo.a) ORDER BY __PH_SORT_TRAIT__foo__)" )
+                .Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretStringConcatAggregateFunctionWithTraitsAndSeparator()
         {
             var sut = CreateInterpreter();

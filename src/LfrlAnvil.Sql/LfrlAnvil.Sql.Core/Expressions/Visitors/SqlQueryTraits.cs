@@ -27,16 +27,14 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 /// Specifies whether any of <see cref="SqlCommonTableExpressionTraitNode"/> instances returned <b>true</b>
 /// for their <see cref="SqlCommonTableExpressionTraitNode.ContainsRecursive"/> property.
 /// </param>
-/// <param name="Ordering">
-/// Collection of ordering expressions that is the result of parsing of all <see cref="SqlSortTraitNode"/> instances.
-/// </param>
+/// <param name="Ordering">Extracted information about all parsed sort traits.</param>
 /// <param name="Limit">Underlying value of the last <see cref="SqlLimitTraitNode"/> instance.</param>
 /// <param name="Offset">Underlying value of the last <see cref="SqlOffsetTraitNode"/> instance.</param>
 /// <param name="Custom">Collection of all unrecognized <see cref="SqlTraitNode"/> instances.</param>
 public readonly record struct SqlQueryTraits(
     Chain<ReadOnlyArray<SqlCommonTableExpressionNode>> CommonTableExpressions,
     bool ContainsRecursiveCommonTableExpression,
-    Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
+    SqlSortTraitInfo Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,
     Chain<SqlTraitNode> Custom

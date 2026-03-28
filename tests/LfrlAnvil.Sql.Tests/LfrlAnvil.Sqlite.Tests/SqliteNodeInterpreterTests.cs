@@ -1005,6 +1005,28 @@ public partial class SqliteNodeInterpreterTests : TestsBase
     }
 
     [Fact]
+    public void Visit_ShouldInterpretDataSourceQuery_WithSortTraitPlaceholder()
+    {
+        var sut = CreateInterpreter();
+        var query = SqlNode.RawRecordSet( "foo" )
+            .ToDataSource()
+            .Select( s => new[] { s.From["a"].AsSelf() } )
+            .AddTrait( SqlNode.Placeholders.SortTrait( "foo" ) );
+
+        sut.Visit( query );
+
+        sut.Context.Sql.ToString()
+            .TestEquals(
+                """
+                SELECT
+                  foo."a"
+                FROM foo
+                ORDER BY __PH_SORT_TRAIT__foo__
+                """ )
+            .Go();
+    }
+
+    [Fact]
     public void VisitChild_ShouldInterpretDataSourceQueryWithParentheses()
     {
         var sut = CreateInterpreter();
@@ -1075,6 +1097,29 @@ public partial class SqliteNodeInterpreterTests : TestsBase
                 SELECT * FROM qux
                 ORDER BY (a) ASC, (b) DESC
                 LIMIT 50 OFFSET 75
+                """ )
+            .Go();
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretCompoundQuery_WithSortTraitPlaceholder()
+    {
+        var sut = CreateInterpreter();
+        var query = SqlNode.RawQuery( "SELECT foo.* FROM foo JOIN x ON x.a = foo.a" )
+            .CompoundWith( SqlNode.RawQuery( "SELECT * FROM bar" ).ToUnionAll(), SqlNode.RawQuery( "SELECT * FROM qux" ).ToUnion() )
+            .AddTrait( SqlNode.Placeholders.SortTrait( "foo", includeOrderBy: false ) );
+
+        sut.Visit( query );
+
+        sut.Context.Sql.ToString()
+            .TestEquals(
+                """
+                SELECT foo.* FROM foo JOIN x ON x.a = foo.a
+                UNION ALL
+                SELECT * FROM bar
+                UNION
+                SELECT * FROM qux
+                __PH_SORT_TRAIT__foo__
                 """ )
             .Go();
     }

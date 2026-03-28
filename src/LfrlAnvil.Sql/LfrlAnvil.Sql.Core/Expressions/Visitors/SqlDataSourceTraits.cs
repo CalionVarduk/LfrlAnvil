@@ -39,9 +39,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 /// <param name="Windows">
 /// Collection of window definitions that is the result of parsing of all <see cref="SqlWindowDefinitionTraitNode"/> instances.
 /// </param>
-/// <param name="Ordering">
-/// Collection of ordering expressions that is the result of parsing of all <see cref="SqlSortTraitNode"/> instances.
-/// </param>
+/// <param name="Ordering">Extracted information about all parsed sort traits.</param>
 /// <param name="Limit">Underlying value of the last <see cref="SqlLimitTraitNode"/> instance.</param>
 /// <param name="Offset">Underlying value of the last <see cref="SqlOffsetTraitNode"/> instance.</param>
 /// <param name="Custom">Collection of all unrecognized <see cref="SqlTraitNode"/> instances.</param>
@@ -53,7 +51,7 @@ public readonly record struct SqlDataSourceTraits(
     Chain<ReadOnlyArray<SqlExpressionNode>> Aggregations,
     SqlConditionNode? AggregationFilter,
     Chain<ReadOnlyArray<SqlWindowDefinitionNode>> Windows,
-    Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
+    SqlSortTraitInfo Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,
     Chain<SqlTraitNode> Custom

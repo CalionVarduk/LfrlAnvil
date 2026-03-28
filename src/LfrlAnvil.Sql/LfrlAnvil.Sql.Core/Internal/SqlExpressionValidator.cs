@@ -301,6 +301,13 @@ public abstract class SqlExpressionValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
+    /// <inheritdoc />
+    /// <remarks>Node is added to the <see cref="ForbiddenNodes"/> collection.</remarks>
+    public override void VisitSortTraitPlaceholder(SqlSortTraitPlaceholderNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     /// <summary>
     /// Adds the provided <paramref name="node"/> to the <see cref="ForbiddenNodes"/> collection, unless it already exists.
     /// </summary>

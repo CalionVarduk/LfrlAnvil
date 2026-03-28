@@ -494,6 +494,22 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretNamedAggregateFunctionWithTraits_WithSortTraitPlaceholder()
+        {
+            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableAggregateFunctionOrdering() );
+            sut.Visit(
+                SqlNode.AggregateFunctions.Named(
+                        SqlSchemaObjectName.Create( "foo", "bar" ),
+                        SqlNode.Parameter<int>( "a" ),
+                        SqlNode.RawExpression( "qux.a" ) )
+                    .AddTrait( SqlNode.Placeholders.SortTrait( "foo" ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals( "\"foo_bar\"(@a, (qux.a) ORDER BY __PH_SORT_TRAIT__foo__)" )
+                .Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretMinAggregateFunction()
         {
             var sut = CreateInterpreter();

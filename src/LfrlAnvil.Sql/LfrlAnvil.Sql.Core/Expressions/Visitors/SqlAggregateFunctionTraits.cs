@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,14 +24,12 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 /// <param name="Distinct"><see cref="SqlDistinctTraitNode"/> instance.</param>
 /// <param name="Filter">Predicate that is the result of parsing of all <see cref="SqlFilterTraitNode"/> instances.</param>
 /// <param name="Window"><see cref="SqlWindowDefinitionNode"/> instance.</param>
-/// <param name="Ordering">
-/// Collection of ordering expressions that is the result of parsing of all <see cref="SqlSortTraitNode"/> instances.
-/// </param>
+/// <param name="Ordering">Extracted information about all parsed sort traits.</param>
 /// <param name="Custom">Collection of all unrecognized <see cref="SqlTraitNode"/> instances.</param>
 public readonly record struct SqlAggregateFunctionTraits(
     SqlDistinctTraitNode? Distinct,
     SqlConditionNode? Filter,
     SqlWindowDefinitionNode? Window,
-    Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
+    SqlSortTraitInfo Ordering,
     Chain<SqlTraitNode> Custom
 );

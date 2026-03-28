@@ -564,5 +564,10 @@ public enum SqlNodeType : byte
     /// <summary>
     /// Specifies an <see cref="SqlConditionPlaceholderNode"/>.
     /// </summary>
-    ConditionPlaceholder
+    ConditionPlaceholder,
+
+    /// <summary>
+    /// Specifies an <see cref="SqlSortTraitPlaceholderNode"/>.
+    /// </summary>
+    SortTraitPlaceholder
 }

@@ -2207,6 +2207,17 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitSortTraitPlaceholder_ShouldRegisterError()
+    {
+        _sut.VisitSortTraitPlaceholder( SqlNode.Placeholders.SortTrait() );
+
+        Assertion.All(
+                _sut.GetErrors().Count.TestEquals( 1 ),
+                _sut.GetReferencedObjects().TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         _sut.VisitCustom( new NodeMock() );

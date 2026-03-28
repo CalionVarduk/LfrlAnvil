@@ -553,19 +553,25 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             else
                 VisitChild( arguments[0] );
 
-            if ( traits.Ordering.Count > 0 )
+            if ( traits.Ordering.Nodes.Count > 0 || traits.Ordering.Placeholder is not null )
             {
-                Context.Sql.AppendSpace().Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
-                foreach ( var ordering in traits.Ordering )
+                Context.Sql.AppendSpace();
+                if ( traits.Ordering.Nodes.Count > 0 )
                 {
-                    foreach ( var orderBy in ordering )
+                    Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+                    foreach ( var ordering in traits.Ordering.Nodes )
                     {
-                        VisitOrderBy( orderBy );
-                        Context.Sql.AppendComma().AppendSpace();
+                        foreach ( var orderBy in ordering )
+                        {
+                            VisitOrderBy( orderBy );
+                            Context.Sql.AppendComma().AppendSpace();
+                        }
                     }
-                }
 
-                Context.Sql.ShrinkBy( 2 );
+                    Context.Sql.ShrinkBy( 2 );
+                }
+                else if ( traits.Ordering.Placeholder is not null )
+                    VisitSortTraitPlaceholder( traits.Ordering.Placeholder );
             }
 
             if ( arguments.Count > 1 )
@@ -1717,7 +1723,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Aggregations.Count == 0
             && traits.AggregationFilter is null
             && traits.Windows.Count == 0
-            && traits.Ordering.Count == 0
+            && traits.Ordering.Nodes.Count == 0
+            && traits.Ordering.Placeholder is null
             && traits.Limit is null
             && traits.Offset is null
             && traits.Custom.Count == 0;
@@ -1761,7 +1768,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Aggregations.Count == 0
             && traits.AggregationFilter is null
             && traits.Windows.Count == 0
-            && traits.Ordering.Count == 0
+            && traits.Ordering.Nodes.Count == 0
+            && traits.Ordering.Placeholder is null
             && traits.Limit is null
             && traits.Offset is null
             && traits.Custom.Count == 0;

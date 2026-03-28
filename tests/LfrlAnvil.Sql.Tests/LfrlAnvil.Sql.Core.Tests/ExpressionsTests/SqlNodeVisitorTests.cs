@@ -1824,6 +1824,14 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitSortTraitPlaceholder_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitSortTraitPlaceholder( SqlNode.Placeholders.SortTrait() ) );
+        action.Test( exc => exc.TestNull() ).Go();
+    }
+
+    [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         var sut = new Visitor();

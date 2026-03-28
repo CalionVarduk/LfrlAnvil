@@ -827,6 +827,11 @@ public interface ISqlNodeVisitor
     void VisitConditionPlaceholder(SqlConditionPlaceholderNode node);
 
     /// <summary>
+    /// Visits an <see cref="SqlSortTraitPlaceholderNode"/>.
+    /// </summary>
+    void VisitSortTraitPlaceholder(SqlSortTraitPlaceholderNode node);
+
+    /// <summary>
     /// Visits an <see cref="SqlNodeBase"/> with <see cref="SqlNodeType.Unknown"/> type.
     /// </summary>
     void VisitCustom(SqlNodeBase node);

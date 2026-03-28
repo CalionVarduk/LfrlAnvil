@@ -733,4 +733,177 @@ public class SqlNodeInterpreterContextTests : TestsBase
                             .Select( p => p.ToString() ) ) )
             .Go();
     }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithString_ShouldCreateNewSnapshot()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret( set.ToDataSource().AddTrait( placeholder ) );
+
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, "b ASC, d ASC" );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY b ASC, d ASC
+                    """ ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithSnapshot_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            set.ToDataSource().Select( SqlNode.Parameter<int>( "a" ).As( "a" ) ).AddTrait( placeholder ) );
+
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( set["x"].Asc() ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY ([foo].[x] : ?) ASC
+                    SELECT
+                      (@a : System.Int32) AS [a]
+                    """ ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithSnapshot_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret( set.ToDataSource().AddTrait( placeholder ) );
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ).Asc() ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY (@b : System.Int32) ASC
+                    """ ),
+                result.Parameters.TestSequence( snapshot.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithSnapshot_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            set.ToDataSource().Select( SqlNode.Parameter<int>( "a" ).As( "a" ) ).AddTrait( placeholder ) );
+
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ).Asc() ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY (@b : System.Int32) ASC
+                    SELECT
+                      (@a : System.Int32) AS [a]
+                    """ ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual( sut.Parameters.ToArray().Concat( snapshot.Parameters.ToArray() ).Select( p => p.ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithContext_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            set.ToDataSource().Select( SqlNode.Parameter<int>( "a" ).As( "a" ) ).AddTrait( placeholder ) );
+
+        var other = new SqlNodeDebugInterpreter().Interpret( set["x"].Asc() );
+
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY ([foo].[x] : ?) ASC
+                    SELECT
+                      (@a : System.Int32) AS [a]
+                    """ ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithContext_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret( set.ToDataSource().AddTrait( placeholder ) );
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ).Asc() );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY (@b : System.Int32) ASC
+                    """ ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSequence( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ).ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_SortTraitWithContext_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var placeholder = SqlNode.Placeholders.SortTrait( includeOrderBy: true );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            set.ToDataSource().Select( SqlNode.Parameter<int>( "a" ).As( "a" ) ).AddTrait( placeholder ) );
+
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ).Asc() );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    """
+                    FROM [foo]
+                    ORDER BY (@b : System.Int32) ASC
+                    SELECT
+                      (@a : System.Int32) AS [a]
+                    """ ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual(
+                        sut.Parameters.ToArray()
+                            .Concat( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ) ) )
+                            .Select( p => p.ToString() ) ) )
+            .Go();
+    }
 }

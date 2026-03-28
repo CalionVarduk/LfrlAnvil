@@ -209,6 +209,7 @@ public class SqlNodeMutatorTestsData
             SqlNode.RollbackTransaction(),
             SqlNode.Placeholders.Expression(),
             SqlNode.Placeholders.Condition(),
+            SqlNode.Placeholders.SortTrait(),
             new SqlNodeMock()
         };
 
@@ -274,6 +275,7 @@ public class SqlNodeMutatorTestsData
             (SqlNode.RollbackTransaction(), null),
             (SqlNode.Placeholders.Expression(), null),
             (SqlNode.Placeholders.Condition(), null),
+            (SqlNode.Placeholders.SortTrait(), null),
             (new SqlNodeMock(), null)
         };
 

@@ -2051,6 +2051,12 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         HandleLeafNode( node, mutation.Value, mutation.IsNode );
     }
 
+    public void VisitSortTraitPlaceholder(SqlSortTraitPlaceholderNode node)
+    {
+        var mutation = Context.Mutate( node, _ancestors );
+        HandleLeafNode( node, mutation.Value, mutation.IsNode );
+    }
+
     public void VisitCustom(SqlNodeBase node)
     {
         var mutation = Context.Mutate( node, _ancestors );

@@ -1467,7 +1467,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void PlaceholdersCondition_ShouldCreateExpressionPlaceholderNode(bool wrapInParentheses)
+    public void PlaceholdersCondition_ShouldCreateConditionPlaceholderNode(bool wrapInParentheses)
     {
         var sut = SqlNode.Placeholders.Condition( identifier: "foo", wrapInParentheses: wrapInParentheses );
         var text = sut.ToString();
@@ -1484,7 +1484,7 @@ public partial class BaseExpressionsTests : TestsBase
     [Theory]
     [InlineData( true, "(a) + 1" )]
     [InlineData( false, "a + 1" )]
-    public void ExpressionCondition_Replace_ShouldReplaceSelfInProvidedText(bool wrapInParentheses, string expected)
+    public void ConditionPlaceholder_Replace_ShouldReplaceSelfInProvidedText(bool wrapInParentheses, string expected)
     {
         var sut = SqlNode.Placeholders.Condition( wrapInParentheses: wrapInParentheses );
         var sql = $"{sut.SqlPlaceholder} + 1";
@@ -1492,5 +1492,33 @@ public partial class BaseExpressionsTests : TestsBase
         var result = sut.Replace( sql, "a" );
 
         result.TestEquals( expected ).Go();
+    }
+
+    [Theory]
+    [InlineData( true, "ORDER BY __PH_SORT_TRAIT__foo__" )]
+    [InlineData( false, "__PH_SORT_TRAIT__foo__" )]
+    public void PlaceholdersSortTrait_ShouldCreateSortTraitPlaceholderNode(bool includeOrderBy, string expectedText)
+    {
+        var sut = SqlNode.Placeholders.SortTrait( identifier: "foo", includeOrderBy: includeOrderBy );
+        var text = sut.ToString();
+
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.SortTraitPlaceholder ),
+                sut.Identifier.TestEquals( "foo" ),
+                sut.SqlPlaceholder.TestEquals( "__PH_SORT_TRAIT__foo__" ),
+                sut.IncludeOrderBy.TestEquals( includeOrderBy ),
+                text.TestEquals( expectedText ) )
+            .Go();
+    }
+
+    [Fact]
+    public void SortTraitPlaceholder_Replace_ShouldReplaceSelfInProvidedText()
+    {
+        var sut = SqlNode.Placeholders.SortTrait();
+        var sql = $"ORDER BY {sut.SqlPlaceholder} + 1";
+
+        var result = sut.Replace( sql, "a" );
+
+        result.TestEquals( "ORDER BY a + 1" ).Go();
     }
 }

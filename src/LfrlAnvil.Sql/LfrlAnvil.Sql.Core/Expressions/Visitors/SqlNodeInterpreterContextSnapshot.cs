@@ -230,6 +230,57 @@ public readonly struct SqlNodeInterpreterContextSnapshot
         return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), parameters?.Values );
     }
 
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacementSql"/>.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacementSql">Text to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlSortTraitPlaceholderNode node, string replacementSql)
+    {
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacementSql ), _parameters );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot
+    /// with the provided <paramref name="replacement"/> snapshot's SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlSortTraitPlaceholderNode node, SqlNodeInterpreterContextSnapshot replacement)
+    {
+        if ( replacement.Parameters.IsEmpty )
+            return Replace( node, replacement.Sql );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), replacement._parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), parameters?.Values );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacement"/>'s SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlSortTraitPlaceholderNode node, SqlNodeInterpreterContext replacement)
+    {
+        if ( replacement.Parameters.Count == 0 )
+            return Replace( node, replacement.Sql.ToString() );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), replacement.Parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), parameters?.Values );
+    }
+
     [Pure]
     private static Dictionary<string, SqlNodeInterpreterContextParameter>? MergeParameters(
         ReadOnlySpan<SqlParameterNode> first,

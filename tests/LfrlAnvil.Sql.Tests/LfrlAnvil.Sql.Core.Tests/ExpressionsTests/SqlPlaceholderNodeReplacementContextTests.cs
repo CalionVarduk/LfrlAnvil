@@ -1,4 +1,5 @@
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -6,7 +7,7 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 public class SqlPlaceholderNodeReplacementContextTests : TestsBase
 {
     [Fact]
-    public void Visit_ShouldReplacePlaceholders()
+    public void Visit_ShouldReplaceExpressionAndConditionPlaceholders()
     {
         var ph1 = SqlNode.Placeholders.Expression();
         var ph2 = SqlNode.Placeholders.Expression();
@@ -14,7 +15,7 @@ public class SqlPlaceholderNodeReplacementContextTests : TestsBase
         var ph4 = SqlNode.Placeholders.Condition();
         var tree = (SqlNode.Parameter<int>( "a" ) > ph1).Or( ph2 == SqlNode.Literal( "foo" ) ).Or( ph3.And( ph4 ) );
 
-        var sut = new SqlPlaceholderNodeReplacementContext.Builder( capacity: 2 )
+        var sut = new SqlPlaceholderNodeReplacementContext.Builder( capacity: 4 )
             .Add( ph1, SqlNode.Literal( 123 ) )
             .Add( ph2, SqlNode.RawDataField( SqlNode.RawRecordSet( "r" ), "val" ) )
             .Add( ph3, SqlNode.True() )
@@ -29,6 +30,52 @@ public class SqlPlaceholderNodeReplacementContextTests : TestsBase
                     .TestEquals(
                         "(((@a : System.Int32) > (\"123\" : System.Int32)) OR (([r].[val] : ?) == (\"foo\" : System.String))) OR ((TRUE) AND (([r].[val] : ?) > (\"10\" : System.Int32)))" ),
                 result.Parameters.TestSequence( [ new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Visit_ShouldReplaceSortTraitPlaceholders()
+    {
+        var ph = SqlNode.Placeholders.SortTrait();
+        var set = SqlNode.RawRecordSet( "foo" );
+        var tree = set.ToDataSource().AddTrait( ph );
+
+        var sut = new SqlPlaceholderNodeReplacementContext.Builder( capacity: 1 )
+            .Add( ph, set["x"].Asc(), set["y"].Desc() )
+            .Build();
+
+        var replaced = sut.Visit( tree );
+        var result = new SqlNodeDebugInterpreter().Interpret( replaced );
+
+        result.Sql.ToString()
+            .TestEquals(
+                """
+                FROM [foo]
+                ORDER BY ([foo].[x] : ?) ASC, ([foo].[y] : ?) DESC
+                """ )
+            .Go();
+    }
+
+    [Fact]
+    public void Visit_ShouldReplaceSortTraitPlaceholders_WithEmptyReplacement()
+    {
+        var ph = SqlNode.Placeholders.SortTrait( includeOrderBy: false );
+        var set = SqlNode.RawRecordSet( "foo" );
+        var tree = set.ToDataSource().AddTrait( ph );
+
+        var sut = new SqlPlaceholderNodeReplacementContext.Builder( capacity: 1 )
+            .Add( ph, ( SqlSortTraitNode? )null )
+            .Build();
+
+        var replaced = sut.Visit( tree );
+        var result = new SqlNodeDebugInterpreter().Interpret( replaced );
+
+        result.Sql.ToString()
+            .TestEquals(
+                """
+                FROM [foo]
+                ORDER BY
+                """ )
             .Go();
     }
 }

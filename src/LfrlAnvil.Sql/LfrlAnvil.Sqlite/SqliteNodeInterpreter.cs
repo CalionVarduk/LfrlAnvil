@@ -1004,22 +1004,27 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.Sql.ShrinkBy( 2 );
         }
 
-        if ( traits.Ordering.Count > 0 && Options.IsAggregateFunctionOrderingEnabled )
+        if ( (traits.Ordering.Nodes.Count > 0 || traits.Ordering.Placeholder is not null) && Options.IsAggregateFunctionOrderingEnabled )
         {
             if ( arguments.Count > 0 )
                 Context.Sql.AppendSpace();
 
-            Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
-            foreach ( var ordering in traits.Ordering )
+            if ( traits.Ordering.Nodes.Count > 0 )
             {
-                foreach ( var orderBy in ordering )
+                Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+                foreach ( var ordering in traits.Ordering.Nodes )
                 {
-                    VisitOrderBy( orderBy );
-                    Context.Sql.AppendComma().AppendSpace();
+                    foreach ( var orderBy in ordering )
+                    {
+                        VisitOrderBy( orderBy );
+                        Context.Sql.AppendComma().AppendSpace();
+                    }
                 }
-            }
 
-            Context.Sql.ShrinkBy( 2 );
+                Context.Sql.ShrinkBy( 2 );
+            }
+            else if ( traits.Ordering.Placeholder is not null )
+                VisitSortTraitPlaceholder( traits.Ordering.Placeholder );
         }
 
         Context.Sql.Append( ')' );
@@ -1404,7 +1409,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             && traits.Aggregations.Count == 0
             && traits.AggregationFilter is null
             && traits.Windows.Count == 0
-            && (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null))
+            && (Options.IsUpdateOrDeleteLimitEnabled
+                || (traits.Ordering.Nodes.Count == 0
+                    && traits.Ordering.Placeholder is null
+                    && traits.Limit is null
+                    && traits.Offset is null))
             && traits.Custom.Count == 0;
     }
 
@@ -1431,7 +1440,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             && traits.Aggregations.Count == 0
             && traits.AggregationFilter is null
             && traits.Windows.Count == 0
-            && (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null))
+            && (Options.IsUpdateOrDeleteLimitEnabled
+                || (traits.Ordering.Nodes.Count == 0
+                    && traits.Ordering.Placeholder is null
+                    && traits.Limit is null
+                    && traits.Offset is null))
             && traits.Custom.Count == 0;
     }
 

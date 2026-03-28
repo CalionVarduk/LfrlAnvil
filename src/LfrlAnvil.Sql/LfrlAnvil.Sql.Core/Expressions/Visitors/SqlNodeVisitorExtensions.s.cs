@@ -465,6 +465,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitConditionPlaceholder( ReinterpretCast.To<SqlConditionPlaceholderNode>( node ) );
                 break;
 
+            case SqlNodeType.SortTraitPlaceholder:
+                visitor.VisitSortTraitPlaceholder( ReinterpretCast.To<SqlSortTraitPlaceholderNode>( node ) );
+                break;
+
             default:
                 visitor.VisitCustom( node );
                 break;

@@ -1367,6 +1367,13 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitSortTraitPlaceholder_ShouldRegisterError()
+    {
+        _sut.VisitSortTraitPlaceholder( SqlNode.Placeholders.SortTrait() );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
+    }
+
+    [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         _sut.VisitCustom( new NodeMock() );

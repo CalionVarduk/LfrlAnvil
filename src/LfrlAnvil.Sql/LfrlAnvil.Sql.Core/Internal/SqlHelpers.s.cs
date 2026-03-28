@@ -725,6 +725,17 @@ public static class SqlHelpers
         return $"__PH_COND__{identifier}__";
     }
 
+    /// <summary>
+    /// Creates an <see cref="SqlSortTraitPlaceholderNode.SqlPlaceholder"/> value.
+    /// </summary>
+    /// <param name="identifier">Placeholder's identifier.</param>
+    /// <returns>New <see cref="string"/> instance.</returns>
+    [Pure]
+    public static string GetSortTraitSqlPlaceholder(string identifier)
+    {
+        return $"__PH_SORT_TRAIT__{identifier}__";
+    }
+
     [Pure]
     private static bool IsFloatingPoint(string value)
     {
