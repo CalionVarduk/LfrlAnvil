@@ -314,6 +314,7 @@ public class PersistenceExpressionsTests : TestsBase
                 sut.InsertDataFields.TestSequence( insertDataFields ),
                 sut.UpdateAssignments.TestSequence( updateAssignments ),
                 sut.ConflictTarget.TestSequence( conflictTarget ),
+                sut.UpdateFilter.TestNull(),
                 (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
                 (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
                 text.TestEquals(
@@ -362,6 +363,7 @@ public class PersistenceExpressionsTests : TestsBase
                 sut.InsertDataFields.TestSequence( insertDataFields ),
                 sut.UpdateAssignments.TestSequence( updateAssignments ),
                 sut.ConflictTarget.TestSequence( conflictTarget ),
+                sut.UpdateFilter.TestNull(),
                 (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
                 (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
                 text.TestEquals(
@@ -374,6 +376,105 @@ public class PersistenceExpressionsTests : TestsBase
                     ON CONFLICT SET
                       ([foo].[x] : ?) = ("10" : System.Int32),
                       ([foo].[y] : ?) = (@dVal : System.Double)
+                    """ ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Upsert_ShouldCreateUpsertNode_FromQuery_WithUpdateFilter()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var query = SqlNode.RawQuery( "SELECT a, b FROM bar" );
+        var insertDataFields = new SqlDataFieldNode[] { set["x"], set["y"] };
+
+        var updateAssignments = new[] { set["x"].Assign( SqlNode.Literal( 10 ) ), set["y"].Assign( SqlNode.Parameter<double>( "dVal" ) ) };
+        var updateFilter = set["x"].IsGreaterThan( SqlNode.Literal( 11 ) );
+
+        var conflictTarget = new SqlDataFieldNode[] { set["x"] };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => insertDataFields );
+        var updateSelector = Substitute.For<Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart>>();
+        updateSelector.WithAnyArgs( _ => new SqlUpsertNodeUpdatePart( updateAssignments, updateFilter ) );
+        var conflictTargetSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        conflictTargetSelector.WithAnyArgs( _ => conflictTarget );
+        var sut = query.ToUpsert( set, dataFieldsSelector, updateSelector, conflictTargetSelector );
+        var text = sut.ToString();
+
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                updateSelector.CallAt( 0 ).Arguments.TestSequence( [ set, sut.UpdateSource ] ),
+                conflictTargetSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.Upsert ),
+                sut.Source.TestRefEquals( query ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.UpdateSource.Base.TestRefEquals( sut.RecordSet ),
+                sut.InsertDataFields.TestSequence( insertDataFields ),
+                sut.UpdateAssignments.TestSequence( updateAssignments ),
+                sut.ConflictTarget.TestSequence( conflictTarget ),
+                sut.UpdateFilter.TestRefEquals( updateFilter ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
+                    """
+                    UPSERT [foo] USING
+                    SELECT a, b FROM bar
+                    WITH CONFLICT TARGET ([foo].[x] : ?)
+                    INSERT ([foo].[x] : ?, [foo].[y] : ?)
+                    ON CONFLICT SET
+                      ([foo].[x] : ?) = ("10" : System.Int32),
+                      ([foo].[y] : ?) = (@dVal : System.Double)
+                    WHERE ([foo].[x] : ?) > ("11" : System.Int32)
+                    """ ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Upsert_ShouldCreateUpsertNode_FromValues_WithUpdateFilter()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var values = SqlNode.Values( SqlNode.Literal( 5 ), SqlNode.Parameter<string>( "a" ) );
+        var insertDataFields = new SqlDataFieldNode[] { set["x"], set["y"] };
+
+        var updateAssignments = new[] { set["x"].Assign( SqlNode.Literal( 10 ) ), set["y"].Assign( SqlNode.Parameter<double>( "dVal" ) ) };
+        var updateFilter = set["x"].IsGreaterThan( SqlNode.Literal( 11 ) );
+
+        var conflictTarget = new SqlDataFieldNode[] { set["x"] };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => insertDataFields );
+        var updateSelector = Substitute.For<Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart>>();
+        updateSelector.WithAnyArgs( _ => new SqlUpsertNodeUpdatePart( updateAssignments, updateFilter ) );
+        var conflictTargetSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        conflictTargetSelector.WithAnyArgs( _ => conflictTarget );
+        var sut = values.ToUpsert( set, dataFieldsSelector, updateSelector, conflictTargetSelector );
+        var text = sut.ToString();
+
+        Assertion.All(
+                dataFieldsSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                updateSelector.CallAt( 0 ).Arguments.TestSequence( [ set, sut.UpdateSource ] ),
+                conflictTargetSelector.CallAt( 0 ).Arguments.TestSequence( [ set ] ),
+                sut.NodeType.TestEquals( SqlNodeType.Upsert ),
+                sut.Source.TestRefEquals( values ),
+                sut.RecordSet.TestRefEquals( set ),
+                sut.UpdateSource.Base.TestRefEquals( sut.RecordSet ),
+                sut.InsertDataFields.TestSequence( insertDataFields ),
+                sut.UpdateAssignments.TestSequence( updateAssignments ),
+                sut.ConflictTarget.TestSequence( conflictTarget ),
+                sut.UpdateFilter.TestRefEquals( updateFilter ),
+                (( ISqlStatementNode )sut).Node.TestRefEquals( sut ),
+                (( ISqlStatementNode )sut).QueryCount.TestEquals( 0 ),
+                text.TestEquals(
+                    """
+                    UPSERT [foo] USING
+                    VALUES
+                    (("5" : System.Int32), (@a : System.String))
+                    WITH CONFLICT TARGET ([foo].[x] : ?)
+                    INSERT ([foo].[x] : ?, [foo].[y] : ?)
+                    ON CONFLICT SET
+                      ([foo].[x] : ?) = ("10" : System.Int32),
+                      ([foo].[y] : ?) = (@dVal : System.Double)
+                    WHERE ([foo].[x] : ?) > ("11" : System.Int32)
                     """ ) )
             .Go();
     }

@@ -1508,6 +1508,70 @@ public static partial class SqlNode
     }
 
     /// <summary>
+    /// Creates a new <see cref="SqlUpsertNode"/> instance.
+    /// </summary>
+    /// <param name="query"><see cref="SqlQueryExpressionNode"/> source of records to be inserted or updated.</param>
+    /// <param name="recordSet">Table to upsert into.</param>
+    /// <param name="insertDataFields">Collection of record set data fields that the insertion part of this upsert refers to.</param>
+    /// <param name="update">
+    /// Provider of the update part.
+    /// The first parameter is the table to upsert into and the second parameter is the <see cref="SqlUpsertNode.UpdateSource"/>
+    /// of the created upsert node.
+    /// </param>
+    /// <param name="conflictTarget">
+    /// Optional collection of data fields from the table that define the insertion conflict target.
+    /// Empty conflict target may cause the table's primary key to be used instead. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlUpsertNode"/> instance.</returns>
+    [Pure]
+    public static SqlUpsertNode Upsert(
+        SqlQueryExpressionNode query,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart> update,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return new SqlUpsertNode(
+            query,
+            recordSet,
+            insertDataFields,
+            conflictTarget ?? ReadOnlyArray<SqlDataFieldNode>.Empty,
+            update );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlUpsertNode"/> instance.
+    /// </summary>
+    /// <param name="values"><see cref="SqlValuesNode"/> source of records to be inserted or updated.</param>
+    /// <param name="recordSet">Table to upsert into.</param>
+    /// <param name="insertDataFields">Collection of record set data fields that the insertion part of this upsert refers to.</param>
+    /// <param name="update">
+    /// Provider of the update part.
+    /// The first parameter is the table to upsert into and the second parameter is the <see cref="SqlUpsertNode.UpdateSource"/>
+    /// of the created upsert node.
+    /// </param>
+    /// <param name="conflictTarget">
+    /// Optional collection of data fields from the table that define the insertion conflict target.
+    /// Empty conflict target may cause the table's primary key to be used instead. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlUpsertNode"/> instance.</returns>
+    [Pure]
+    public static SqlUpsertNode Upsert(
+        SqlValuesNode values,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart> update,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return new SqlUpsertNode(
+            values,
+            recordSet,
+            insertDataFields,
+            conflictTarget ?? ReadOnlyArray<SqlDataFieldNode>.Empty,
+            update );
+    }
+
+    /// <summary>
     /// Creates a new <see cref="SqlColumnDefinitionNode"/> instance.
     /// </summary>
     /// <param name="name">Column's name.</param>

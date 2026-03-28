@@ -14,6 +14,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 sut.CommonSchemaName.TestNull(),
                 sut.IndexPrefixLength.TestEquals( 500 ),
                 sut.IsFullJoinParsingEnabled.TestFalse(),
+                sut.IsUpsertUpdateFilterIgnored.TestFalse(),
                 sut.IsIndexFilterParsingEnabled.TestFalse(),
                 sut.AreTemporaryViewsForbidden.TestFalse(),
                 sut.UpsertSourceAlias.TestNull() )
@@ -32,6 +33,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -49,6 +51,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -66,6 +69,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestEquals( "foo" ),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -83,6 +87,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -100,6 +105,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 400 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -127,6 +133,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestNull(),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -146,6 +153,27 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestEquals( enabled ),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
+                result.IsIndexFilterParsingEnabled.TestFalse(),
+                result.AreTemporaryViewsForbidden.TestFalse(),
+                result.UpsertSourceAlias.TestNull() )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void IgnoreUpsertUpdateFilter_ShouldReturnCorrectResult(bool enabled)
+    {
+        var sut = MySqlNodeInterpreterOptions.Default;
+        var result = sut.IgnoreUpsertUpdateFilter( enabled );
+
+        Assertion.All(
+                result.TypeDefinitions.TestNull(),
+                result.CommonSchemaName.TestNull(),
+                result.IndexPrefixLength.TestEquals( 500 ),
+                result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestEquals( enabled ),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -165,6 +193,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestEquals( enabled ),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestNull() )
@@ -184,6 +213,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestEquals( enabled ),
                 result.UpsertSourceAlias.TestNull() )
@@ -204,6 +234,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
                 result.CommonSchemaName.TestNull(),
                 result.IndexPrefixLength.TestEquals( 500 ),
                 result.IsFullJoinParsingEnabled.TestFalse(),
+                result.IsUpsertUpdateFilterIgnored.TestFalse(),
                 result.IsIndexFilterParsingEnabled.TestFalse(),
                 result.AreTemporaryViewsForbidden.TestFalse(),
                 result.UpsertSourceAlias.TestRefEquals( alias ) )

@@ -785,6 +785,9 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     /// <inheritdoc />
     public sealed override void VisitUpsert(SqlUpsertNode node)
     {
+        if ( node.UpdateFilter is not null && ! Options.IsUpsertUpdateFilterIgnored )
+            throw new SqlNodeVisitorException( Resources.UpsertUpdateFiltersAreForbidden, this, node );
+
         switch ( node.Source.NodeType )
         {
             case SqlNodeType.DataSourceQuery:

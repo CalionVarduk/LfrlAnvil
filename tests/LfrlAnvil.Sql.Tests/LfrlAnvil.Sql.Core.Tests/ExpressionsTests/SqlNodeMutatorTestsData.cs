@@ -1116,7 +1116,9 @@ public class SqlNodeMutatorTestsData
             (values.ToUpsert(
                     set,
                     new[] { field1, field2 },
-                    (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
+                    (_, i) => new SqlUpsertNodeUpdatePart(
+                        [ field1.Assign( i["x"] ), field2.Assign( i["y"] ) ],
+                        field1.IsGreaterThan( SqlNode.Literal( 1 ) ) ),
                     new[] { field3, field4 } ),
                 new[]
                 {
@@ -1131,6 +1133,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         set,
@@ -1144,6 +1147,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([qux].[x] : ?) = ([<internal>].[x] : ?),
                           ([qux].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([qux].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field1,
@@ -1157,6 +1161,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[z] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[z] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field2,
@@ -1170,6 +1175,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[z] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field3,
@@ -1183,6 +1189,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field4,
@@ -1196,12 +1203,15 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ )
                 }),
             (query.ToUpsert(
                     set,
                     new[] { field1, field2 },
-                    (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
+                    (_, i) => new SqlUpsertNodeUpdatePart(
+                        [ field1.Assign( i["x"] ), field2.Assign( i["y"] ) ],
+                        field1.IsGreaterThan( SqlNode.Literal( 1 ) ) ),
                     new[] { field3, field4 } ),
                 new[]
                 {
@@ -1217,6 +1227,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         set,
@@ -1229,6 +1240,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([qux].[x] : ?) = ([<internal>].[x] : ?),
                           ([qux].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([qux].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field1,
@@ -1241,6 +1253,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[z] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[z] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field2,
@@ -1253,6 +1266,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[z] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field3,
@@ -1265,6 +1279,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ ),
                     Arg(
                         field4,
@@ -1277,6 +1292,7 @@ public class SqlNodeMutatorTestsData
                         ON CONFLICT SET
                           ([bar].[x] : ?) = ([<internal>].[x] : ?),
                           ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        WHERE ([bar].[x] : ?) > ("1" : System.Int32)
                         """ )
                 }),
             (set.ToDataSource().ToDeleteFrom(), new[] { Arg( set, SqlNode.RawRecordSet( "qux" ), "DELETE FROM [qux]" ) }),

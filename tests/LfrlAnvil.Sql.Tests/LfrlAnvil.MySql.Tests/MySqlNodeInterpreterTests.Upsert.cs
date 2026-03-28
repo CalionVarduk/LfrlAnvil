@@ -1,4 +1,7 @@
-﻿using LfrlAnvil.Sql.Expressions;
+﻿using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -8,6 +11,56 @@ public partial class MySqlNodeInterpreterTests
 {
     public class Upsert : TestsBase
     {
+        [Fact]
+        public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateFilterIsNotNullAndOptionsDoNotIgnoreIt()
+        {
+            var sut = CreateInterpreter();
+            var node = SqlNode.Values( new[,] { { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) } } )
+                .ToUpsert(
+                    SqlNode.RawRecordSet( "qux" ),
+                    r => new[] { r["a"], r["b"] },
+                    (r, i) => new SqlUpsertNodeUpdatePart(
+                        [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                        r["b"].IsGreaterThan( i["b"] ) ) );
+
+            var action = Lambda.Of( () => sut.Visit( node ) );
+
+            action.Test( exc => exc.TestType().Exact<SqlNodeVisitorException>() ).Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretUpsertWithValues_WithIgnoredUpdateFilter()
+        {
+            var sut = CreateInterpreter( MySqlNodeInterpreterOptions.Default.IgnoreUpsertUpdateFilter() );
+            sut.Visit(
+                SqlNode.Values(
+                        new[,]
+                        {
+                            { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
+                            { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        } )
+                    .ToUpsert(
+                        SqlNode.RawRecordSet( "qux" ),
+                        r => new[] { r["a"], r["b"] },
+                        (r, i) => new SqlUpsertNodeUpdatePart(
+                            [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                            r["b"].IsGreaterThan( i["b"] ) ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    AS `new`
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ )
+                .Go();
+        }
+
         [Fact]
         public void Visit_ShouldInterpretUpsertWithValues_WithConflictTarget()
         {

@@ -5,6 +5,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -1522,20 +1523,23 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitUpsert_ShouldVisitRecordSetAndInsertDataFieldsAndUpdateAssignmentsAndConflictTargetAndSource()
+    public void VisitUpsert_ShouldVisitRecordSetAndInsertDataFieldsAndUpdateAssignmentsAndConflictTargetAndSourceAndUpdateFilter()
     {
         var sut = new VisitorMock();
         var recordSet = SqlNode.RawRecordSet( "foo" );
         var dataFields = new[] { recordSet["x"], recordSet["y"], recordSet["z"] };
         var source = new[,] { { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) }, { SqlNode.Literal( 30 ), SqlNode.Literal( 40 ) } };
         var updateValues = new[] { SqlNode.Literal( 50 ) };
+        var updateFilter = SqlNode.Literal( 60 );
 
         sut.VisitUpsert(
             SqlNode.Values( source )
                 .ToUpsert(
                     recordSet,
                     new[] { dataFields[0], dataFields[1] },
-                    (_, _) => new[] { dataFields[2].Assign( updateValues[0] ) },
+                    (_, _) => new SqlUpsertNodeUpdatePart(
+                        [ dataFields[2].Assign( updateValues[0] ) ],
+                        dataFields[0].IsGreaterThan( updateFilter ) ),
                     new[] { dataFields[0] } ) );
 
         sut.Nodes.TestSequence(
@@ -1549,7 +1553,9 @@ public class SqlNodeVisitorTests : TestsBase
                 source[0, 0],
                 source[0, 1],
                 source[1, 0],
-                source[1, 1]
+                source[1, 1],
+                recordSet,
+                updateFilter
             ] )
             .Go();
     }

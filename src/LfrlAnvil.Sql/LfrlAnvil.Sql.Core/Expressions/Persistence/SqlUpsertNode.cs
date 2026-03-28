@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Persistence;
@@ -39,6 +40,7 @@ public sealed class SqlUpsertNode : SqlNodeBase, ISqlStatementNode
         ConflictTarget = conflictTarget;
         UpdateSource = new SqlInternalRecordSetNode( recordSet );
         UpdateAssignments = updateAssignments( RecordSet, UpdateSource ).ToArray();
+        UpdateFilter = null;
     }
 
     internal SqlUpsertNode(
@@ -55,6 +57,43 @@ public sealed class SqlUpsertNode : SqlNodeBase, ISqlStatementNode
         ConflictTarget = conflictTarget;
         UpdateSource = new SqlInternalRecordSetNode( recordSet );
         UpdateAssignments = updateAssignments( RecordSet, UpdateSource ).ToArray();
+        UpdateFilter = null;
+    }
+
+    internal SqlUpsertNode(
+        SqlQueryExpressionNode query,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        ReadOnlyArray<SqlDataFieldNode> conflictTarget,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart> update)
+        : base( SqlNodeType.Upsert )
+    {
+        Source = query;
+        RecordSet = recordSet;
+        InsertDataFields = insertDataFields;
+        ConflictTarget = conflictTarget;
+        UpdateSource = new SqlInternalRecordSetNode( recordSet );
+        var updatePart = update( RecordSet, UpdateSource );
+        UpdateAssignments = updatePart.Assignments.ToArray();
+        UpdateFilter = updatePart.Filter;
+    }
+
+    internal SqlUpsertNode(
+        SqlValuesNode values,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        ReadOnlyArray<SqlDataFieldNode> conflictTarget,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, SqlUpsertNodeUpdatePart> update)
+        : base( SqlNodeType.Upsert )
+    {
+        Source = values;
+        RecordSet = recordSet;
+        InsertDataFields = insertDataFields;
+        ConflictTarget = conflictTarget;
+        UpdateSource = new SqlInternalRecordSetNode( recordSet );
+        var updatePart = update( RecordSet, UpdateSource );
+        UpdateAssignments = updatePart.Assignments.ToArray();
+        UpdateFilter = updatePart.Filter;
     }
 
     /// <summary>
@@ -89,6 +128,11 @@ public sealed class SqlUpsertNode : SqlNodeBase, ISqlStatementNode
     /// </summary>
     /// <remarks>Empty conflict target may cause the table's primary key to be used instead.</remarks>
     public ReadOnlyArray<SqlDataFieldNode> ConflictTarget { get; }
+
+    /// <summary>
+    /// Optional filter for rows to update.
+    /// </summary>
+    public SqlConditionNode? UpdateFilter { get; }
 
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;

@@ -47,11 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- Add support for optional WHERE clause in upsert node
-  - sqlite and postgresql have the same syntax:
-    - UPDATE SET ..., ... WHERE [expr]
-  - mysql doesn't support this
-    - add options to interpreter: throw, ignore or add-anyway
 - check a parameter binder options issue when using From with expression which returns null
 - add WHERE and HAVING and ORDER BY template nodes
   - allow to prepare a query/statement sql template

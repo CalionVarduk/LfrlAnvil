@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ namespace LfrlAnvil.MySql.Exceptions;
 internal static class Resources
 {
     internal const string TemporaryViewsAreForbidden = "temporary views are forbidden";
+    internal const string UpsertUpdateFiltersAreForbidden = "update filters for upsert nodes are forbidden";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

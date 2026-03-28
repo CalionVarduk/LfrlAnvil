@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1712,17 +1712,19 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var insertDataFields = HandleCollection( node.InsertDataFields, node );
         var conflictTarget = HandleCollection( node.ConflictTarget, node );
         var updateAssignments = HandleCollection( node.UpdateAssignments, node );
+        var updateFilter = node.UpdateFilter is null ? null : Handle( node.UpdateFilter, node );
 
         if ( ! ReferenceEquals( source, node.Source )
             || ! ReferenceEquals( recordSet, node.RecordSet )
             || insertDataFields is not null
             || conflictTarget is not null
-            || updateAssignments is not null )
+            || updateAssignments is not null
+            || ! ReferenceEquals( updateFilter, node.UpdateFilter ) )
         {
             insertDataFields ??= node.InsertDataFields.GetUnderlyingArray().ToArray();
             conflictTarget ??= node.ConflictTarget.GetUnderlyingArray().ToArray();
             updateAssignments ??= node.UpdateAssignments.GetUnderlyingArray().ToArray();
-            var updateAssignmentsProvider = (SqlRecordSetNode r, SqlInternalRecordSetNode i) =>
+            var updateProvider = (SqlRecordSetNode r, SqlInternalRecordSetNode i) =>
             {
                 var mutator = new SqlNodeMutator( new SqlRecordSetReplacerContext( node.UpdateSource, i ) );
                 for ( var j = 0; j < updateAssignments.Length; ++j )
@@ -1732,13 +1734,13 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
                     updateAssignments[j] = CastOrThrow<SqlValueAssignmentNode>( mutator.GetResult(), assignment, node );
                 }
 
-                return updateAssignments.AsEnumerable();
+                return new SqlUpsertNodeUpdatePart( updateAssignments, updateFilter );
             };
 
             next = source is SqlValuesNode values
-                ? values.ToUpsert( recordSet, insertDataFields, updateAssignmentsProvider, conflictTarget )
+                ? values.ToUpsert( recordSet, insertDataFields, updateProvider, conflictTarget )
                 : CastOrThrow<SqlQueryExpressionNode>( source, node.Source, node )
-                    .ToUpsert( recordSet, insertDataFields, updateAssignmentsProvider, conflictTarget );
+                    .ToUpsert( recordSet, insertDataFields, updateProvider, conflictTarget );
         }
 
         Push( next );

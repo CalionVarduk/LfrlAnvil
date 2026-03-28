@@ -1327,7 +1327,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         _upsertUpdateSourceReplacement ??= SqlNode.RawRecordSet( SqliteHelpers.UpsertExcludedRecordSetName );
         using ( TempReplaceRecordSet( node.UpdateSource, _upsertUpdateSourceReplacement ) )
+        {
             VisitUpdateAssignmentRange( node.UpdateAssignments );
+            if ( node.UpdateFilter is not null )
+            {
+                Context.AppendIndent().Append( "WHERE" ).AppendSpace();
+                this.Visit( node.UpdateFilter );
+            }
+        }
     }
 
     /// <summary>

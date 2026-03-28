@@ -34,6 +34,7 @@ public readonly struct MySqlNodeInterpreterOptions
         string? commonSchemaName,
         int? indexPrefixLength,
         bool isFullJoinParsingEnabled,
+        bool isUpsertUpdateFilterIgnored,
         bool isIndexFilterParsingEnabled,
         bool areTemporaryViewsForbidden,
         string? upsertSourceAlias)
@@ -42,6 +43,7 @@ public readonly struct MySqlNodeInterpreterOptions
         CommonSchemaName = commonSchemaName;
         IndexPrefixLength = indexPrefixLength;
         IsFullJoinParsingEnabled = isFullJoinParsingEnabled;
+        IsUpsertUpdateFilterIgnored = isUpsertUpdateFilterIgnored;
         IsIndexFilterParsingEnabled = isIndexFilterParsingEnabled;
         AreTemporaryViewsForbidden = areTemporaryViewsForbidden;
         UpsertSourceAlias = upsertSourceAlias;
@@ -76,6 +78,11 @@ public readonly struct MySqlNodeInterpreterOptions
     public bool IsFullJoinParsingEnabled { get; }
 
     /// <summary>
+    /// Specifies whether additional filter for <b>ON DUPLICATE KEY UPDATE</b> part of <b>INSERT</b> should be ignored.
+    /// </summary>
+    public bool IsUpsertUpdateFilterIgnored { get; }
+
+    /// <summary>
     /// Specifies whether index filters should be included in SQL statements.
     /// </summary>
     public bool IsIndexFilterParsingEnabled { get; }
@@ -105,6 +112,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
             UpsertSourceAlias );
@@ -124,6 +132,7 @@ public readonly struct MySqlNodeInterpreterOptions
             name,
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
             UpsertSourceAlias );
@@ -144,6 +153,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             length,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
             UpsertSourceAlias );
@@ -162,6 +172,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             null,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
             UpsertSourceAlias );
@@ -180,6 +191,27 @@ public readonly struct MySqlNodeInterpreterOptions
             TypeDefinitions,
             CommonSchemaName,
             IndexPrefixLength,
+            enabled,
+            IsUpsertUpdateFilterIgnored,
+            IsIndexFilterParsingEnabled,
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="MySqlNodeInterpreterOptions"/> instance with changed <see cref="IsUpsertUpdateFilterIgnored"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="MySqlNodeInterpreterOptions"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlNodeInterpreterOptions IgnoreUpsertUpdateFilter(bool enabled = true)
+    {
+        return new MySqlNodeInterpreterOptions(
+            TypeDefinitions,
+            CommonSchemaName,
+            IndexPrefixLength,
+            IsFullJoinParsingEnabled,
             enabled,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
@@ -200,6 +232,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             enabled,
             AreTemporaryViewsForbidden,
             UpsertSourceAlias );
@@ -219,6 +252,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             enabled,
             UpsertSourceAlias );
@@ -238,6 +272,7 @@ public readonly struct MySqlNodeInterpreterOptions
             CommonSchemaName,
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
+            IsUpsertUpdateFilterIgnored,
             IsIndexFilterParsingEnabled,
             AreTemporaryViewsForbidden,
             alias );

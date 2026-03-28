@@ -143,6 +143,45 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretUpsertWithValues_WithUpdateFilter()
+        {
+            var sut = CreateInterpreter();
+            var table = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "qux" ),
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+                constraintsProvider: r => SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { r["a"].Asc(), r["c"].Asc() } ) ) );
+
+            sut.Visit(
+                SqlNode.Values(
+                        new[,]
+                        {
+                            { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
+                            { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        } )
+                    .ToUpsert(
+                        table.RecordSet,
+                        r => new[] { r["a"], r["b"] },
+                        (r, i) => new SqlUpsertNodeUpdatePart(
+                            [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                            r["b"].IsGreaterThan( i["b"] ) ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    INSERT INTO "qux" ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    WHERE "qux"."b" > EXCLUDED."b"
+                    """ )
+                .Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretUpsertWithValues_WithoutConflictTargetAndAllowedEmptyConflictTarget()
         {
             var sut = CreateInterpreter(
@@ -407,6 +446,72 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
+                    """ )
+                .Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretUpsertWithDataSourceQuery_WithUpdateFilter()
+        {
+            var sut = CreateInterpreter();
+            var table = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "qux" ),
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+                constraintsProvider: r => SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { r["a"].Asc(), r["c"].Asc() } ) ) );
+
+            var foo = SqlTableMock.Create<int>( "foo", new[] { "a", "b" } ).ToRecordSet();
+            var bar = SqlTableMock.Create<int>( "bar", new[] { "c", "d" } ).ToRecordSet();
+            var wnd = SqlNode.WindowDefinition( "wnd", new[] { foo["a"].Asc() } );
+
+            var query = foo
+                .Join( bar.InnerOn( bar["c"] == foo["a"] ) )
+                .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
+                .Distinct()
+                .AndWhere( s => s["common.bar"]["c"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+                .GroupBy( s => new[] { s["common.foo"]["b"] } )
+                .AndHaving( s => s["common.foo"]["b"] < SqlNode.Literal( 100 ) )
+                .Window( wnd )
+                .Select( s => new SqlSelectNode[]
+                {
+                    s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
+                } )
+                .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
+                .Limit( SqlNode.Literal( 50 ) )
+                .Offset( SqlNode.Literal( 100 ) );
+
+            sut.Visit(
+                query.ToUpsert(
+                    table.RecordSet,
+                    r => new[] { r["a"], r["b"] },
+                    (r, i) => new SqlUpsertNodeUpdatePart(
+                        [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                        r["b"].IsGreaterThan( i["b"] ) ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    WHERE "qux"."b" > EXCLUDED."b"
                     """ )
                 .Go();
         }
@@ -685,6 +790,58 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretUpsertWithCompoundQuery_WithUpdateFilter()
+        {
+            var sut = CreateInterpreter();
+            var table = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "qux" ),
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+                constraintsProvider: r => SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { r["a"].Asc(), r["c"].Asc() } ) ) );
+
+            var query = SqlNode.RawQuery( "SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a" )
+                .CompoundWith(
+                    SqlNode.RawQuery( "SELECT a, b FROM bar" ).ToUnionAll(),
+                    SqlNode.RawQuery( "SELECT a, b FROM qux" ).ToUnion() )
+                .With( SqlNode.RawQuery( "SELECT * FROM ipsum" ).ToCte( "x" ) )
+                .OrderBy( SqlNode.RawExpression( "a" ).Asc() )
+                .Limit( SqlNode.Literal( 50 ) )
+                .Offset( SqlNode.Literal( 75 ) );
+
+            sut.Visit(
+                query.ToUpsert(
+                    table.RecordSet,
+                    r => new[] { r["a"], r["b"] },
+                    (r, i) => new SqlUpsertNodeUpdatePart(
+                        [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                        r["b"].IsGreaterThan( i["b"] ) ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    WHERE "qux"."b" > EXCLUDED."b"
+                    """ )
+                .Go();
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretUpsertWithCompoundQuery_WithoutConflictTargetAndAllowedEmptyConflictTarget()
         {
             var sut = CreateInterpreter(
@@ -826,6 +983,38 @@ public partial class SqliteNodeInterpreterTests
                     ON CONFLICT ("a", "c") DO UPDATE SET
                       "b" = ("qux"."b" + EXCLUDED."b"),
                       "c" = (EXCLUDED."b" + 1)
+                    """ )
+                .Go();
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretUpsertWithRawQuery_WithUpdateFilter()
+        {
+            var sut = CreateInterpreter();
+            var table = SqlNode.CreateTable(
+                SqlRecordSetInfo.Create( "qux" ),
+                new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ), SqlNode.Column<int>( "c" ) },
+                constraintsProvider: r => SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { r["a"].Asc(), r["c"].Asc() } ) ) );
+
+            sut.Visit(
+                SqlNode.RawQuery( "SELECT * FROM bar" )
+                    .ToUpsert(
+                        table.RecordSet,
+                        r => new[] { r["a"], r["b"] },
+                        (r, i) => new SqlUpsertNodeUpdatePart(
+                            [ r["b"].Assign( r["b"] + i["b"] ), r["c"].Assign( i["b"] + SqlNode.Literal( 1 ) ) ],
+                            r["b"].IsGreaterThan( i["b"] ) ) ) );
+
+            sut.Context.Sql.ToString()
+                .TestEquals(
+                    """
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    WHERE "qux"."b" > EXCLUDED."b"
                     """ )
                 .Go();
         }

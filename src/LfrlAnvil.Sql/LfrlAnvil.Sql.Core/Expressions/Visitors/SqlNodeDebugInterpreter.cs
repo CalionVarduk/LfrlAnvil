@@ -705,6 +705,12 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
                 Context.Sql.ShrinkBy( 1 );
             }
         }
+
+        if ( node.UpdateFilter is not null )
+        {
+            Context.AppendIndent().Append( "WHERE" ).AppendSpace();
+            this.Visit( node.UpdateFilter );
+        }
     }
 
     /// <inheritdoc />
