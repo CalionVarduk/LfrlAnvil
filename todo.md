@@ -47,7 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- check a parameter binder options issue when using From with expression which returns null
 - add WHERE and HAVING and ORDER BY template nodes
   - allow to prepare a query/statement sql template
   - which can be easily replaced with an actual sql

@@ -227,7 +227,10 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     {
         Assume.IsNotNull( configuration.CustomSelector );
         Assume.IsNotNull( configuration.TargetParameterName );
-        var type = TypeNullability.Create( configuration.CustomSelector.Body.Type );
+
+        var bodyType = configuration.CustomSelector.Body.Type;
+        var type = TypeNullability.Create( bodyType, isNullable: ! bodyType.IsValueType );
+
         return new StatementParameterInfo(
             configuration.TargetParameterName,
             configuration.CustomSelector,
