@@ -1085,5 +1085,11 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     public virtual void VisitRollbackTransaction(SqlRollbackTransactionNode node) { }
 
     /// <inheritdoc />
+    public virtual void VisitExpressionPlaceholder(SqlExpressionPlaceholderNode node) { }
+
+    /// <inheritdoc />
+    public virtual void VisitConditionPlaceholder(SqlConditionPlaceholderNode node) { }
+
+    /// <inheritdoc />
     public virtual void VisitCustom(SqlNodeBase node) { }
 }

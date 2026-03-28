@@ -1808,6 +1808,22 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitExpressionPlaceholder_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitExpressionPlaceholder( SqlNode.Placeholders.Expression() ) );
+        action.Test( exc => exc.TestNull() ).Go();
+    }
+
+    [Fact]
+    public void VisitConditionPlaceholder_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitConditionPlaceholder( SqlNode.Placeholders.Condition() ) );
+        action.Test( exc => exc.TestNull() ).Go();
+    }
+
+    [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         var sut = new Visitor();

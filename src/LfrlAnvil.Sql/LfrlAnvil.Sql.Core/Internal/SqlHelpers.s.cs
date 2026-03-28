@@ -22,6 +22,7 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
@@ -663,7 +664,7 @@ public static class SqlHelpers
     }
 
     /// <summary>
-    /// Extracts <see cref="SqlObjectBuilder.ReferencingObjects"/> from the provided <paramref name="obj"/>, on order of their creation.
+    /// Extracts <see cref="SqlObjectBuilder.ReferencingObjects"/> from the provided <paramref name="obj"/>, in order of their creation.
     /// </summary>
     /// <param name="obj"><see cref="SqlObjectBuilder"/> instance to extract references from.</param>
     /// <param name="filter">
@@ -700,6 +701,28 @@ public static class SqlHelpers
 
         result.Sort( static (a, b) => a.Id.CompareTo( b.Id ) );
         return result;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="SqlExpressionPlaceholderNode.SqlPlaceholder"/> value.
+    /// </summary>
+    /// <param name="identifier">Placeholder's identifier.</param>
+    /// <returns>New <see cref="string"/> instance.</returns>
+    [Pure]
+    public static string GetExpressionSqlPlaceholder(string identifier)
+    {
+        return $"__PH_EXPR__{identifier}__";
+    }
+
+    /// <summary>
+    /// Creates an <see cref="SqlConditionPlaceholderNode.SqlPlaceholder"/> value.
+    /// </summary>
+    /// <param name="identifier">Placeholder's identifier.</param>
+    /// <returns>New <see cref="string"/> instance.</returns>
+    [Pure]
+    public static string GetConditionSqlPlaceholder(string identifier)
+    {
+        return $"__PH_COND__{identifier}__";
     }
 
     [Pure]

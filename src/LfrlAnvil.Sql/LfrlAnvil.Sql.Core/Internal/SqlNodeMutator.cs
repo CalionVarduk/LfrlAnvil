@@ -2039,6 +2039,18 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         HandleLeafNode( node, mutation.Value, mutation.IsNode );
     }
 
+    public void VisitExpressionPlaceholder(SqlExpressionPlaceholderNode node)
+    {
+        var mutation = Context.Mutate( node, _ancestors );
+        HandleLeafNode( node, mutation.Value, mutation.IsNode );
+    }
+
+    public void VisitConditionPlaceholder(SqlConditionPlaceholderNode node)
+    {
+        var mutation = Context.Mutate( node, _ancestors );
+        HandleLeafNode( node, mutation.Value, mutation.IsNode );
+    }
+
     public void VisitCustom(SqlNodeBase node)
     {
         var mutation = Context.Mutate( node, _ancestors );

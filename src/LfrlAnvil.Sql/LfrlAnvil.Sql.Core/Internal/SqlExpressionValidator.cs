@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -283,6 +283,20 @@ public abstract class SqlExpressionValidator : SqlNodeVisitor
     /// <inheritdoc />
     /// <remarks>Node is added to the <see cref="ForbiddenNodes"/> collection.</remarks>
     public override void VisitRollbackTransaction(SqlRollbackTransactionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Node is added to the <see cref="ForbiddenNodes"/> collection.</remarks>
+    public override void VisitExpressionPlaceholder(SqlExpressionPlaceholderNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Node is added to the <see cref="ForbiddenNodes"/> collection.</remarks>
+    public override void VisitConditionPlaceholder(SqlConditionPlaceholderNode node)
     {
         AddForbiddenNode( node );
     }

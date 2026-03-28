@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -28,18 +29,26 @@ public readonly struct SqlNodeInterpreterContextSnapshot
     private readonly SqlParameterNode[]? _parameters;
 
     internal SqlNodeInterpreterContextSnapshot(SqlNodeInterpreterContext context)
+        : this( context.Sql.ToString(), context.Parameters ) { }
+
+    private SqlNodeInterpreterContextSnapshot(string sql, IReadOnlyCollection<SqlNodeInterpreterContextParameter>? parameters)
     {
-        _sql = context.Sql.ToString();
+        _sql = sql;
         _parameters = Array.Empty<SqlParameterNode>();
 
-        var parameters = context.Parameters;
-        if ( parameters.Count > 0 )
+        if ( parameters is not null && parameters.Count > 0 )
         {
             var i = 0;
             _parameters = new SqlParameterNode[parameters.Count];
             foreach ( var (name, type, index) in parameters )
                 _parameters[i++] = SqlNode.Parameter( name, type, index );
         }
+    }
+
+    private SqlNodeInterpreterContextSnapshot(string sql, SqlParameterNode[]? parameters)
+    {
+        _sql = sql;
+        _parameters = parameters ?? Array.Empty<SqlParameterNode>();
     }
 
     /// <summary>
@@ -101,5 +110,153 @@ public readonly struct SqlNodeInterpreterContextSnapshot
     public SqlRawQueryExpressionNode ToQuery()
     {
         return SqlNode.RawQuery( Sql, _parameters ?? Array.Empty<SqlParameterNode>() );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlNodeInterpreterContext"/> from this snapshot.
+    /// </summary>
+    /// <returns>New <see cref="SqlNodeInterpreterContext"/> instance.</returns>
+    [Pure]
+    public SqlNodeInterpreterContext Restore()
+    {
+        var result = SqlNodeInterpreterContext.Create( capacity: Sql.Length );
+
+        result.Sql.Append( Sql );
+        foreach ( var p in Parameters )
+            result.AddParameter( p.Name, p.Type, p.Index );
+
+        return result;
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacementSql"/>.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacementSql">Text to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlExpressionPlaceholderNode node, string replacementSql)
+    {
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacementSql ), _parameters );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot
+    /// with the provided <paramref name="replacement"/> snapshot's SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlExpressionPlaceholderNode node, SqlNodeInterpreterContextSnapshot replacement)
+    {
+        if ( replacement.Parameters.IsEmpty )
+            return Replace( node, replacement.Sql );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), replacement._parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), parameters?.Values );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacement"/>'s SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlExpressionPlaceholderNode node, SqlNodeInterpreterContext replacement)
+    {
+        if ( replacement.Parameters.Count == 0 )
+            return Replace( node, replacement.Sql.ToString() );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), replacement.Parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), parameters?.Values );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacementSql"/>.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacementSql">Text to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlConditionPlaceholderNode node, string replacementSql)
+    {
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacementSql ), _parameters );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot
+    /// with the provided <paramref name="replacement"/> snapshot's SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlConditionPlaceholderNode node, SqlNodeInterpreterContextSnapshot replacement)
+    {
+        if ( replacement.Parameters.IsEmpty )
+            return Replace( node, replacement.Sql );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), replacement._parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql ), parameters?.Values );
+    }
+
+    /// <summary>
+    /// Replaces provided placeholder <paramref name="node"/> in this snapshot with the provided <paramref name="replacement"/>'s SQL.
+    /// </summary>
+    /// <param name="node">Node to replace.</param>
+    /// <param name="replacement">Context to replace the placeholder with.</param>
+    /// <returns>New context snapshot with replaced placeholder.</returns>
+    [Pure]
+    public SqlNodeInterpreterContextSnapshot Replace(SqlConditionPlaceholderNode node, SqlNodeInterpreterContext replacement)
+    {
+        if ( replacement.Parameters.Count == 0 )
+            return Replace( node, replacement.Sql.ToString() );
+
+        if ( Parameters.IsEmpty )
+            return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), replacement.Parameters );
+
+        var parameters = MergeParameters( Parameters, replacement.Parameters );
+        return new SqlNodeInterpreterContextSnapshot( node.Replace( Sql, replacement.Sql.ToString() ), parameters?.Values );
+    }
+
+    [Pure]
+    private static Dictionary<string, SqlNodeInterpreterContextParameter>? MergeParameters(
+        ReadOnlySpan<SqlParameterNode> first,
+        ReadOnlySpan<SqlParameterNode> second)
+    {
+        Dictionary<string, SqlNodeInterpreterContextParameter>? result = null;
+        foreach ( var p in first )
+            SqlNodeInterpreterContext.AddParameter( ref result, p.Name, p.Type, p.Index );
+
+        foreach ( var p in second )
+            SqlNodeInterpreterContext.AddParameter( ref result, p.Name, p.Type, p.Index );
+
+        return result;
+    }
+
+    [Pure]
+    private static Dictionary<string, SqlNodeInterpreterContextParameter>? MergeParameters(
+        ReadOnlySpan<SqlParameterNode> first,
+        IReadOnlyCollection<SqlNodeInterpreterContextParameter> second)
+    {
+        Dictionary<string, SqlNodeInterpreterContextParameter>? result = null;
+        foreach ( var p in first )
+            SqlNodeInterpreterContext.AddParameter( ref result, p.Name, p.Type, p.Index );
+
+        foreach ( var p in second )
+            SqlNodeInterpreterContext.AddParameter( ref result, p.Name, p.Type, p.Index );
+
+        return result;
     }
 }

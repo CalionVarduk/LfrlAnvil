@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -815,6 +815,16 @@ public interface ISqlNodeVisitor
     /// Visits an <see cref="SqlRollbackTransactionNode"/>.
     /// </summary>
     void VisitRollbackTransaction(SqlRollbackTransactionNode node);
+
+    /// <summary>
+    /// Visits an <see cref="SqlExpressionPlaceholderNode"/>.
+    /// </summary>
+    void VisitExpressionPlaceholder(SqlExpressionPlaceholderNode node);
+
+    /// <summary>
+    /// Visits an <see cref="SqlConditionPlaceholderNode"/>.
+    /// </summary>
+    void VisitConditionPlaceholder(SqlConditionPlaceholderNode node);
 
     /// <summary>
     /// Visits an <see cref="SqlNodeBase"/> with <see cref="SqlNodeType.Unknown"/> type.

@@ -1353,6 +1353,20 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitExpressionPlaceholder_ShouldRegisterError()
+    {
+        _sut.VisitExpressionPlaceholder( SqlNode.Placeholders.Expression() );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
+    }
+
+    [Fact]
+    public void VisitConditionPlaceholder_ShouldRegisterError()
+    {
+        _sut.VisitConditionPlaceholder( SqlNode.Placeholders.Condition() );
+        _sut.GetErrors().Count.TestEquals( 1 ).Go();
+    }
+
+    [Fact]
     public void VisitCustom_ShouldDoNothing()
     {
         _sut.VisitCustom( new NodeMock() );

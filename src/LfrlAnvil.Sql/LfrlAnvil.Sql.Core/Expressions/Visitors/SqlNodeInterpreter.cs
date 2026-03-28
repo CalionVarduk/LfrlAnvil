@@ -1130,6 +1130,18 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     /// <inheritdoc />
+    public virtual void VisitExpressionPlaceholder(SqlExpressionPlaceholderNode node)
+    {
+        Context.Sql.Append( node.SqlPlaceholder );
+    }
+
+    /// <inheritdoc />
+    public virtual void VisitConditionPlaceholder(SqlConditionPlaceholderNode node)
+    {
+        Context.Sql.Append( node.SqlPlaceholder );
+    }
+
+    /// <inheritdoc />
     public virtual void VisitCustom(SqlNodeBase node)
     {
         throw new UnrecognizedSqlNodeException( this, node );

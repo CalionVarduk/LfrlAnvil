@@ -1433,4 +1433,64 @@ public partial class BaseExpressionsTests : TestsBase
                 text.TestEquals( "ROLLBACK" ) )
             .Go();
     }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void PlaceholdersExpression_ShouldCreateExpressionPlaceholderNode(bool wrapInParentheses)
+    {
+        var sut = SqlNode.Placeholders.Expression( identifier: "foo", wrapInParentheses: wrapInParentheses );
+        var text = sut.ToString();
+
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ExpressionPlaceholder ),
+                sut.Identifier.TestEquals( "foo" ),
+                sut.SqlPlaceholder.TestEquals( "__PH_EXPR__foo__" ),
+                sut.WrapInParentheses.TestEquals( wrapInParentheses ),
+                text.TestEquals( "__PH_EXPR__foo__" ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( true, "(a) + 1" )]
+    [InlineData( false, "a + 1" )]
+    public void ExpressionPlaceholder_Replace_ShouldReplaceSelfInProvidedText(bool wrapInParentheses, string expected)
+    {
+        var sut = SqlNode.Placeholders.Expression( wrapInParentheses: wrapInParentheses );
+        var sql = $"{sut.SqlPlaceholder} + 1";
+
+        var result = sut.Replace( sql, "a" );
+
+        result.TestEquals( expected ).Go();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void PlaceholdersCondition_ShouldCreateExpressionPlaceholderNode(bool wrapInParentheses)
+    {
+        var sut = SqlNode.Placeholders.Condition( identifier: "foo", wrapInParentheses: wrapInParentheses );
+        var text = sut.ToString();
+
+        Assertion.All(
+                sut.NodeType.TestEquals( SqlNodeType.ConditionPlaceholder ),
+                sut.Identifier.TestEquals( "foo" ),
+                sut.SqlPlaceholder.TestEquals( "__PH_COND__foo__" ),
+                sut.WrapInParentheses.TestEquals( wrapInParentheses ),
+                text.TestEquals( "__PH_COND__foo__" ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( true, "(a) + 1" )]
+    [InlineData( false, "a + 1" )]
+    public void ExpressionCondition_Replace_ShouldReplaceSelfInProvidedText(bool wrapInParentheses, string expected)
+    {
+        var sut = SqlNode.Placeholders.Condition( wrapInParentheses: wrapInParentheses );
+        var sql = $"{sut.SqlPlaceholder} + 1";
+
+        var result = sut.Replace( sql, "a" );
+
+        result.TestEquals( expected ).Go();
+    }
 }

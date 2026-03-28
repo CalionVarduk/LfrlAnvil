@@ -207,6 +207,8 @@ public class SqlNodeMutatorTestsData
             SqlNode.BeginTransaction( IsolationLevel.Serializable ),
             SqlNode.CommitTransaction(),
             SqlNode.RollbackTransaction(),
+            SqlNode.Placeholders.Expression(),
+            SqlNode.Placeholders.Condition(),
             new SqlNodeMock()
         };
 
@@ -270,6 +272,8 @@ public class SqlNodeMutatorTestsData
             (SqlNode.BeginTransaction( IsolationLevel.Serializable ), null),
             (SqlNode.CommitTransaction(), null),
             (SqlNode.RollbackTransaction(), null),
+            (SqlNode.Placeholders.Expression(), null),
+            (SqlNode.Placeholders.Condition(), null),
             (new SqlNodeMock(), null)
         };
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -176,25 +176,7 @@ public sealed class SqlNodeInterpreterContext
     /// </remarks>
     public void AddParameter(string name, TypeNullability? type, int? index)
     {
-        if ( _parameters is null )
-        {
-            _parameters = new Dictionary<string, SqlNodeInterpreterContextParameter>( comparer: SqlHelpers.NameComparer );
-            _parameters.Add( name, new SqlNodeInterpreterContextParameter( name, type, index ) );
-            return;
-        }
-
-        ref var parameter = ref CollectionsMarshal.GetValueRefOrAddDefault( _parameters, name, out var exists );
-        if ( ! exists )
-        {
-            parameter = new SqlNodeInterpreterContextParameter( name, type, index );
-            return;
-        }
-
-        if ( parameter.Type != type )
-            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, null, parameter.Index );
-
-        if ( parameter.Index != index )
-            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, parameter.Type, null );
+        AddParameter( ref _parameters, name, type, index );
     }
 
     /// <summary>
@@ -278,5 +260,33 @@ public sealed class SqlNodeInterpreterContext
         {
             _context.DecreaseIndent();
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static void AddParameter(
+        ref Dictionary<string, SqlNodeInterpreterContextParameter>? target,
+        string name,
+        TypeNullability? type,
+        int? index)
+    {
+        if ( target is null )
+        {
+            target = new Dictionary<string, SqlNodeInterpreterContextParameter>( comparer: SqlHelpers.NameComparer );
+            target.Add( name, new SqlNodeInterpreterContextParameter( name, type, index ) );
+            return;
+        }
+
+        ref var parameter = ref CollectionsMarshal.GetValueRefOrAddDefault( target, name, out var exists );
+        if ( ! exists )
+        {
+            parameter = new SqlNodeInterpreterContextParameter( name, type, index );
+            return;
+        }
+
+        if ( parameter.Type != type )
+            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, null, parameter.Index );
+
+        if ( parameter.Index != index )
+            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, parameter.Type, null );
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -455,6 +455,14 @@ public static class SqlNodeVisitorExtensions
 
             case SqlNodeType.RollbackTransaction:
                 visitor.VisitRollbackTransaction( ReinterpretCast.To<SqlRollbackTransactionNode>( node ) );
+                break;
+
+            case SqlNodeType.ExpressionPlaceholder:
+                visitor.VisitExpressionPlaceholder( ReinterpretCast.To<SqlExpressionPlaceholderNode>( node ) );
+                break;
+
+            case SqlNodeType.ConditionPlaceholder:
+                visitor.VisitConditionPlaceholder( ReinterpretCast.To<SqlConditionPlaceholderNode>( node ) );
                 break;
 
             default:

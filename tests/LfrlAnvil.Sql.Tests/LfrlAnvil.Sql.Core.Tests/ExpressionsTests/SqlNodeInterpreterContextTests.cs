@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
@@ -460,6 +462,275 @@ public class SqlNodeInterpreterContextTests : TestsBase
         Assertion.All(
                 result.Sql.TestEquals( "SELECT * FROM bar" ),
                 result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Restore_ShouldCreateNewContext()
+    {
+        var context = SqlNodeInterpreterContext.Create();
+        context.AddParameter( "a", TypeNullability.Create<int>(), null );
+        context.Sql.Append( "SELECT * FROM bar" );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Restore();
+
+        Assertion.All(
+                result.Sql.ToString().TestEquals( "SELECT * FROM bar" ),
+                result.Parameters.TestSequence(
+                    sut.Parameters.ToArray().Select( p => new SqlNodeInterpreterContextParameter( p.Name, p.Type, p.Index ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithString_ShouldCreateNewSnapshot()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) + placeholder );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, "1" );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(@a : System.Int32) + (1)" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithSnapshot_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) + placeholder );
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Literal( 1 ) ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(@a : System.Int32) + (\"1\" : System.Int32)" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithSnapshot_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Literal( 1 ) + placeholder );
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(\"1\" : System.Int32) + (@a : System.Int32)" ),
+                result.Parameters.TestSequence( snapshot.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithSnapshot_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) + placeholder );
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(@a : System.Int32) + (@b : System.Int32)" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual( sut.Parameters.ToArray().Concat( snapshot.Parameters.ToArray() ).Select( p => p.ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithContext_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) + placeholder );
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Literal( 1 ) );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(@a : System.Int32) + (\"1\" : System.Int32)" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithContext_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Literal( 1 ) + placeholder );
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(\"1\" : System.Int32) + (@a : System.Int32)" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSequence( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ).ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ExpressionWithContext_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Expression( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "a" ) + placeholder );
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(@a : System.Int32) + (@b : System.Int32)" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual(
+                        sut.Parameters.ToArray()
+                            .Concat( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ) ) )
+                            .Select( p => p.ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithString_ShouldCreateNewSnapshot()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( (SqlNode.Parameter<int>( "a" ) == SqlNode.Literal( 0 )).Or( placeholder ) );
+
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, "b > 0" );
+
+        Assertion.All(
+                result.Sql.TestEquals( "((@a : System.Int32) == (\"0\" : System.Int32)) OR (b > 0)" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithSnapshot_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( (SqlNode.Parameter<int>( "a" ) == SqlNode.Literal( 0 )).Or( placeholder ) );
+        var snapshot = new SqlNodeDebugInterpreter()
+            .Interpret( SqlNode.RawDataField( SqlNode.RawRecordSet( "r" ), "val" ) == SqlNode.Literal( 1 ) )
+            .ToSnapshot();
+
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals( "((@a : System.Int32) == (\"0\" : System.Int32)) OR (([r].[val] : ?) == (\"1\" : System.Int32))" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithSnapshot_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            (SqlNode.RawDataField( SqlNode.RawRecordSet( "r" ), "val" ) == SqlNode.Literal( 1 )).Or( placeholder ) );
+
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) == SqlNode.Literal( 1 ) ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(([r].[val] : ?) == (\"1\" : System.Int32)) OR ((@b : System.Int32) == (\"1\" : System.Int32))" ),
+                result.Parameters.TestSequence( snapshot.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithSnapshot_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( (SqlNode.Parameter<int>( "a" ) == SqlNode.Literal( 0 )).Or( placeholder ) );
+        var snapshot = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) == SqlNode.Literal( 1 ) ).ToSnapshot();
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, snapshot );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    "((@a : System.Int32) == (\"0\" : System.Int32)) OR ((@b : System.Int32) == (\"1\" : System.Int32))" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual( sut.Parameters.ToArray().Concat( snapshot.Parameters.ToArray() ).Select( p => p.ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithContext_ShouldCreateNewSnapshot_WhenReplacementDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( (SqlNode.Parameter<int>( "a" ) == SqlNode.Literal( 0 )).Or( placeholder ) );
+        var other = new SqlNodeDebugInterpreter().Interpret(
+            SqlNode.RawDataField( SqlNode.RawRecordSet( "r" ), "val" ) == SqlNode.Literal( 1 ) );
+
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals( "((@a : System.Int32) == (\"0\" : System.Int32)) OR (([r].[val] : ?) == (\"1\" : System.Int32))" ),
+                result.Parameters.TestSequence( sut.Parameters.ToArray() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithContext_ShouldCreateNewSnapshot_WhenSourceDoesNotHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret(
+            (SqlNode.RawDataField( SqlNode.RawRecordSet( "r" ), "val" ) == SqlNode.Literal( 1 )).Or( placeholder ) );
+
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) == SqlNode.Literal( 1 ) );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals( "(([r].[val] : ?) == (\"1\" : System.Int32)) OR ((@b : System.Int32) == (\"1\" : System.Int32))" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSequence( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ).ToString() ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Snapshot_Replace_ConditionWithContext_ShouldCreateNewSnapshot_WhenBothContextsHaveParameters()
+    {
+        var placeholder = SqlNode.Placeholders.Condition( wrapInParentheses: false );
+        var context = new SqlNodeDebugInterpreter().Interpret( (SqlNode.Parameter<int>( "a" ) == SqlNode.Literal( 0 )).Or( placeholder ) );
+        var other = new SqlNodeDebugInterpreter().Interpret( SqlNode.Parameter<int>( "b" ) == SqlNode.Literal( 1 ) );
+        var sut = context.ToSnapshot();
+
+        var result = sut.Replace( placeholder, other );
+
+        Assertion.All(
+                result.Sql.TestEquals(
+                    "((@a : System.Int32) == (\"0\" : System.Int32)) OR ((@b : System.Int32) == (\"1\" : System.Int32))" ),
+                result.Parameters.ToArray()
+                    .Select( p => p.ToString() )
+                    .TestSetEqual(
+                        sut.Parameters.ToArray()
+                            .Concat( other.Parameters.ToArray().Select( p => SqlNode.Parameter( p.Name, p.Type, p.Index ) ) )
+                            .Select( p => p.ToString() ) ) )
             .Go();
     }
 }
