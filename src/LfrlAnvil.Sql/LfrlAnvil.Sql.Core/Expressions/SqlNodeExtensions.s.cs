@@ -208,6 +208,120 @@ public static class SqlNodeExtensions
     }
 
     /// <summary>
+    /// Creates a new <see cref="SqlParameterNode"/> instance matching the provided column <paramref name="node"/>.
+    /// </summary>
+    /// <param name="node">Column to create a matching parameter from.</param>
+    /// <param name="index">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlParameterNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="index"/> is not null and is less than <b>0</b>.</exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterNode CreateParameter(this SqlColumnNode node, int? index = null)
+    {
+        return SqlNode.Parameter( node.Name, node.Type, index );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlParameterNode"/> instance matching the provided column <paramref name="node"/>.
+    /// </summary>
+    /// <param name="node">Column to create a matching parameter from.</param>
+    /// <param name="index">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlParameterNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="index"/> is not null and is less than <b>0</b>.</exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterNode CreateParameter(this SqlColumnBuilderNode node, int? index = null)
+    {
+        return SqlNode.Parameter( node.Name, node.Type, index );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlValueAssignmentNode"/> instance
+    /// with value being a parameter matching the provided column <paramref name="node"/>.
+    /// </summary>
+    /// <param name="node">Column to assign matching parameter to.</param>
+    /// <param name="parameterIndex">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlValueAssignmentNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="parameterIndex"/> is not null and is less than <b>0</b>.
+    /// </exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlValueAssignmentNode AssignParameter(this SqlColumnNode node, int? parameterIndex = null)
+    {
+        return node.Assign( node.CreateParameter( parameterIndex ) );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlValueAssignmentNode"/> instance
+    /// with value being a parameter matching the provided column <paramref name="node"/>.
+    /// </summary>
+    /// <param name="node">Column to assign matching parameter to.</param>
+    /// <param name="parameterIndex">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlValueAssignmentNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="parameterIndex"/> is not null and is less than <b>0</b>.
+    /// </exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlValueAssignmentNode AssignParameter(this SqlColumnBuilderNode node, int? parameterIndex = null)
+    {
+        return node.Assign( node.CreateParameter( parameterIndex ) );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlEqualToConditionNode"/> instance
+    /// with equality check between the provided column <paramref name="node"/> and a matching parameter.
+    /// </summary>
+    /// <param name="node">Column to compare against a matching parameter.</param>
+    /// <param name="parameterIndex">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlEqualToConditionNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="parameterIndex"/> is not null and is less than <b>0</b>.
+    /// </exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlEqualToConditionNode IsEqualToParameter(this SqlColumnNode node, int? parameterIndex = null)
+    {
+        return node.IsEqualTo( node.CreateParameter( parameterIndex ) );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlEqualToConditionNode"/> instance
+    /// with equality check between the provided column <paramref name="node"/> and a matching parameter.
+    /// </summary>
+    /// <param name="node">Column to compare against a matching parameter.</param>
+    /// <param name="parameterIndex">
+    /// Optional 0-based position of the parameter.
+    /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="SqlEqualToConditionNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="parameterIndex"/> is not null and is less than <b>0</b>.
+    /// </exception>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlEqualToConditionNode IsEqualToParameter(this SqlColumnBuilderNode node, int? parameterIndex = null)
+    {
+        return node.IsEqualTo( node.CreateParameter( parameterIndex ) );
+    }
+
+    /// <summary>
     /// Creates a new <see cref="SqlSelectExpressionNode"/> instance.
     /// </summary>
     /// <param name="node">Underlying selection.</param>

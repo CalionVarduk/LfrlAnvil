@@ -47,9 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- add extension methods for sql column node:
-  - AssignFromParameter: creates assignment node, accepts optional parameter name
-  - IsEqualToParameter: creates conditional node, accepts optional parameter name
 - add extension methods for table node:
   - create parameterized insert statement
     - inserts a row from parameters using column names

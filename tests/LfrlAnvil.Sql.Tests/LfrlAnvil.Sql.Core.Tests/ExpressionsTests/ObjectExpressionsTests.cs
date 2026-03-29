@@ -250,6 +250,92 @@ public partial class ObjectExpressionsTests : TestsBase
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
+    [Theory]
+    [InlineData( null )]
+    [InlineData( 5 )]
+    public void CreateParameter_ForColumn_ShouldCreateMatchingParameter(int? index)
+    {
+        var table = SqlTableMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.CreateParameter( index );
+
+        Assertion.All( result.Name.TestEquals( sut.Name ), result.Type.TestEquals( sut.Type ), result.Index.TestEquals( index ) ).Go();
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( 5 )]
+    public void CreateParameter_ForColumnBuilder_ShouldCreateMatchingParameter(int? index)
+    {
+        var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.CreateParameter( index );
+
+        Assertion.All( result.Name.TestEquals( sut.Name ), result.Type.TestEquals( sut.Type ), result.Index.TestEquals( index ) ).Go();
+    }
+
+    [Fact]
+    public void AssignParameter_ForColumn_ShouldCreateAssignmentWithMatchingParameter()
+    {
+        var table = SqlTableMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.AssignParameter();
+
+        Assertion.All(
+                result.DataField.TestRefEquals( sut ),
+                result.Value.TestType()
+                    .Exact<SqlParameterNode>( p => Assertion.All( p.Name.TestEquals( sut.Name ), p.Type.TestEquals( sut.Type ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void AssignParameter_ForColumnBuilder_ShouldCreateAssignmentWithMatchingParameter()
+    {
+        var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.AssignParameter();
+
+        Assertion.All(
+                result.DataField.TestRefEquals( sut ),
+                result.Value.TestType()
+                    .Exact<SqlParameterNode>( p => Assertion.All( p.Name.TestEquals( sut.Name ), p.Type.TestEquals( sut.Type ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void IsEqualToParameter_ForColumn_ShouldCreateEqualToConditionWithMatchingParameter()
+    {
+        var table = SqlTableMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.IsEqualToParameter();
+
+        Assertion.All(
+                result.Left.TestRefEquals( sut ),
+                result.Right.TestType()
+                    .Exact<SqlParameterNode>( p => Assertion.All( p.Name.TestEquals( sut.Name ), p.Type.TestEquals( sut.Type ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void IsEqualToParameter_ForColumnBuilder_ShouldCreateEqualToConditionWithMatchingParameter()
+    {
+        var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a" } );
+        var sut = table.Node["a"];
+
+        var result = sut.IsEqualToParameter();
+
+        Assertion.All(
+                result.Left.TestRefEquals( sut ),
+                result.Right.TestType()
+                    .Exact<SqlParameterNode>( p => Assertion.All( p.Name.TestEquals( sut.Name ), p.Type.TestEquals( sut.Type ) ) ) )
+            .Go();
+    }
+
     [Fact]
     public void Table_ShouldCreateTableNode()
     {

@@ -90,6 +90,7 @@ public static partial class SqlNode
     /// </param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlParameterNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="index"/> is not null and is less than <b>0</b>.</exception>
     [Pure]
     public static SqlParameterNode Parameter<T>(string name, bool isNullable = false, int? index = null)
     {
@@ -106,6 +107,7 @@ public static partial class SqlNode
     /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
     /// </param>
     /// <returns>New <see cref="SqlParameterNode"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="index"/> is not null and is less than <b>0</b>.</exception>
     [Pure]
     public static SqlParameterNode Parameter(string name, TypeNullability? type = null, int? index = null)
     {
@@ -124,6 +126,7 @@ public static partial class SqlNode
     /// </param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New collection of <see cref="SqlParameterNode"/> instances.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="firstIndex"/> is not null and is less than <b>0</b>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">When <paramref name="count"/> is less than <b>0</b>.</exception>
     [Pure]
     public static SqlParameterNode[] ParameterRange<T>(string name, int count, bool isNullable = false, int? firstIndex = null)
@@ -142,6 +145,7 @@ public static partial class SqlNode
     /// Non-null values mean that the parameter may be interpreted as a positional parameter. Equal to null by default.
     /// </param>
     /// <returns>New collection of <see cref="SqlParameterNode"/> instances.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="firstIndex"/> is not null and is less than <b>0</b>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">When <paramref name="count"/> is less than <b>0</b>.</exception>
     [Pure]
     public static SqlParameterNode[] ParameterRange(string name, int count, TypeNullability? type = null, int? firstIndex = null)
