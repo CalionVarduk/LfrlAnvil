@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
@@ -1802,6 +1803,40 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var action = Lambda.Of( () => sut.CreateAsyncScalarExpression<Row>() );
         action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
+    }
+
+    [Fact]
+    public void CreateForValue_ShouldCreateQueryReaderThatReturnsCorrectResult()
+    {
+        var reader = new DbDataReaderMock( new ResultSet( FieldNames: [ "a" ], Rows: [ [ "foo" ], [ "bar" ], [ "qux" ] ] ) );
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateForValue<string>( "a" );
+
+        var result = queryReader.Read( reader );
+
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull( rows => rows.Select( r => r.Item ).TestSequence( [ "foo", "bar", "qux" ] ) ),
+                result.ResultSetFields.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
+    public async Task CreateAsyncForValue_ShouldCreateAsyncQueryReaderThatReturnsCorrectResult()
+    {
+        var reader = new DbDataReaderMock( new ResultSet( FieldNames: [ "a" ], Rows: [ [ "foo" ], [ "bar" ], [ "qux" ] ] ) );
+        var sut = SqlQueryReaderFactoryMock.CreateInstance();
+        var queryReader = sut.CreateAsyncForValue<string>( "a" );
+
+        var result = await queryReader.ReadAsync( reader );
+
+        Assertion.All(
+                queryReader.Dialect.TestRefEquals( sut.Dialect ),
+                result.IsEmpty.TestFalse(),
+                result.Rows.TestNotNull( rows => rows.Select( r => r.Item ).TestSequence( [ "foo", "bar", "qux" ] ) ),
+                result.ResultSetFields.TestEmpty() )
+            .Go();
     }
 
     public sealed class Row

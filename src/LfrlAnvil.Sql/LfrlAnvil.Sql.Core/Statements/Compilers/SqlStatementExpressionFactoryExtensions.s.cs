@@ -15,6 +15,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
@@ -64,6 +65,58 @@ public static class SqlStatementExpressionFactoryExtensions
     }
 
     /// <summary>
+    /// Creates a new <see cref="SqlQueryReaderExpression{TRow}"/> instance for rows of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="fieldName">Name of the SQL field to read as row's value.</param>
+    /// <param name="alwaysTestForNull">
+    /// Specifies whether <paramref name="fieldName"/> values should be tested for null. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="resultSetFieldsPersistenceMode">
+    /// Specifies how query result set fields should be extracted, if at all.
+    /// Equal to <see cref="SqlQueryReaderResultSetFieldsPersistenceMode.Ignore"/> by default.
+    /// </param>
+    /// <typeparam name="T">Row's value type.</typeparam>
+    /// <returns>New <see cref="SqlQueryReaderExpression{TRow}"/> instance.</returns>
+    [Pure]
+    public static SqlQueryReaderExpression<Value<T>> CreateExpressionForValue<T>(
+        this ISqlQueryReaderFactory factory,
+        string fieldName,
+        bool alwaysTestForNull = false,
+        SqlQueryReaderResultSetFieldsPersistenceMode resultSetFieldsPersistenceMode = SqlQueryReaderResultSetFieldsPersistenceMode.Ignore)
+    {
+        return factory.CreateExpression<Value<T>>(
+            SqlQueryReaderCreationOptions.Default
+                .EnableAlwaysTestingForNull( alwaysTestForNull )
+                .SetResultSetFieldsPersistenceMode( resultSetFieldsPersistenceMode )
+                .With( SqlQueryMemberConfiguration.From( nameof( Value<T>.Item ), fieldName ) ) );
+    }
+
+    /// <summary>
+    /// Creates a new compiled <see cref="SqlQueryReader{TRow}"/> instance for rows of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="fieldName">Name of the SQL field to read as row's value.</param>
+    /// <param name="alwaysTestForNull">
+    /// Specifies whether <paramref name="fieldName"/> values should be tested for null. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="resultSetFieldsPersistenceMode">
+    /// Specifies how query result set fields should be extracted, if at all.
+    /// Equal to <see cref="SqlQueryReaderResultSetFieldsPersistenceMode.Ignore"/> by default.
+    /// </param>
+    /// <typeparam name="T">Row's value type.</typeparam>
+    /// <returns>New <see cref="SqlQueryReader{TRow}"/> instance.</returns>
+    [Pure]
+    public static SqlQueryReader<Value<T>> CreateForValue<T>(
+        this ISqlQueryReaderFactory factory,
+        string fieldName,
+        bool alwaysTestForNull = false,
+        SqlQueryReaderResultSetFieldsPersistenceMode resultSetFieldsPersistenceMode = SqlQueryReaderResultSetFieldsPersistenceMode.Ignore)
+    {
+        return factory.CreateExpressionForValue<T>( fieldName, alwaysTestForNull, resultSetFieldsPersistenceMode ).Compile();
+    }
+
+    /// <summary>
     /// Creates a new <see cref="SqlAsyncQueryReaderExpression{TRow}"/> instance.
     /// </summary>
     /// <param name="factory">Source factory.</param>
@@ -105,6 +158,58 @@ public static class SqlStatementExpressionFactoryExtensions
         where TRow : notnull
     {
         return factory.CreateAsyncExpression<TRow>( options ).Compile();
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlAsyncQueryReaderExpression{TRow}"/> instance for rows of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="fieldName">Name of the SQL field to read as row's value.</param>
+    /// <param name="alwaysTestForNull">
+    /// Specifies whether <paramref name="fieldName"/> values should be tested for null. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="resultSetFieldsPersistenceMode">
+    /// Specifies how query result set fields should be extracted, if at all.
+    /// Equal to <see cref="SqlQueryReaderResultSetFieldsPersistenceMode.Ignore"/> by default.
+    /// </param>
+    /// <typeparam name="T">Row's value type.</typeparam>
+    /// <returns>New <see cref="SqlAsyncQueryReaderExpression{TRow}"/> instance.</returns>
+    [Pure]
+    public static SqlAsyncQueryReaderExpression<Value<T>> CreateAsyncExpressionForValue<T>(
+        this ISqlQueryReaderFactory factory,
+        string fieldName,
+        bool alwaysTestForNull = false,
+        SqlQueryReaderResultSetFieldsPersistenceMode resultSetFieldsPersistenceMode = SqlQueryReaderResultSetFieldsPersistenceMode.Ignore)
+    {
+        return factory.CreateAsyncExpression<Value<T>>(
+            SqlQueryReaderCreationOptions.Default
+                .EnableAlwaysTestingForNull( alwaysTestForNull )
+                .SetResultSetFieldsPersistenceMode( resultSetFieldsPersistenceMode )
+                .With( SqlQueryMemberConfiguration.From( nameof( Value<T>.Item ), fieldName ) ) );
+    }
+
+    /// <summary>
+    /// Creates a new compiled <see cref="SqlAsyncQueryReader{TRow}"/> instance for rows of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="fieldName">Name of the SQL field to read as row's value.</param>
+    /// <param name="alwaysTestForNull">
+    /// Specifies whether <paramref name="fieldName"/> values should be tested for null. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="resultSetFieldsPersistenceMode">
+    /// Specifies how query result set fields should be extracted, if at all.
+    /// Equal to <see cref="SqlQueryReaderResultSetFieldsPersistenceMode.Ignore"/> by default.
+    /// </param>
+    /// <typeparam name="T">Row's value type.</typeparam>
+    /// <returns>New <see cref="SqlAsyncQueryReader{TRow}"/> instance.</returns>
+    [Pure]
+    public static SqlAsyncQueryReader<Value<T>> CreateAsyncForValue<T>(
+        this ISqlQueryReaderFactory factory,
+        string fieldName,
+        bool alwaysTestForNull = false,
+        SqlQueryReaderResultSetFieldsPersistenceMode resultSetFieldsPersistenceMode = SqlQueryReaderResultSetFieldsPersistenceMode.Ignore)
+    {
+        return factory.CreateAsyncExpressionForValue<T>( fieldName, alwaysTestForNull, resultSetFieldsPersistenceMode ).Compile();
     }
 
     /// <summary>
@@ -213,5 +318,67 @@ public static class SqlStatementExpressionFactoryExtensions
         where TSource : notnull
     {
         return factory.CreateExpression<TSource>( options ).Compile();
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SqlParameterBinderExpression{TSource}"/> instance for sources of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="parameterName">Name of the SQL parameter.</param>
+    /// <param name="isParameterPositional">
+    /// Specifies whether the SQL parameter is positional. Positional parameter will be assigned an index value of <b>0</b>.
+    /// Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="ignoreNullValue">
+    /// Specifies whether null parameter value will be completely ignored. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="context">Optional <see cref="SqlNodeInterpreterContext"/> instance used for further parameter validation.</param>
+    /// <typeparam name="T">Parameter's value type.</typeparam>
+    /// <returns>New <see cref="SqlParameterBinderExpression{TSource}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterBinderExpression<Value<T>> CreateExpressionForValue<T>(
+        this ISqlParameterBinderFactory factory,
+        string parameterName,
+        bool isParameterPositional = false,
+        bool ignoreNullValue = false,
+        SqlNodeInterpreterContext? context = null)
+    {
+        return factory.CreateExpression<Value<T>>(
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( context )
+                .With(
+                    SqlParameterConfiguration.From(
+                        parameterName,
+                        nameof( Value<T>.Item ),
+                        isIgnoredWhenNull: ignoreNullValue,
+                        parameterIndex: isParameterPositional ? 0 : null ) ) );
+    }
+
+    /// <summary>
+    /// Creates a new compiled <see cref="SqlParameterBinder{TSource}"/> instance for sources of <see cref="Value{T}"/> type.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <param name="parameterName">Name of the SQL parameter.</param>
+    /// <param name="isParameterPositional">
+    /// Specifies whether the SQL parameter is positional. Positional parameter will be assigned an index value of <b>0</b>.
+    /// Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="ignoreNullValue">
+    /// Specifies whether null parameter value will be completely ignored. Equal to <b>false</b> by default.
+    /// </param>
+    /// <param name="context">Optional <see cref="SqlNodeInterpreterContext"/> instance used for further parameter validation.</param>
+    /// <typeparam name="T">Parameter's value type.</typeparam>
+    /// <returns>New <see cref="SqlParameterBinder{TSource}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterBinder<Value<T>> CreateForValue<T>(
+        this ISqlParameterBinderFactory factory,
+        string parameterName,
+        bool isParameterPositional = false,
+        bool ignoreNullValue = false,
+        SqlNodeInterpreterContext? context = null)
+    {
+        return factory.CreateExpressionForValue<T>( parameterName, isParameterPositional, ignoreNullValue, context ).Compile();
     }
 }

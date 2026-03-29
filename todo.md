@@ -47,9 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- add parameter binder/query reader factory extension methods that create for a single Value<T>
-  - parameter binder accepts an optional context and parameter name
-  - query reader accepts a column name
 - add extension methods for sql column node:
   - AssignFromParameter: creates assignment node, accepts optional parameter name
   - IsEqualToParameter: creates conditional node, accepts optional parameter name

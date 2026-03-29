@@ -1674,6 +1674,26 @@ public class SqlParameterBinderFactoryTests : TestsBase
         action.Test( exc => exc.TestType().Exact<SqlCompilerException>( e => e.Dialect.TestEquals( sut.Dialect ) ) ).Go();
     }
 
+    [Fact]
+    public void CreateForValue_ShouldCreateCorrectParameterBinder()
+    {
+        var command = new DbCommandMock();
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.CreateForValue<string>( "a" );
+
+        parameterBinder.Bind( command, "foo" );
+
+        Assertion.All(
+                parameterBinder.Dialect.TestRefEquals( sut.Dialect ),
+                command.Parameters.Count.TestEquals( 1 ),
+                command.Parameters[0].Direction.TestEquals( ParameterDirection.Input ),
+                command.Parameters[0].DbType.TestEquals( DbType.String ),
+                command.Parameters[0].IsNullable.TestFalse(),
+                command.Parameters[0].ParameterName.TestEquals( "a" ),
+                command.Parameters[0].Value.TestEquals( "foo" ) )
+            .Go();
+    }
+
     public sealed class Source
     {
         public int? A { get; init; }
