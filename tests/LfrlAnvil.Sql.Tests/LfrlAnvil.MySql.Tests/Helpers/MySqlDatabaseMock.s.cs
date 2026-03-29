@@ -19,6 +19,6 @@ public static class MySqlDatabaseMock
                 new MySqlConnectionStringBuilder(),
                 new DbConnectionEventHandler( ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>>.Empty ) ),
             new Version(),
-            new SqlQueryReader<SqlDatabaseVersionRecord>( MySqlDialect.Instance, (_, _) => default ).Bind( string.Empty ) );
+            new SqlQueryReader<SqlDatabaseVersionRecord>( MySqlDialect.Instance, (_, _) => default ).BindStatement( string.Empty ) );
     }
 }

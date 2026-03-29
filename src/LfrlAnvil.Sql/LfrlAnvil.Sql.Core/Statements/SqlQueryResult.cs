@@ -15,6 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Sql.Statements;
 
@@ -60,6 +62,23 @@ public readonly struct SqlQueryResult
     /// </summary>
     [MemberNotNullWhen( false, nameof( Rows ) )]
     public bool IsEmpty => Rows is null;
+
+    /// <summary>
+    /// Returns the only row from this query result.
+    /// </summary>
+    /// <returns>The only row or <b>null</b> if there are no rows.</returns>
+    /// <exception cref="InvalidOperationException">When query result contains more than one row.</exception>
+    [Pure]
+    public SqlQueryReaderRow? SingleOrDefault()
+    {
+        if ( IsEmpty )
+            return null;
+
+        if ( Rows.Count > 1 )
+            ExceptionThrower.Throw( new InvalidOperationException( Exceptions.ExceptionResources.QueryResultContainsMoreThanOneRow ) );
+
+        return Rows[0];
+    }
 }
 
 /// <summary>

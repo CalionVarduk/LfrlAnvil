@@ -114,6 +114,36 @@ public partial class SqlQueryResultTests : TestsBase
     }
 
     [Fact]
+    public void SingleOrDefault_TypeErased_ShouldReturnNull_WhenResultIsEmpty()
+    {
+        var sut = SqlQueryResult.Empty;
+        var result = sut.SingleOrDefault();
+        result.TestNull().Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_TypeErased_ShouldReturnFirstRow_WhenResultContainsOneRow()
+    {
+        var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
+        var sut = new SqlQueryResult( resultSetFields, [ 1, "foo" ] );
+
+        var result = sut.SingleOrDefault();
+
+        result.TestNotNull( r => r.TestEquals( sut.Rows![0] ) ).Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_TypeErased_ShouldThrowInvalidOperationException_WhenResultContainsMoreThanOneRow()
+    {
+        var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
+        var sut = new SqlQueryResult( resultSetFields, [ 1, "foo", 2, "bar" ] );
+
+        var action = Lambda.Of( () => sut.SingleOrDefault() );
+
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
+    }
+
+    [Fact]
     public void Default_Generic_ShouldBeEmpty()
     {
         var sut = default( SqlQueryResult<object[]> );
@@ -167,5 +197,53 @@ public partial class SqlQueryResultTests : TestsBase
                 sut.ResultSetFields.TestSequence( resultSetFields ),
                 sut.IsEmpty.TestFalse() )
             .Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericRefType_ShouldReturnNull_WhenResultIsEmpty()
+    {
+        var sut = SqlQueryResult<string>.Empty;
+        var result = sut.SingleOrDefault();
+        result.TestNull().Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericRefType_ShouldReturnFirstRow_WhenResultContainsOneRow()
+    {
+        var sut = new SqlQueryResult<string>( null, [ "foo" ] );
+        var result = sut.SingleOrDefault();
+        result.TestEquals( "foo" ).Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericRefType_ShouldThrowInvalidOperationException_WhenResultContainsMoreThanOneRow()
+    {
+        var sut = new SqlQueryResult<string>( null, [ "foo", "bar" ] );
+        var action = Lambda.Of( () => sut.SingleOrDefault() );
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericValueType_ShouldReturnNull_WhenResultIsEmpty()
+    {
+        var sut = SqlQueryResult<int>.Empty;
+        var result = sut.SingleOrDefault();
+        result.TestNull().Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericValueType_ShouldReturnFirstRow_WhenResultContainsOneRow()
+    {
+        var sut = new SqlQueryResult<int>( null, [ 1 ] );
+        var result = sut.SingleOrDefault();
+        result.TestEquals( 1 ).Go();
+    }
+
+    [Fact]
+    public void SingleOrDefault_GenericValueType_ShouldThrowInvalidOperationException_WhenResultContainsMoreThanOneRow()
+    {
+        var sut = new SqlQueryResult<int>( null, [ 1, 2 ] );
+        var action = Lambda.Of( () => sut.SingleOrDefault() );
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 }

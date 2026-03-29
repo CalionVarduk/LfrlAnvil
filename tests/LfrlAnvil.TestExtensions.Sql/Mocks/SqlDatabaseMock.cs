@@ -27,7 +27,7 @@ public sealed class SqlDatabaseMock : SqlDatabase
                     (_, _) => versionRecordsProvider is null
                         ? SqlQueryResult<SqlDatabaseVersionRecord>.Empty
                         : new SqlQueryResult<SqlDatabaseVersionRecord>( null, versionRecordsProvider().ToList() ) )
-                .Bind( string.Empty ) )
+                .BindStatement( string.Empty ) )
     {
         connector.SetDatabase( this );
     }

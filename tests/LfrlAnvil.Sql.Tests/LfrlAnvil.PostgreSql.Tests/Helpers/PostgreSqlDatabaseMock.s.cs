@@ -19,6 +19,6 @@ public static class PostgreSqlDatabaseMock
                 new NpgsqlConnectionStringBuilder(),
                 new DbConnectionEventHandler( ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>>.Empty ) ),
             new Version(),
-            new SqlQueryReader<SqlDatabaseVersionRecord>( PostgreSqlDialect.Instance, (_, _) => default ).Bind( string.Empty ) );
+            new SqlQueryReader<SqlDatabaseVersionRecord>( PostgreSqlDialect.Instance, (_, _) => default ).BindStatement( string.Empty ) );
     }
 }

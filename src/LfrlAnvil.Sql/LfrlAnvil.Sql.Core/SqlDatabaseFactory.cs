@@ -617,7 +617,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         return new SqlQueryReader<SqlDatabaseVersionRecord>(
                 versionHistoryTable.Database.Dialect,
                 GetVersionHistoryRecordsQueryDelegate( versionHistoryTable.Database.QueryReaders ) )
-            .Bind( sql );
+            .BindStatement( sql );
     }
 
     [Pure]
@@ -642,7 +642,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         var sql = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        return fullQuery.Reader.Bind( sql );
+        return fullQuery.Reader.BindStatement( sql );
     }
 
     SqlCreateDatabaseResult<ISqlDatabase> ISqlDatabaseFactory.Create(

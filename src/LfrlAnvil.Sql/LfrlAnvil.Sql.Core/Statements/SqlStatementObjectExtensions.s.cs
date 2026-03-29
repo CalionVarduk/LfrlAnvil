@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -294,56 +294,56 @@ public static class SqlStatementObjectExtensions
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlQueryReader"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlQueryReader"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <returns>New <see cref="SqlQueryReaderExecutor"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderExecutor Bind(this SqlQueryReader reader, string sql)
+    public static SqlQueryReaderExecutor BindStatement(this SqlQueryReader reader, string sql)
     {
         return new SqlQueryReaderExecutor( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlQueryReader{TRow}"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlQueryReader{TRow}"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <typeparam name="TRow">Row type.</typeparam>
     /// <returns>New <see cref="SqlQueryReaderExecutor{TRow}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlQueryReaderExecutor<TRow> Bind<TRow>(this SqlQueryReader<TRow> reader, string sql)
+    public static SqlQueryReaderExecutor<TRow> BindStatement<TRow>(this SqlQueryReader<TRow> reader, string sql)
         where TRow : notnull
     {
         return new SqlQueryReaderExecutor<TRow>( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlScalarQueryReader"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlScalarQueryReader"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source scalar query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <returns>New <see cref="SqlScalarQueryReaderExecutor"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarQueryReaderExecutor Bind(this SqlScalarQueryReader reader, string sql)
+    public static SqlScalarQueryReaderExecutor BindStatement(this SqlScalarQueryReader reader, string sql)
     {
         return new SqlScalarQueryReaderExecutor( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlScalarQueryReader{T}"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlScalarQueryReader{T}"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source scalar query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlScalarQueryReaderExecutor{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlScalarQueryReaderExecutor<T> Bind<T>(this SqlScalarQueryReader<T> reader, string sql)
+    public static SqlScalarQueryReaderExecutor<T> BindStatement<T>(this SqlScalarQueryReader<T> reader, string sql)
     {
         return new SqlScalarQueryReaderExecutor<T>( reader, sql );
     }
@@ -374,6 +374,99 @@ public static class SqlStatementObjectExtensions
         where TSource : notnull
     {
         return new SqlParameterBinderExecutor<TSource>( binder, source );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlQueryReaderExecutor"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <returns>New <see cref="SqlParameterizedQueryReaderExecutor"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedQueryReaderExecutor Parameterize(this SqlQueryReaderExecutor executor, SqlParameterBinder parameterBinder)
+    {
+        return new SqlParameterizedQueryReaderExecutor( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlQueryReaderExecutor{TRow}"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <typeparam name="TParameter">Parameter source type.</typeparam>
+    /// <typeparam name="TRow">Row type.</typeparam>
+    /// <returns>New <see cref="SqlParameterizedQueryReaderExecutor{TParameter,TRow}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedQueryReaderExecutor<TParameter, TRow> Parameterize<TParameter, TRow>(
+        this SqlQueryReaderExecutor<TRow> executor,
+        SqlParameterBinder<TParameter> parameterBinder)
+        where TParameter : notnull
+        where TRow : notnull
+    {
+        return new SqlParameterizedQueryReaderExecutor<TParameter, TRow>( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlScalarQueryReaderExecutor"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <returns>New <see cref="SqlParameterizedScalarQueryReaderExecutor"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedScalarQueryReaderExecutor Parameterize(
+        this SqlScalarQueryReaderExecutor executor,
+        SqlParameterBinder parameterBinder)
+    {
+        return new SqlParameterizedScalarQueryReaderExecutor( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlQueryReaderExecutor{TRow}"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <typeparam name="TParameter">Parameter source type.</typeparam>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <returns>New <see cref="SqlParameterizedScalarQueryReaderExecutor{TParameter,T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedScalarQueryReaderExecutor<TParameter, T> Parameterize<TParameter, T>(
+        this SqlScalarQueryReaderExecutor<T> executor,
+        SqlParameterBinder<TParameter> parameterBinder)
+        where TParameter : notnull
+    {
+        return new SqlParameterizedScalarQueryReaderExecutor<TParameter, T>( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlParameterBinder"/> to the given parameter <paramref name="sql"/> statement.
+    /// </summary>
+    /// <param name="binder">Source parameter binder.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
+    /// <returns>New <see cref="SqlParameterizedStatementExecutor"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedStatementExecutor BindStatement(this SqlParameterBinder binder, string sql)
+    {
+        return new SqlParameterizedStatementExecutor( binder, sql );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlParameterBinder{TSource}"/> to the given parameter <paramref name="sql"/> statement.
+    /// </summary>
+    /// <param name="binder">Source parameter binder.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
+    /// <typeparam name="T">Parameter source type.</typeparam>
+    /// <returns>New <see cref="SqlParameterizedStatementExecutor{TSource}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlParameterizedStatementExecutor<T> BindStatement<T>(this SqlParameterBinder<T> binder, string sql)
+        where T : notnull
+    {
+        return new SqlParameterizedStatementExecutor<T>( binder, sql );
     }
 
     /// <summary>
@@ -570,57 +663,124 @@ public static class SqlStatementObjectExtensions
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlAsyncQueryReader"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlAsyncQueryReader"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <returns>New <see cref="SqlAsyncQueryReaderExecutor"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncQueryReaderExecutor Bind(this SqlAsyncQueryReader reader, string sql)
+    public static SqlAsyncQueryReaderExecutor BindStatement(this SqlAsyncQueryReader reader, string sql)
     {
         return new SqlAsyncQueryReaderExecutor( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlAsyncQueryReader{TRow}"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlAsyncQueryReader{TRow}"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <typeparam name="TRow">Row type.</typeparam>
     /// <returns>New <see cref="SqlAsyncQueryReaderExecutor{TRow}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncQueryReaderExecutor<TRow> Bind<TRow>(this SqlAsyncQueryReader<TRow> reader, string sql)
+    public static SqlAsyncQueryReaderExecutor<TRow> BindStatement<TRow>(this SqlAsyncQueryReader<TRow> reader, string sql)
         where TRow : notnull
     {
         return new SqlAsyncQueryReaderExecutor<TRow>( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlAsyncScalarQueryReader"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlAsyncScalarQueryReader"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source scalar query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <returns>New <see cref="SqlAsyncScalarQueryReaderExecutor"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncScalarQueryReaderExecutor Bind(this SqlAsyncScalarQueryReader reader, string sql)
+    public static SqlAsyncScalarQueryReaderExecutor BindStatement(this SqlAsyncScalarQueryReader reader, string sql)
     {
         return new SqlAsyncScalarQueryReaderExecutor( reader, sql );
     }
 
     /// <summary>
-    /// Binds the provided <see cref="SqlAsyncScalarQueryReader{T}"/> to the given <paramref name="sql"/>.
+    /// Binds the provided <see cref="SqlAsyncScalarQueryReader{T}"/> to the given <paramref name="sql"/> statement.
     /// </summary>
     /// <param name="reader">Source scalar query reader.</param>
-    /// <param name="sql">SQL to bind with.</param>
+    /// <param name="sql">SQL statement to bind with.</param>
     /// <typeparam name="T">Value type.</typeparam>
     /// <returns>New <see cref="SqlAsyncScalarQueryReaderExecutor{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlAsyncScalarQueryReaderExecutor<T> Bind<T>(this SqlAsyncScalarQueryReader<T> reader, string sql)
+    public static SqlAsyncScalarQueryReaderExecutor<T> BindStatement<T>(this SqlAsyncScalarQueryReader<T> reader, string sql)
     {
         return new SqlAsyncScalarQueryReaderExecutor<T>( reader, sql );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlAsyncQueryReaderExecutor"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <returns>New <see cref="SqlAsyncParameterizedQueryReaderExecutor"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncParameterizedQueryReaderExecutor Parameterize(
+        this SqlAsyncQueryReaderExecutor executor,
+        SqlParameterBinder parameterBinder)
+    {
+        return new SqlAsyncParameterizedQueryReaderExecutor( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlAsyncQueryReaderExecutor{TRow}"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <typeparam name="TParameter">Parameter source type.</typeparam>
+    /// <typeparam name="TRow">Row type.</typeparam>
+    /// <returns>New <see cref="SqlAsyncParameterizedQueryReaderExecutor{TParameter,TRow}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncParameterizedQueryReaderExecutor<TParameter, TRow> Parameterize<TParameter, TRow>(
+        this SqlAsyncQueryReaderExecutor<TRow> executor,
+        SqlParameterBinder<TParameter> parameterBinder)
+        where TParameter : notnull
+        where TRow : notnull
+    {
+        return new SqlAsyncParameterizedQueryReaderExecutor<TParameter, TRow>( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlAsyncScalarQueryReaderExecutor"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <returns>New <see cref="SqlAsyncParameterizedScalarQueryReaderExecutor"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncParameterizedScalarQueryReaderExecutor Parameterize(
+        this SqlAsyncScalarQueryReaderExecutor executor,
+        SqlParameterBinder parameterBinder)
+    {
+        return new SqlAsyncParameterizedScalarQueryReaderExecutor( parameterBinder, executor );
+    }
+
+    /// <summary>
+    /// Binds the provided <see cref="SqlAsyncQueryReaderExecutor{TRow}"/> to the given <paramref name="parameterBinder"/>.
+    /// </summary>
+    /// <param name="executor">Query reader executor.</param>
+    /// <param name="parameterBinder">Parameter binder to bind to the executor.</param>
+    /// <typeparam name="TParameter">Parameter source type.</typeparam>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <returns>New <see cref="SqlAsyncParameterizedScalarQueryReaderExecutor{TParameter,T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlAsyncParameterizedScalarQueryReaderExecutor<TParameter, T> Parameterize<TParameter, T>(
+        this SqlAsyncScalarQueryReaderExecutor<T> executor,
+        SqlParameterBinder<TParameter> parameterBinder)
+        where TParameter : notnull
+    {
+        return new SqlAsyncParameterizedScalarQueryReaderExecutor<TParameter, T>( parameterBinder, executor );
     }
 }

@@ -24,7 +24,7 @@ public static class SqliteDatabaseMock
             builder,
             connector,
             new Version(),
-            new SqlQueryReader<SqlDatabaseVersionRecord>( SqliteDialect.Instance, (_, _) => default ).Bind( string.Empty ) );
+            new SqlQueryReader<SqlDatabaseVersionRecord>( SqliteDialect.Instance, (_, _) => default ).BindStatement( string.Empty ) );
 
         connector.SetDatabase( result );
         return result;

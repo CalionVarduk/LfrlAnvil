@@ -7,12 +7,12 @@
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
 |      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |                       -                        |
 |      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
-| Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |                       -                        |
 |     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
+| Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |                       -                        |
 |      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
-|         Sql.*          |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
 |           -            |             Terminal             |                   [link](#terminal)                    |                       -                        |
 |  Computable.Automata   |     Add Context-free grammar     |                           -                            |                       -                        |
+|         Sql.*          |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
 |         Sql.*          |    Add Microsoft SQL support     |                           -                            |                       -                        |
 |      Collections       |           Add SkipList           |                           -                            |                       -                        |
 |     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
@@ -47,16 +47,6 @@ project idea:
 
 ### Sql: Refinements
 
-- add parameterized statement executor
-  - simple struct with generic parameter binder and sql string
-  - also has ExecuteAsync method which accepts a db command and parameters
-  - extension methods:
-    - applies a collection of parameters
-- add parameterized sync and async query reader executor
-  - simple struct with generic parameter binder and generic sync/async query reader executor
-  - also has ExecuteAsync method which accepts a db command, parameters and reader options
-  - extension methods:
-    - Execute[Single/First]Async: reads zero or one row
 - add parameter binder/query reader factory extension methods that create for a single Value<T>
   - parameter binder accepts an optional context and parameter name
   - query reader accepts a column name

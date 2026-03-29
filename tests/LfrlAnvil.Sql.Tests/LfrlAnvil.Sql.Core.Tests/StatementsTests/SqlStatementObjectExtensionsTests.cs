@@ -76,7 +76,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = command.Query( factory.Create().Bind( sql ) );
+        var result = command.Query( factory.Create().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -97,7 +97,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = command.Query( factory.Create<Row>().Bind( sql ) );
+        var result = command.Query( factory.Create<Row>().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -146,7 +146,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = command.Query( factory.CreateScalar().Bind( sql ) );
+        var result = command.Query( factory.CreateScalar().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -164,7 +164,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = command.Query( factory.CreateScalar<int>().Bind( sql ) );
+        var result = command.Query( factory.CreateScalar<int>().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -216,7 +216,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = await command.QueryAsync( factory.CreateAsync().Bind( sql ) );
+        var result = await command.QueryAsync( factory.CreateAsync().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -237,7 +237,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = await command.QueryAsync( factory.CreateAsync<Row>().Bind( sql ) );
+        var result = await command.QueryAsync( factory.CreateAsync<Row>().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -286,7 +286,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = await command.QueryAsync( factory.CreateAsyncScalar().Bind( sql ) );
+        var result = await command.QueryAsync( factory.CreateAsyncScalar().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),
@@ -304,7 +304,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
             new ResultSet( new[] { "A", "B" }, new[] { new object[] { 1, "foo" }, new object[] { 2, "bar" } } ) );
 
         var factory = SqlQueryReaderFactoryMock.CreateInstance();
-        var result = await command.QueryAsync( factory.CreateAsyncScalar<int>().Bind( sql ) );
+        var result = await command.QueryAsync( factory.CreateAsyncScalar<int>().BindStatement( sql ) );
 
         Assertion.All(
                 command.Audit.LastOrDefault().TestEquals( "DbDataReader[0].Close" ),

@@ -9,12 +9,12 @@ namespace LfrlAnvil.Sql.Tests.StatementsTests;
 public class SqlQueryReaderExecutorTests : TestsBase
 {
     [Fact]
-    public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
+    public void BindStatement_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult>>();
         var reader = new SqlQueryReader( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         Assertion.All(
                 sut.Sql.TestRefEquals( sql ),
@@ -40,7 +40,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         var result = sut.Execute( command );
 
@@ -52,12 +52,12 @@ public class SqlQueryReaderExecutorTests : TestsBase
     }
 
     [Fact]
-    public void Bind_Extension_ForGeneric_ShouldCreateCorrectExecutor()
+    public void BindStatement_Extension_ForGeneric_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<object[]>>>();
         var reader = new SqlQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         Assertion.All(
                 sut.Sql.TestRefEquals( sql ),
@@ -81,7 +81,7 @@ public class SqlQueryReaderExecutorTests : TestsBase
         var @delegate = Substitute.For<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<object[]>>>();
         @delegate.WithAnyArgs( _ => expected );
         var reader = new SqlQueryReader<object[]>( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         var result = sut.Execute( command );
 

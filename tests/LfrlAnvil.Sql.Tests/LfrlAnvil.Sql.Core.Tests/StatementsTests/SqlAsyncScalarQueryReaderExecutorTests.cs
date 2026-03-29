@@ -10,12 +10,12 @@ namespace LfrlAnvil.Sql.Tests.StatementsTests;
 public class SqlAsyncScalarQueryReaderExecutorTests : TestsBase
 {
     [Fact]
-    public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
+    public void BindStatement_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
         var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult>>>();
         var reader = new SqlAsyncScalarQueryReader( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         Assertion.All(
                 sut.Sql.TestRefEquals( sql ),
@@ -33,7 +33,7 @@ public class SqlAsyncScalarQueryReaderExecutorTests : TestsBase
         var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var reader = new SqlAsyncScalarQueryReader( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         var result = await sut.ExecuteAsync( command );
 
@@ -45,12 +45,12 @@ public class SqlAsyncScalarQueryReaderExecutorTests : TestsBase
     }
 
     [Fact]
-    public void Bind_Extension_ForGeneric_ShouldCreateCorrectExecutor()
+    public void BindStatement_Extension_ForGeneric_ShouldCreateCorrectExecutor()
     {
         var sql = "SELECT * FROM foo";
         var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<int>>>>();
         var reader = new SqlAsyncScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         Assertion.All(
                 sut.Sql.TestRefEquals( sql ),
@@ -68,7 +68,7 @@ public class SqlAsyncScalarQueryReaderExecutorTests : TestsBase
         var @delegate = Substitute.For<Func<IDataReader, CancellationToken, ValueTask<SqlScalarQueryResult<int>>>>();
         @delegate.WithAnyArgs( _ => ValueTask.FromResult( expected ) );
         var reader = new SqlAsyncScalarQueryReader<int>( new SqlDialect( "foo" ), @delegate );
-        var sut = reader.Bind( sql );
+        var sut = reader.BindStatement( sql );
 
         var result = await sut.ExecuteAsync( command );
 

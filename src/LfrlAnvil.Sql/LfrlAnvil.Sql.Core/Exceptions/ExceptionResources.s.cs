@@ -70,6 +70,7 @@ public static class ExceptionResources
     internal const string TargetIsNotValidRecordSet = "target is not a valid record set";
     internal const string TargetIsNotAliased = "target record set is not aliased";
     internal const string TargetDoesNotContainValidIdentityColumns = "target record set does not contain valid indentity columns";
+    internal const string QueryResultContainsMoreThanOneRow = "Query result contains more than one row.";
 
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";
