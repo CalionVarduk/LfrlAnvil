@@ -2,7 +2,6 @@
 
 |        Project         |              Title               |                        Details                         |                  Requirements                  |
 |:----------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
 |       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
 |      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |                       -                        |
@@ -12,7 +11,7 @@
 |      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
 |           -            |             Terminal             |                   [link](#terminal)                    |                       -                        |
 |  Computable.Automata   |     Add Context-free grammar     |                           -                            |                       -                        |
-|         Sql.*          |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
+|         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
 |         Sql.*          |    Add Microsoft SQL support     |                           -                            |                       -                        |
 |      Collections       |           Add SkipList           |                           -                            |                       -                        |
 |     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
@@ -47,29 +46,12 @@ project idea:
 
 ### Sql: Refinements
 
-- add extension methods for table node:
-  - create parameterized insert statement
-    - inserts a row from parameters using column names
-    - optional filter delegate, which can exclude columns
-    - optional parameter settings for mapping
-  - create parameterized delete statement
-    - deletes a row by PK parameters
-    - optional parameter settings for mapping
-  - create parameterized update statement
-    - updates a row by PK parameters with non-PK columns being updated from parameters
-    - optional filter delegate, which can exclude assignments
-    - optional parameter settings for mapping
-  - create parameterized upsert statement
-    - upserts a row from parameters using column names
-    - optional filter delegates, which can exclude insert columns and/or update assignments
-    - optional parameter settings for mapping
-  - create temp table
-    - copies table's schema
-    - requires explicit name
-    - optional filter delegate, which can exclude columns
-    - optional setting if PK should be copied or ignored
-
 Low priority/probably won't do:
+- add support for some sort of BulkCopy operation
+  - targets a single table
+  - DataTable as the source...?
+  - fallback to normal one-by-one insert if dialect doesn't support bulk copying
+  - might be added as a method to ISqlDatabase
 - source generators for parameter bindings and queries/statements
 - IncludedColumns for IXs
   - for now, only postgresql can use those
@@ -78,6 +60,19 @@ Low priority/probably won't do:
   - alter column drop expression doesn't work on them
   - would probably have to drop column => create column with new storage type
   - impacts new identity columns with old virtual storage
+- add support for basic(?) triggers
+  - they would accept a batch node as their body
+  - body needs to be scanned for referenced db objects & proper references need to be registered
+  - there would be no support for branching statements or local variables
+    - this could be worked around with raw statement nodes, but that's unsafe
+  - limitation is mostly due to sqlite, that doesn't support branching
+    - however, they can have a condition, so maybe that's the way to do it?
+    - do other sql providers support conditional triggers?
+      - I guess a simple IF could be added in their case
+  - sqlite has another limitation: CTEs inside triggers are not supported
+    - but that can't be helped
+  - only FOR EACH ROW triggers would be supported, with BEFORE/AFTER + INSERT/UPDATE/DELETE
+  - triggers could be registered as table constraints
 
 ### Reactive: Refinements
 
@@ -92,6 +87,7 @@ Might do:
 - extension methods for converting between event sources and async enumerables
 - after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
   - lock everything? decorators may be a bit of an issue
+  - currently, there is a risk of deadlocks since e.g. Publish holds the lock while invoking subscriber callbacks
 
 ### Computable.Expressions: Refinements
 
@@ -213,22 +209,6 @@ ideas for other LfrlAnvil.Computable projects:
 - extract VariableValidator & VariableChangeTracker(?) to separate interfaces
 - this could potentially allow for more flexibility & for easier async validation?
 - or add a separate IAsyncVariable stack, since CancellationToken should be supported
-
-### Sql.Core: Triggers
-
-- add support for basic(?) triggers
-- they would accept a batch node as their body
-- body needs to be scanned for referenced db objects & proper references need to be registered
-- there would be no support for branching statements or local variables
-    - this could be worked around with raw statement nodes, but that's unsafe
-- limitation is mostly due to sqlite, that doesn't support branching
-    - however, they can have a condition, so maybe that's the way to do it?
-    - do other sql providers support conditional triggers?
-        - I guess a simple IF could be added in their case
-- sqlite has another limitation: CTEs inside triggers are not supported
-    - but that can't be helped
-- only FOR EACH ROW triggers would be supported, with BEFORE/AFTER + INSERT/UPDATE/DELETE
-- triggers could be registered as table constraints
 
 ### Sql.Core: Add JSON nodes
 

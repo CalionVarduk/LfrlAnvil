@@ -54,4 +54,13 @@ public sealed class SqlTableBuilderMock : SqlTableBuilder
         var table = schema.Objects.CreateTable( name );
         return table;
     }
+
+    [Pure]
+    public SqlTableMock Build()
+    {
+        var db = SqlDatabaseMock.Create( Database );
+        var schema = db.Schemas.Get( Schema.Name );
+        var table = schema.Objects.GetTable( Name );
+        return ( SqlTableMock )table;
+    }
 }

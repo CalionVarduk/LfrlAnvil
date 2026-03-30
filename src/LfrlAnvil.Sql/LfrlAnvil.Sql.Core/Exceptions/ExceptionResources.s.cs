@@ -71,6 +71,8 @@ public static class ExceptionResources
     internal const string TargetIsNotAliased = "target record set is not aliased";
     internal const string TargetDoesNotContainValidIdentityColumns = "target record set does not contain valid indentity columns";
     internal const string QueryResultContainsMoreThanOneRow = "Query result contains more than one row.";
+    internal const string PrimaryKeyIsRequired = "Primary key is required.";
+    internal const string PrimaryKeyExpressionIsNotDataField = "One of primary key expressions is not a data field.";
 
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";

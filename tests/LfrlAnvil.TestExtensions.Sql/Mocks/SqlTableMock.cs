@@ -23,9 +23,6 @@ public sealed class SqlTableMock : SqlTable
         where TColumnType : notnull
     {
         var builder = SqlTableBuilderMock.Create<TColumnType>( name, columns, pkColumns, areColumnsNullable, schemaName );
-        var db = SqlDatabaseMock.Create( builder.Database );
-        var schema = schemaName is null ? db.Schemas.Default : db.Schemas.Get( schemaName );
-        var table = schema.Objects.GetTable( name );
-        return ( SqlTableMock )table;
+        return builder.Build();
     }
 }
