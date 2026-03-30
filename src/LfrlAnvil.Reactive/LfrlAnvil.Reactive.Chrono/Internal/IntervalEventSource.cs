@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
@@ -26,25 +26,25 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 {
     private readonly ITimestampProvider _timestampProvider;
     private readonly Duration _interval;
-    private readonly TaskFactory _taskFactory;
     private readonly Duration _spinWaitDurationHint;
     private readonly long _count;
+    private DelaySource _delaySource;
 
     internal IntervalEventSource(
-        ITimestampProvider timestampProvider,
+        ITimestampProvider? timestampProvider,
         Duration interval,
-        TaskFactory taskFactory,
         Duration spinWaitDurationHint,
+        ValueTaskDelaySource? delaySource,
         long count)
     {
         Ensure.IsGreaterThan( count, 0 );
         Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
-        _timestampProvider = timestampProvider;
+        _timestampProvider = timestampProvider ?? TimestampProvider.Shared;
         _interval = interval;
-        _taskFactory = taskFactory;
         _spinWaitDurationHint = spinWaitDurationHint;
+        _delaySource = delaySource is null ? DelaySource.Owned() : DelaySource.External( delaySource );
         _count = count;
     }
 
@@ -56,34 +56,29 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
         if ( IsDisposed )
             return listener;
 
-        var timer = new ReactiveTimer( _timestampProvider, _interval, _spinWaitDurationHint, _count );
-        return new EventListener( listener, subscriber, timer, _taskFactory );
+        var timer = new ReactiveTimer( _interval, _spinWaitDurationHint, _timestampProvider, _delaySource.GetSource(), _count );
+        return new EventListener( listener, subscriber, timer );
+    }
+
+    /// <inheritdoc />
+    protected override void OnDispose()
+    {
+        base.OnDispose();
+        var delaySource = _delaySource.DiscardOwnedSource();
+        delaySource?.Dispose();
     }
 
     private sealed class EventListener : DecoratedEventListener<WithInterval<long>, WithInterval<long>>
     {
         private ReactiveTimer? _timer;
 
-        internal EventListener(
-            IEventListener<WithInterval<long>> next,
-            IEventSubscriber subscriber,
-            ReactiveTimer timer,
-            TaskFactory taskFactory)
+        internal EventListener(IEventListener<WithInterval<long>> next, IEventSubscriber subscriber, ReactiveTimer timer)
             : base( next )
         {
             _timer = timer;
             var timerListener = new TimerListener( this, subscriber );
             _timer.Listen( timerListener );
-
-            taskFactory.StartNew(
-                static o =>
-                {
-                    Assume.IsNotNull( o );
-                    var t = ReinterpretCast.To<ReactiveTimer>( o );
-                    t.Run();
-                },
-                _timer,
-                TaskCreationOptions.LongRunning );
+            timer.Start();
         }
 
         public override void React(WithInterval<long> @event)

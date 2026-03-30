@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ public sealed class EventListenerWithTimestampDecorator<TEvent> : IEventListener
     /// <summary>
     /// Creates a new <see cref="EventListenerWithTimestampDecorator{TEvent}"/> instance.
     /// </summary>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
-    public EventListenerWithTimestampDecorator(ITimestampProvider timestampProvider)
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
+    public EventListenerWithTimestampDecorator(ITimestampProvider? timestampProvider)
     {
-        _timestampProvider = timestampProvider;
+        _timestampProvider = timestampProvider ?? TimestampProvider.Shared;
     }
 
     /// <inheritdoc />

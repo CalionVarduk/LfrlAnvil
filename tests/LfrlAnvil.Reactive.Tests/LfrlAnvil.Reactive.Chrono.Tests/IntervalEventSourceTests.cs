@@ -14,12 +14,10 @@ public class IntervalEventSourceTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateEventSourceWithoutSubscriptions()
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var sut = new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count );
+        var sut = new IntervalEventSource( null, interval, spinWaitDurationHint, null, count );
 
         Assertion.All(
                 sut.IsDisposed.TestFalse(),
@@ -33,13 +31,11 @@ public class IntervalEventSourceTests : TestsBase
     [InlineData( 0 )]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenIntervalIsLessThanOneTick(long ticks)
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( ticks );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
 
-        var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count ) );
+        var action = Lambda.Of( () => new IntervalEventSource( null, interval, spinWaitDurationHint, null, count ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -49,13 +45,11 @@ public class IntervalEventSourceTests : TestsBase
     [InlineData( int.MaxValue + 2L )]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenIntervalIsTooLarge(long ms)
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromMilliseconds( ms );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
 
-        var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count ) );
+        var action = Lambda.Of( () => new IntervalEventSource( null, interval, spinWaitDurationHint, null, count ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -63,13 +57,11 @@ public class IntervalEventSourceTests : TestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenSpinWaitDurationHintIsLessThanZero()
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( -1 );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
 
-        var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count ) );
+        var action = Lambda.Of( () => new IntervalEventSource( null, interval, spinWaitDurationHint, null, count ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -79,12 +71,10 @@ public class IntervalEventSourceTests : TestsBase
     [InlineData( 0 )]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(long count)
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
 
-        var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count ) );
+        var action = Lambda.Of( () => new IntervalEventSource( null, interval, spinWaitDurationHint, null, count ) );
 
         action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
@@ -93,12 +83,10 @@ public class IntervalEventSourceTests : TestsBase
     public void Listen_ShouldReturnDisposedSubscriber_WhenEventSourceIsDisposed()
     {
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        var sut = new IntervalEventSource( timestampProvider, interval, taskFactory, spinWaitDurationHint, count );
+        var sut = new IntervalEventSource( null, interval, spinWaitDurationHint, null, count );
         sut.Dispose();
 
         var subscriber = sut.Listen( listener );
@@ -115,13 +103,11 @@ public class IntervalEventSourceTests : TestsBase
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var interval = Duration.FromSeconds( 1 );
         var count = Fixture.Create<int>( x => x > 0 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( Timestamp.Zero );
         var sut = new IntervalEventSource(
-            timestampProvider,
+            null,
             interval,
-            taskFactory: Task.Factory,
             ReactiveTimer.DefaultSpinWaitDurationHint,
+            null,
             count );
 
         var subscriber = sut.Listen( listener );
@@ -132,47 +118,6 @@ public class IntervalEventSourceTests : TestsBase
                 sut.HasSubscribers.TestFalse(),
                 subscriber.IsDisposed.TestTrue(),
                 listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithInterval<long>>() ) ) )
-            .Go();
-    }
-
-    [Fact]
-    public void
-        Listen_WithCustomScheduler_ShouldCreateActiveSubscriberThatPublishesMultipleEventsInCorrectOrderAndDisposes_WhenCountIsReached()
-    {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
-        var interval = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 3
-        };
-
-        var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
-        var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = new IntervalEventSource(
-            timestampProvider,
-            interval,
-            taskFactory,
-            ReactiveTimer.DefaultSpinWaitDurationHint,
-            count: eventTimestamps.Count );
-
-        var subscriber = sut.Listen( listener );
-
-        Assertion.All(
-                subscriber.IsDisposed.TestTrue(),
-                sut.IsDisposed.TestFalse(),
-                sut.HasSubscribers.TestFalse(),
-                actualEvents.TestSequence( expectedEvents ) )
             .Go();
     }
 
@@ -190,20 +135,20 @@ public class IntervalEventSourceTests : TestsBase
             Timestamp.Zero + interval * 3
         };
 
-        var completion = new TaskCompletionSource();
+        var completion = new SafeTaskCompletionSource( completionCount: 2 );
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
         var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
         var actualEvents = new List<WithInterval<long>>();
 
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.SetResult() );
+        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.Complete() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
 
         var sut = new IntervalEventSource(
             timestampProvider,
             interval,
-            taskFactory: Task.Factory,
             ReactiveTimer.DefaultSpinWaitDurationHint,
+            null,
             count: eventTimestamps.Count );
 
         var subscriber = sut.Listen( listener );
@@ -220,7 +165,6 @@ public class IntervalEventSourceTests : TestsBase
     [Fact]
     public void Listen_ShouldCreateSubscribersThatSpawnTheirOwnTimers()
     {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
         var interval = Duration.FromTicks( 1 );
         var timestamps = new[]
         {
@@ -240,8 +184,8 @@ public class IntervalEventSourceTests : TestsBase
         var sut = new IntervalEventSource(
             timestampProvider,
             interval,
-            taskFactory,
             ReactiveTimer.DefaultSpinWaitDurationHint,
+            null,
             count: 1 );
 
         sut.Listen( firstListener );
@@ -269,7 +213,7 @@ public class IntervalEventSourceTests : TestsBase
             Timestamp.Zero + interval * 3
         };
 
-        var completion = new TaskCompletionSource();
+        var completion = new SafeTaskCompletionSource( completionCount: 2 );
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
         var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
         var actualEvents = new List<WithInterval<long>>();
@@ -277,7 +221,7 @@ public class IntervalEventSourceTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
 
-        var sut = ChronoEventSource.Interval( timestampProvider, interval );
+        var sut = ChronoEventSource.Interval( interval, timestampProvider );
         var listener = EventListener.Create<WithInterval<long>>(
             e =>
             {
@@ -285,7 +229,7 @@ public class IntervalEventSourceTests : TestsBase
                 if ( e.Event == eventTimestamps.Count - 1 )
                     sut.Dispose();
             },
-            _ => completion.SetResult() );
+            _ => completion.Complete() );
 
         sut.Listen( listener );
         await completion.Task;
@@ -299,7 +243,7 @@ public class IntervalEventSourceTests : TestsBase
         var interval = Duration.FromTicks( 1 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval, Timestamp.Zero + interval * 2 };
 
-        var completion = new TaskCompletionSource();
+        var completion = new SafeTaskCompletionSource( completionCount: 2 );
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
         var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
         var actualEvents = new List<WithInterval<long>>();
@@ -307,8 +251,8 @@ public class IntervalEventSourceTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
 
-        var sut = ChronoEventSource.Interval( timestampProvider, interval, count: eventTimestamps.Count );
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.SetResult() );
+        var sut = ChronoEventSource.Interval( interval, count: eventTimestamps.Count, timestampProvider );
+        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.Complete() );
 
         sut.Listen( listener );
         await completion.Task;
@@ -332,7 +276,7 @@ public class IntervalEventSourceTests : TestsBase
             Timestamp.Zero + interval * 3
         };
 
-        var completion = new TaskCompletionSource();
+        var completion = new SafeTaskCompletionSource( completionCount: 2 );
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
         var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
         var actualEvents = new List<WithInterval<long>>();
@@ -340,7 +284,7 @@ public class IntervalEventSourceTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
 
-        var sut = ChronoEventSource.Interval( timestampProvider, interval, spinWaitDurationHint );
+        var sut = ChronoEventSource.Interval( interval, spinWaitDurationHint, timestampProvider );
         var listener = EventListener.Create<WithInterval<long>>(
             e =>
             {
@@ -348,110 +292,7 @@ public class IntervalEventSourceTests : TestsBase
                 if ( e.Event == eventTimestamps.Count - 1 )
                     sut.Dispose();
             },
-            _ => completion.SetResult() );
-
-        sut.Listen( listener );
-        await completion.Task;
-
-        actualEvents.TestSequence( expectedEvents ).Go();
-    }
-
-    [Fact]
-    public async Task
-        Interval_WithSchedulerAndImplicitMaxCount_ThenListen_ShouldCreateActiveSubscriberThatPublishesMultipleEventsInCorrectOrder()
-    {
-        var taskFactory = new TaskFactory( TaskScheduler.Current );
-        var interval = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 3
-        };
-
-        var completion = new TaskCompletionSource();
-        var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
-        var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = ChronoEventSource.Interval( timestampProvider, interval, taskFactory );
-        var listener = EventListener.Create<WithInterval<long>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                if ( e.Event == eventTimestamps.Count - 1 )
-                    sut.Dispose();
-            },
-            _ => completion.SetResult() );
-
-        sut.Listen( listener );
-        await completion.Task;
-
-        actualEvents.TestSequence( expectedEvents ).Go();
-    }
-
-    [Fact]
-    public void Interval_WithSchedulerAndCount_ThenListen_ShouldCreateActiveSubscriberThatPublishesMultipleEventsInCorrectOrder()
-    {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
-        var interval = Duration.FromTicks( 1 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval, Timestamp.Zero + interval * 2 };
-
-        var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
-        var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = ChronoEventSource.Interval( timestampProvider, interval, taskFactory, count: eventTimestamps.Count );
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-
-        sut.Listen( listener );
-
-        actualEvents.TestSequence( expectedEvents ).Go();
-    }
-
-    [Fact]
-    public async Task
-        Interval_WithSchedulerAndSpinWaitDurationHint_ThenListen_ShouldCreateActiveSubscriberThatPublishesMultipleEventsInCorrectOrder()
-    {
-        var taskFactory = new TaskFactory( TaskScheduler.Current );
-        var interval = Duration.FromTicks( 1 );
-        var spinWaitDurationHint = Duration.FromMilliseconds( 0.5 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 3
-        };
-
-        var completion = new TaskCompletionSource();
-        var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
-        var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = ChronoEventSource.Interval( timestampProvider, interval, taskFactory, spinWaitDurationHint );
-        var listener = EventListener.Create<WithInterval<long>>(
-            e =>
-            {
-                actualEvents.Add( e );
-                if ( e.Event == eventTimestamps.Count - 1 )
-                    sut.Dispose();
-            },
-            _ => completion.SetResult() );
+            _ => completion.Complete() );
 
         sut.Listen( listener );
         await completion.Task;
@@ -465,39 +306,18 @@ public class IntervalEventSourceTests : TestsBase
         var timeout = Duration.FromTicks( 1 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + timeout };
 
-        var completion = new TaskCompletionSource();
+        var completion = new SafeTaskCompletionSource( completionCount: 2 );
         var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + timeout, timeout );
         var actualEvents = new List<WithInterval<long>>();
 
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
 
-        var sut = ChronoEventSource.Timeout( timestampProvider, timeout );
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.TrySetResult() );
+        var sut = ChronoEventSource.Timeout( timeout, timestampProvider );
+        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add, _ => completion.Complete() );
 
         sut.Listen( listener );
         await completion.Task;
-
-        actualEvents.TestSequence( [ expectedEvent ] ).Go();
-    }
-
-    [Fact]
-    public void Timeout_WithScheduler_ThenListen_ShouldCreateActiveSubscriberThatPublishesSingleEvent()
-    {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
-        var timeout = Duration.FromTicks( 1 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + timeout };
-
-        var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + timeout, timeout );
-        var actualEvents = new List<WithInterval<long>>();
-
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( timestamps );
-
-        var sut = ChronoEventSource.Timeout( timestampProvider, timeout, taskFactory );
-        var listener = EventListener.Create<WithInterval<long>>( actualEvents.Add );
-
-        sut.Listen( listener );
 
         actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }

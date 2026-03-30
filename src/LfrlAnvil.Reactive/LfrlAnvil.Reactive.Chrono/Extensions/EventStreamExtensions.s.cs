@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Decorators;
 
@@ -33,14 +33,14 @@ public static class EventStreamExtensions
     /// Decorates the event stream with <see cref="EventListenerWithTimestampDecorator{TEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<WithTimestamp<TEvent>> WithTimestamp<TEvent>(
         this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider)
+        ITimestampProvider? timestampProvider = null)
     {
         var decorator = new EventListenerWithTimestampDecorator<TEvent>( timestampProvider );
         return source.Decorate( decorator );
@@ -50,14 +50,14 @@ public static class EventStreamExtensions
     /// Decorates the event stream with <see cref="EventListenerWithIntervalDecorator{TEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<WithInterval<TEvent>> WithInterval<TEvent>(
         this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider)
+        ITimestampProvider? timestampProvider = null)
     {
         var decorator = new EventListenerWithIntervalDecorator<TEvent>( timestampProvider );
         return source.Decorate( decorator );
@@ -82,8 +82,9 @@ public static class EventStreamExtensions
     /// Decorates the event stream with <see cref="EventListenerDelayDecorator{TEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="delaySource">Value task delay source to use for scheduling delays.</param>
     /// <param name="delay">Event delay.</param>
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -93,19 +94,21 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<WithInterval<TEvent>> Delay<TEvent>(
         this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider,
-        Duration delay)
+        ValueTaskDelaySource delaySource,
+        Duration delay,
+        ITimestampProvider? timestampProvider = null)
     {
-        return source.Delay( timestampProvider, delay, ReactiveTimer.DefaultSpinWaitDurationHint );
+        return source.Delay( delaySource, delay, ReactiveTimer.DefaultSpinWaitDurationHint, timestampProvider );
     }
 
     /// <summary>
     /// Decorates the event stream with <see cref="EventListenerDelayDecorator{TEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="delaySource">Value task delay source to use for scheduling delays.</param>
     /// <param name="delay">Event delay.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -116,66 +119,12 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEventStream<WithInterval<TEvent>> Delay<TEvent>(
         this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider,
+        ValueTaskDelaySource delaySource,
         Duration delay,
-        Duration spinWaitDurationHint)
+        Duration spinWaitDurationHint,
+        ITimestampProvider? timestampProvider = null)
     {
-        var decorator = new EventListenerDelayDecorator<TEvent>(
-            timestampProvider,
-            delay,
-            taskFactory: Task.Factory,
-            spinWaitDurationHint );
-
-        return source.Decorate( decorator );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerDelayDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
-    /// <param name="delay">Event delay.</param>
-    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">
-    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
-    /// </exception>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<WithInterval<TEvent>> Delay<TEvent>(
-        this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider,
-        Duration delay,
-        TaskFactory taskFactory)
-    {
-        return source.Delay( timestampProvider, delay, taskFactory, ReactiveTimer.DefaultSpinWaitDurationHint );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerDelayDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
-    /// <param name="delay">Event delay.</param>
-    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
-    /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">
-    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
-    /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
-    /// </exception>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<WithInterval<TEvent>> Delay<TEvent>(
-        this IEventStream<TEvent> source,
-        ITimestampProvider timestampProvider,
-        Duration delay,
-        TaskFactory taskFactory,
-        Duration spinWaitDurationHint)
-    {
-        var decorator = new EventListenerDelayDecorator<TEvent>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
+        var decorator = new EventListenerDelayDecorator<TEvent>( delaySource, delay, spinWaitDurationHint, timestampProvider );
         return source.Decorate( decorator );
     }
 

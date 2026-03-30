@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Decorators;
 using LfrlAnvil.Reactive.Chrono.Extensions;
@@ -12,13 +13,11 @@ public class EventListenerDelayDecoratorTests : TestsBase
     [Fact]
     public void Decorate_ShouldNotDisposeTheSubscriber()
     {
-        var taskFactory = new TaskFactory( TaskScheduler.Current );
         var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
+        var sut = new EventListenerDelayDecorator<int>( ValueTaskDelaySource.Start(), delay, spinWaitDurationHint, null );
 
         _ = sut.Decorate( next, subscriber );
 
@@ -44,10 +43,10 @@ public class EventListenerDelayDecoratorTests : TestsBase
 
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerDelayDecorator<int>(
-            timestampProvider,
+            ValueTaskDelaySource.Start(),
             delay,
-            taskFactory: Task.Factory,
-            ReactiveTimer.DefaultSpinWaitDurationHint );
+            ReactiveTimer.DefaultSpinWaitDurationHint,
+            timestampProvider );
 
         var listener = sut.Decorate( next, subscriber );
 
@@ -57,45 +56,17 @@ public class EventListenerDelayDecoratorTests : TestsBase
         actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 
-    [Fact]
-    public void Decorate_WithScheduler_ShouldCreateListenerThatDelaysEmissionsOfEvents()
-    {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
-        var sourceEvent = Fixture.Create<int>();
-        var delay = Duration.FromMilliseconds( 1 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( Timestamp.Zero, Timestamp.Zero + delay );
-
-        var expectedEvent = new WithInterval<int>( sourceEvent, Timestamp.Zero + delay, delay );
-        var actualEvents = new List<WithInterval<int>>();
-        var next = EventListener.Create<WithInterval<int>>( actualEvents.Add );
-
-        var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerDelayDecorator<int>(
-            timestampProvider,
-            delay,
-            taskFactory,
-            ReactiveTimer.DefaultSpinWaitDurationHint );
-
-        var listener = sut.Decorate( next, subscriber );
-
-        listener.React( sourceEvent );
-
-        actualEvents.TestSequence( [ expectedEvent ] ).Go();
-    }
-
     [Theory]
     [InlineData( DisposalSource.EventSource )]
     [InlineData( DisposalSource.Subscriber )]
     public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
     {
-        var taskFactory = new TaskFactory( TaskScheduler.Current );
         var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();
         var subscriber = Substitute.For<IEventSubscriber>();
-        var sut = new EventListenerDelayDecorator<int>( timestampProvider, delay, taskFactory, spinWaitDurationHint );
+        var sut = new EventListenerDelayDecorator<int>( ValueTaskDelaySource.Start(), delay, spinWaitDurationHint, timestampProvider );
         var listener = sut.Decorate( next, subscriber );
 
         listener.OnDispose( source );
@@ -121,33 +92,11 @@ public class EventListenerDelayDecoratorTests : TestsBase
         } );
 
         var sut = new EventPublisher<int>();
-        var decorated = sut.Delay( timestampProvider, delay );
+        var decorated = sut.Delay( ValueTaskDelaySource.Start(), delay, timestampProvider );
         decorated.Listen( next );
 
         sut.Publish( sourceEvent );
         await completion.Task;
-
-        actualEvents.TestSequence( [ expectedEvent ] ).Go();
-    }
-
-    [Fact]
-    public void DelayExtension_WithScheduler_ShouldCreateListenerThatDelaysEmissionsOfEvents()
-    {
-        var taskFactory = new TaskFactory( new SynchronousTaskScheduler() );
-        var sourceEvent = Fixture.Create<int>();
-        var delay = Duration.FromMilliseconds( 1 );
-        var timestampProvider = Substitute.For<ITimestampProvider>();
-        timestampProvider.GetNow().Returns( Timestamp.Zero, Timestamp.Zero + delay );
-
-        var expectedEvent = new WithInterval<int>( sourceEvent, Timestamp.Zero + delay, delay );
-        var actualEvents = new List<WithInterval<int>>();
-        var next = EventListener.Create<WithInterval<int>>( actualEvents.Add );
-
-        var sut = new EventPublisher<int>();
-        var decorated = sut.Delay( timestampProvider, delay, taskFactory );
-        decorated.Listen( next );
-
-        sut.Publish( sourceEvent );
 
         actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }

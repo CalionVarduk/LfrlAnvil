@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
 
@@ -28,41 +28,41 @@ namespace LfrlAnvil.Reactive.Chrono.Decorators;
 /// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorator<TEvent, WithInterval<TEvent>>
 {
-    private readonly ITimestampProvider _timestampProvider;
+    private readonly ValueTaskDelaySource _delaySource;
+    private readonly ITimestampProvider? _timestampProvider;
     private readonly Duration _delay;
-    private readonly TaskFactory _taskFactory;
     private readonly Duration _spinWaitDurationHint;
 
     /// <summary>
     /// Creates a new <see cref="EventListenerDelayDecorator{TEvent}"/> instance,
     /// </summary>
-    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="delaySource">Value task delay source to use for scheduling delays.</param>
     /// <param name="delay">Event delay.</param>
-    /// <param name="taskFactory">Task factory used for creating and underlying timer task.</param>
     /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
+    /// <param name="timestampProvider">Optional timestamp provider to use for time tracking.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
     /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
     /// </exception>
     public EventListenerDelayDecorator(
-        ITimestampProvider timestampProvider,
+        ValueTaskDelaySource delaySource,
         Duration delay,
-        TaskFactory? taskFactory,
-        Duration spinWaitDurationHint)
+        Duration spinWaitDurationHint,
+        ITimestampProvider? timestampProvider)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
+        _delaySource = delaySource;
         _timestampProvider = timestampProvider;
         _delay = delay;
-        _taskFactory = taskFactory ?? Task.Factory;
         _spinWaitDurationHint = spinWaitDurationHint;
     }
 
     /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber subscriber)
     {
-        var timeout = new IntervalEventSource( _timestampProvider, _delay, _taskFactory, _spinWaitDurationHint, count: 1 );
+        var timeout = new IntervalEventSource( _timestampProvider, _delay, _spinWaitDurationHint, _delaySource, count: 1 );
         return new EventListener( listener, timeout );
     }
 

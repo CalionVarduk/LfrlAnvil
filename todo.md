@@ -76,7 +76,6 @@ Low priority/probably won't do:
 
 ### Reactive: Refinements
 
-- use ValueTaskDelaySource in ReactiveTimer
 - refactor schedulers to use ValueTaskDelaySource
   - also, their disposal should wait for disposal of all currently running tasks
   - with some timeout
