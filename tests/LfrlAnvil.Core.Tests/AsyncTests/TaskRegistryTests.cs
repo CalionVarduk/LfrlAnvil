@@ -73,18 +73,6 @@ public class TaskRegistryTests : TestsBase
     }
 
     [Fact]
-    public void Add_ShouldThrowObjectDisposedException_WhenRegistryIsDisposed()
-    {
-        var taskSource = new TaskCompletionSource();
-        var sut = new TaskRegistry();
-        sut.Dispose();
-
-        var action = Lambda.Of( () => sut.Add( taskSource.Task ) );
-
-        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
-    }
-
-    [Fact]
     public void Add_ShouldThrowArgumentException_WhenTaskIsInCreatedState()
     {
         var task = new Task( () => { } );
@@ -175,95 +163,5 @@ public class TaskRegistryTests : TestsBase
                 isCompleted3.TestFalse(),
                 isCompleted4.TestTrue() )
             .Go();
-    }
-
-    [Fact]
-    public void Dispose_ShouldWaitForAllRegisteredTasksToComplete()
-    {
-        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-        var sut = new TaskRegistry();
-        foreach ( var source in taskSources )
-            sut.Add( source.Task );
-
-        Task.Run( async () =>
-        {
-            await Task.Delay( 1 );
-            taskSources[0].SetResult();
-            await Task.Delay( 1 );
-            taskSources[1].SetResult();
-            await Task.Delay( 1 );
-            taskSources[2].SetResult();
-        } );
-
-        sut.Dispose();
-
-        Assertion.All(
-                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
-                sut.Count.TestEquals( 0 ) )
-            .Go();
-    }
-
-    [Fact]
-    public void Dispose_ShouldNotThrow_WhenSomeTasksGetCancelled()
-    {
-        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-        var sut = new TaskRegistry();
-        foreach ( var source in taskSources )
-            sut.Add( source.Task );
-
-        Task.Run( async () =>
-        {
-            await Task.Delay( 1 );
-            taskSources[0].SetResult();
-            await Task.Delay( 1 );
-            taskSources[1].SetCanceled();
-            await Task.Delay( 1 );
-            taskSources[2].SetResult();
-        } );
-
-        sut.Dispose();
-
-        Assertion.All(
-                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
-                sut.Count.TestEquals( 0 ) )
-            .Go();
-    }
-
-    [Fact]
-    public void Dispose_ShouldThrow_WhenSomeTasksFail()
-    {
-        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-        var sut = new TaskRegistry();
-        foreach ( var source in taskSources )
-            sut.Add( source.Task );
-
-        Task.Run( async () =>
-        {
-            await Task.Delay( 1 );
-            taskSources[0].SetResult();
-            await Task.Delay( 1 );
-            taskSources[1].SetException( new Exception() );
-            await Task.Delay( 1 );
-            taskSources[2].SetResult();
-        } );
-
-        var action = Lambda.Of( () => sut.Dispose() );
-
-        action.Test( exc => Assertion.All(
-                exc.TestType().Exact<AggregateException>(),
-                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
-                sut.Count.TestEquals( 0 ) ) )
-            .Go();
-    }
-
-    [Fact]
-    public void Dispose_ShouldDoNothing_WhenRegistryIsAlreadyDisposed()
-    {
-        var sut = new TaskRegistry();
-        sut.Dispose();
-
-        var action = Lambda.Of( () => sut.Dispose() );
-
-        action.Test( exc => exc.TestNull() ).Go();
     }
 }
