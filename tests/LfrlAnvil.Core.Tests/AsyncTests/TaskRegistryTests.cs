@@ -141,14 +141,14 @@ public class TaskRegistryTests : TestsBase
     }
 
     [Fact]
-    public void WaitForAll_ShouldReturnTaskThatCompletesWhenAllRegisteredTasksComplete()
+    public void Tasks_ShouldReturnAllTasks()
     {
         var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
         var sut = new TaskRegistry();
         foreach ( var source in taskSources )
             sut.Add( source.Task );
 
-        var result = sut.WaitForAll();
+        var result = Task.WhenAll( sut.Tasks );
         var isCompleted1 = result.IsCompleted;
         taskSources[0].SetResult();
         var isCompleted2 = result.IsCompleted;

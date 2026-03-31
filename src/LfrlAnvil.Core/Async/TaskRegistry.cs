@@ -44,6 +44,11 @@ public sealed class TaskRegistry
     public int Count => _tasks.Count;
 
     /// <summary>
+    /// Returns all currently stored in-progress <see cref="Task"/> instances.
+    /// </summary>
+    public Task[] Tasks => _tasks.Keys.ToArray();
+
+    /// <summary>
     /// Registers provided <paramref name="task"/> in this registry and stores it until it gets completed.
     /// Does nothing when <paramref name="task"/> is already completed.
     /// </summary>
@@ -77,19 +82,5 @@ public sealed class TaskRegistry
     public bool Contains(Task task)
     {
         return _tasks.ContainsKey( task );
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="Task"/> that allows to wait for completion of all currently stored tasks in this registry.
-    /// </summary>
-    /// <returns><see cref="Task"/> instance that allows to wait for completion of all currently stored tasks in this registry.</returns>
-    /// <remarks>
-    /// Tasks added to this registry after this method invocation will not be dynamically appended to the returned task.
-    /// See <see cref="Task.WhenAll(Task[])"/> for more information.
-    /// </remarks>
-    [Pure]
-    public Task WaitForAll()
-    {
-        return Task.WhenAll( _tasks.Keys.ToArray() );
     }
 }
