@@ -99,7 +99,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     /// <remarks>All scheduled delays will be prematurely completed with <see cref="ValueTaskDelayResult.Disposed"/> result.</remarks>
     public void Dispose()
     {
-        DisposeAsync().AsTask().Wait();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>

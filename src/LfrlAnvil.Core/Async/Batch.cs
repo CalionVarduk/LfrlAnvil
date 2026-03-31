@@ -88,7 +88,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        DisposeAsync().AsTask().Wait();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />

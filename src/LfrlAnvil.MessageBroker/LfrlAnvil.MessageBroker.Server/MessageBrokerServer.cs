@@ -223,7 +223,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        DisposeAsync().AsTask().Wait();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />

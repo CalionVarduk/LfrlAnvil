@@ -139,10 +139,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         {
             try
             {
-                Task.WhenAll( taskContainers.Select( c => c.WaitForDisposalAsync( taskDisposalTimeout ) ) )
-                    .ConfigureAwait( false )
-                    .GetAwaiter()
-                    .GetResult();
+                Task.WhenAll( taskContainers.Select( c => c.WaitForDisposalAsync( taskDisposalTimeout ) ) ).GetAwaiter().GetResult();
             }
             catch ( Exception exc )
             {

@@ -802,7 +802,7 @@ public partial class MessageBrokerServerTests
             using var storage = StorageScope.Create();
 
             var endSource = new SafeTaskCompletionSource( completionCount: 3 );
-            var disposalSource = new SafeTaskCompletionSource( timeout: TimeSpan.FromHours( 1 ) );
+            var disposalSource = new SafeTaskCompletionSource();
             var deactivated = Atomic.Create( false );
 
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );

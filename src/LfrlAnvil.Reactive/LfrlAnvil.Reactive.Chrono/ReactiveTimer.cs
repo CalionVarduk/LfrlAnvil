@@ -176,7 +176,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <inheritdoc />
     public override void Dispose()
     {
-        DisposeAsync().AsTask().ConfigureAwait( false ).GetAwaiter().GetResult();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />

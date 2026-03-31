@@ -58,10 +58,10 @@ public class MessageBrokerStreamTests : TestsBase, IClassFixture<SharedResourceF
             c.SendBindPublisherRequest( "c" );
             c.ReadPublisherBoundResponse();
             c.SendPushMessage( 1, [ 1 ] );
+            c.ReadMessageAcceptedResponse();
             c.SendPushMessage( 1, [ 2, 3 ] );
+            c.ReadMessageAcceptedResponse();
             c.SendPushMessage( 1, [ 4, 5, 6 ] );
-            c.ReadMessageAcceptedResponse();
-            c.ReadMessageAcceptedResponse();
             c.ReadMessageAcceptedResponse();
         } );
 
