@@ -80,7 +80,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
                 }
                 catch
                 {
-                    source.DisposeAsyncCore( ignoreTask: true ).AsTask().Wait();
+                    _ = source.DisposeCore();
                 }
             },
             result,
@@ -104,9 +104,11 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
 
     /// <inheritdoc/>
     /// <remarks>All scheduled delays will be prematurely completed with <see cref="ValueTaskDelayResult.Disposed"/> result.</remarks>
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return DisposeAsyncCore( ignoreTask: false );
+        var task = DisposeCore();
+        if ( task is not null )
+            await task.ConfigureAwait( false );
     }
 
     /// <summary>
@@ -351,16 +353,17 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
         }
     }
 
-    private async ValueTask DisposeAsyncCore(bool ignoreTask)
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Task? DisposeCore()
     {
         Task? task;
         using ( AcquireLock() )
         {
             if ( _isDisposed )
-                return;
+                return null;
 
             _isDisposed = true;
-            task = ignoreTask ? null : _task;
+            task = _task;
             _task = null;
 
             Clear();
@@ -368,8 +371,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
             _reset.TryDispose();
         }
 
-        if ( task is not null )
-            await task.ConfigureAwait( false );
+        return task;
     }
 
     [Flags]

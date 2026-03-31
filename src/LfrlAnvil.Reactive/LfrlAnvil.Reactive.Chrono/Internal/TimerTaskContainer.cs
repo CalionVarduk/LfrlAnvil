@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,12 @@ using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
-internal sealed class TimerTaskContainer<TKey> : IDisposable
+internal sealed class TimerTaskContainer<TKey>
     where TKey : notnull
 {
     private readonly Action<Task> _onActiveTaskCompleted;
     private readonly ITimerTask<TKey> _source;
+    private TaskCompletionSource? _disposalCompletion;
     private TimerTaskCollection<TKey>? _owner;
     private ReactiveTaskInfo _info;
     private Timestamp? _lastOwnerTimestamp;
@@ -75,7 +76,7 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
     internal TKey Key => _source.Key;
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void Dispose()
+    internal void BeginDispose(Duration disposalTimeout)
     {
         using ( ExclusiveLock.Enter( this ) )
         {
@@ -83,9 +84,22 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
                 return;
 
             _disposed = true;
+
             if ( ! _info.HasActiveInvocations )
                 FinalizeDisposal();
+            else if ( disposalTimeout > Duration.Zero )
+                _disposalCompletion = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Task WaitForDisposalAsync(Duration timeout)
+    {
+        TaskCompletionSource? source;
+        using ( ExclusiveLock.Enter( this ) )
+            source = _disposalCompletion;
+
+        return source?.Task.WaitAsync( timeout ) ?? Task.CompletedTask;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -236,7 +250,11 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
         }
 
         if ( _disposed && ! _info.HasActiveInvocations )
+        {
             FinalizeDisposal();
+            _disposalCompletion?.TrySetResult();
+            _disposalCompletion = null;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

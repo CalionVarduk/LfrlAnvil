@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,12 @@
 // limitations under the License.
 
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
@@ -83,45 +87,70 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
 
     public override void OnDispose(DisposalSource source)
     {
+        var errors = Chain<Exception>.Empty;
+        TimerTaskContainer<TKey>[] taskContainers;
+        CancellationTokenSource cancellationTokenSource;
+        Duration taskDisposalTimeout;
+
         using ( ExclusiveLock.Enter( this ) )
         {
             if ( _owner is null )
                 return;
 
-            var errors = Chain<Exception>.Empty;
-            var owner = _owner;
+            taskContainers = _taskContainers;
+            _taskContainers = Array.Empty<TimerTaskContainer<TKey>>();
+            cancellationTokenSource = _owner.CancellationTokenSource;
+            taskDisposalTimeout = _owner.TaskDisposalTimeout;
+            _owner.Subscriber = null;
             _owner = null;
-            owner.Subscriber = null;
+        }
 
-            foreach ( var container in _taskContainers )
-            {
-                try
-                {
-                    container.Dispose();
-                }
-                catch ( Exception exc )
-                {
-                    errors = errors.Extend( exc );
-                }
-            }
-
+        foreach ( var container in taskContainers )
+        {
             try
             {
-                owner.CancellationTokenSource.Cancel();
+                container.BeginDispose( taskDisposalTimeout );
             }
             catch ( Exception exc )
             {
                 errors = errors.Extend( exc );
             }
-            finally
-            {
-                owner.CancellationTokenSource.Dispose();
-            }
-
-            _taskContainers = Array.Empty<TimerTaskContainer<TKey>>();
-
-            if ( errors.Count > 0 )
-                throw new AggregateException( errors );
         }
+
+        try
+        {
+            cancellationTokenSource.Cancel();
+        }
+        catch ( Exception exc )
+        {
+            errors = errors.Extend( exc );
+        }
+
+        try
+        {
+            cancellationTokenSource.Dispose();
+        }
+        catch ( Exception exc )
+        {
+            errors = errors.Extend( exc );
+        }
+
+        if ( taskDisposalTimeout > Duration.Zero )
+        {
+            try
+            {
+                Task.WhenAll( taskContainers.Select( c => c.WaitForDisposalAsync( taskDisposalTimeout ) ) )
+                    .ConfigureAwait( false )
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            catch ( Exception exc )
+            {
+                errors = errors.Extend( exc );
+            }
+        }
+
+        if ( errors.Count > 0 )
+            throw errors.Consolidate()!;
     }
 }

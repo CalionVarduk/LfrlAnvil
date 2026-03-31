@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface ITimerTask<TKey> : IDisposable
 
     /// <summary>
     /// Specifies the <see cref="Timestamp"/> of the next task invocation.
-    /// Lack of value means that the task will be invoked on every event stream's event.
+    /// Lack of value means that the task will be invoked on every stream's event.
     /// </summary>
     Timestamp? NextInvocationTimestamp { get; }
 

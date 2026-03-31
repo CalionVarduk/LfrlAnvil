@@ -134,6 +134,9 @@ public static class EventStreamExtensions
     /// </summary>
     /// <param name="source">Source event stream.</param>
     /// <param name="tasks">Collection of <see cref="ITimerTask{TKey}"/> instances to register.</param>
+    /// <param name="taskDisposalTimeout">
+    /// Max time the disposal of timer tasks will wait for their invocations to complete. Equal to <see cref="Duration.Zero"/> by default.
+    /// </param>
     /// <typeparam name="TKey">Task key type.</typeparam>
     /// <returns>New <see cref="TimerTaskCollection{TKey}"/> instance.</returns>
     /// <exception cref="ArgumentException">When task keys are not unique.</exception>
@@ -141,9 +144,10 @@ public static class EventStreamExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TimerTaskCollection<TKey> RegisterTasks<TKey>(
         this IEventStream<WithInterval<long>> source,
-        IEnumerable<ITimerTask<TKey>> tasks)
+        IEnumerable<ITimerTask<TKey>> tasks,
+        Duration taskDisposalTimeout = default)
         where TKey : notnull
     {
-        return new TimerTaskCollection<TKey>( source, tasks );
+        return new TimerTaskCollection<TKey>( source, tasks, taskDisposalTimeout );
     }
 }

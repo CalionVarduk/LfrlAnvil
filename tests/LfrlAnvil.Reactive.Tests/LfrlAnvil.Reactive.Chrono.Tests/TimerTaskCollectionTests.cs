@@ -1024,6 +1024,43 @@ public class TimerTaskCollectionTests : TestsBase
     }
 
     [Fact]
+    public void Dispose_ShouldDisposeAllTasksCorrectly_AndRethrowAnyExceptionsAtTheEnd_WithTaskDisposalTimeout()
+    {
+        var timestamp = Timestamp.Zero;
+        var task = new TimerTask(
+            "foo",
+            onInvoke: (_, _, _, _) => Task.Delay( 100 ) );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        var sut = source.RegisterTasks( new[] { task }, taskDisposalTimeout: Duration.FromMilliseconds( 15 ) );
+        PublishEvents( source, timestamp );
+
+        var action = Lambda.Of( () => sut.Dispose() );
+
+        action.Test( exc => Assertion.All(
+                exc.TestType().Exact<TimeoutException>(),
+                task.IsDisposed.TestFalse() ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Dispose_ShouldDisposeAllTasksCorrectly_WithTaskDisposalTimeout()
+    {
+        var timestamp = Timestamp.Zero;
+        var task = new TimerTask(
+            "foo",
+            onInvoke: (_, _, _, _) => Task.Delay( 15 ) );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        var sut = source.RegisterTasks( new[] { task }, taskDisposalTimeout: Duration.FromMilliseconds( 100 ) );
+        PublishEvents( source, timestamp );
+
+        sut.Dispose();
+
+        task.IsDisposed.TestTrue().Go();
+    }
+
+    [Fact]
     public void SourceDisposal_FromTaskInvocation_ShouldDisposeSourceAndFinishCurrentInvocation()
     {
         var timestamp = Timestamp.Zero;

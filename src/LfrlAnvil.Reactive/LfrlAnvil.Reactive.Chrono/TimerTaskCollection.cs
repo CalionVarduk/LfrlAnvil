@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
 
@@ -33,16 +35,21 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
     internal readonly CancellationTokenSource CancellationTokenSource;
     internal IEventSubscriber? Subscriber;
     private readonly TimerTaskCollectionListener<TKey>? _listener;
-    private readonly Dictionary<TKey, TimerTaskContainer<TKey>> _taskContainersByKey;
+    private readonly FrozenDictionary<TKey, TimerTaskContainer<TKey>> _taskContainersByKey;
 
-    internal TimerTaskCollection(IEventStream<WithInterval<long>> stream, IEnumerable<ITimerTask<TKey>> tasks)
+    internal TimerTaskCollection(
+        IEventStream<WithInterval<long>> stream,
+        IEnumerable<ITimerTask<TKey>> tasks,
+        Duration taskDisposalTimeout)
     {
+        TaskDisposalTimeout = taskDisposalTimeout.Max( Duration.Zero );
+
         CancellationTokenSource = new CancellationTokenSource();
         var taskContainers = tasks.Select( t => new TimerTaskContainer<TKey>( this, t ) ).ToArray();
 
         if ( taskContainers.Length == 0 )
         {
-            _taskContainersByKey = new Dictionary<TKey, TimerTaskContainer<TKey>>();
+            _taskContainersByKey = FrozenDictionary<TKey, TimerTaskContainer<TKey>>.Empty;
             CancellationTokenSource.Dispose();
         }
         else
@@ -50,7 +57,7 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
             _listener = new TimerTaskCollectionListener<TKey>( this, taskContainers );
             try
             {
-                _taskContainersByKey = taskContainers.ToDictionary( static c => c.Key );
+                _taskContainersByKey = taskContainers.ToFrozenDictionary( static c => c.Key );
                 Subscriber = stream.Listen( _listener );
             }
             catch
@@ -61,6 +68,11 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
             }
         }
     }
+
+    /// <summary>
+    /// Max time the disposal of timer tasks will wait for their invocations to complete.
+    /// </summary>
+    public Duration TaskDisposalTimeout { get; }
 
     /// <summary>
     /// First <see cref="Timestamp"/> of an event emitted by the source event stream.
