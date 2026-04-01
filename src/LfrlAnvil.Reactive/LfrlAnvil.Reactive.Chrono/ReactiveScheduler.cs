@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
+using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Collections;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Internal;
@@ -26,60 +29,63 @@ using LfrlAnvil.Reactive.Chrono.Internal;
 namespace LfrlAnvil.Reactive.Chrono;
 
 /// <inheritdoc cref="IReactiveScheduler{TKey}" />
-public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
+public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     where TKey : notnull
 {
+    private static Duration MaxDelay => Duration.FromMilliseconds( int.MaxValue );
+
     private readonly DictionaryHeap<TKey, ReactiveSchedulerEntry<TKey>> _queue;
-    private readonly ManualResetEventSlim _reset;
-    private InterlockedEnum<ReactiveSchedulerState> _state;
+    private readonly TaskCompletionSource _disposed;
+    private DelaySource _delaySource;
+    private AsyncManualResetEvent _reset;
     private Timestamp _nextEventTimestamp;
+    private Task? _task;
+    private ReactiveSchedulerState _state;
 
     /// <summary>
     /// Creates a new empty <see cref="ReactiveScheduler{TKey}"/> instance.
     /// </summary>
-    /// <param name="timestamps"><see cref="ITimestampProvider"/> instance used for time tracking.</param>
+    /// <param name="timestamps">Optional <see cref="ITimestampProvider"/> instance used for time tracking.</param>
+    /// <param name="delaySource">Optional value task delay source to use for scheduling delays.</param>
     /// <param name="keyComparer">Key equality comparer. Equal to <see cref="EqualityComparer{T}.Default"/> by default.</param>
-    /// <param name="defaultInterval">
-    /// Maximum <see cref="Duration"/> to hang the underlying time tracking mechanism for. Equal to <b>1 hour</b> by default.
-    /// </param>
     /// <param name="spinWaitDurationHint">
     /// <see cref="SpinWait"/> duration hint for the underlying time tracking mechanism. Equal to <b>1 microsecond</b> by default.
     /// </param>
-    /// <exception cref="ArgumentOutOfRangeException">
-    /// When <paramref name="defaultInterval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
-    /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
-    /// </exception>
+    /// <param name="taskDisposalTimeout">
+    /// Max time the disposal of scheduled tasks will wait for their invocations to complete.
+    /// Equal to <see cref="Duration.Zero"/> by default.
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException"> When <paramref name="spinWaitDurationHint"/> is less than <b>0</b>. </exception>
     public ReactiveScheduler(
-        ITimestampProvider timestamps,
+        ITimestampProvider? timestamps = null,
+        ValueTaskDelaySource? delaySource = null,
         IEqualityComparer<TKey>? keyComparer = null,
-        Duration? defaultInterval = null,
-        Duration? spinWaitDurationHint = null)
+        Duration? spinWaitDurationHint = null,
+        Duration taskDisposalTimeout = default)
     {
-        if ( defaultInterval is not null )
-            Ensure.IsInRange( defaultInterval.Value, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-
         if ( spinWaitDurationHint is not null )
             Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint.Value, Duration.Zero );
 
-        _state = new InterlockedEnum<ReactiveSchedulerState>( ReactiveSchedulerState.Created );
-        DefaultInterval = defaultInterval ?? Duration.FromHours( 1 );
+        _state = ReactiveSchedulerState.Created;
+        TaskDisposalTimeout = taskDisposalTimeout.Max( Duration.Zero );
         SpinWaitDurationHint = spinWaitDurationHint ?? ReactiveTimer.DefaultSpinWaitDurationHint;
-        Timestamps = timestamps;
+        Timestamps = timestamps ?? TimestampProvider.Shared;
 
         _queue = new DictionaryHeap<TKey, ReactiveSchedulerEntry<TKey>>(
             keyComparer ?? EqualityComparer<TKey>.Default,
             Comparer<ReactiveSchedulerEntry<TKey>>.Default );
 
         _nextEventTimestamp = new Timestamp( long.MinValue );
-        _reset = new ManualResetEventSlim( false );
+        _delaySource = delaySource is null ? DelaySource.Owned() : DelaySource.External( delaySource );
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         StartTimestamp = Timestamps.GetNow();
     }
 
     /// <inheritdoc />
-    public Timestamp StartTimestamp { get; }
+    public Duration TaskDisposalTimeout { get; }
 
     /// <inheritdoc />
-    public Duration DefaultInterval { get; }
+    public Timestamp StartTimestamp { get; }
 
     /// <inheritdoc />
     public Duration SpinWaitDurationHint { get; }
@@ -91,7 +97,14 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public IEqualityComparer<TKey> KeyComparer => _queue.KeyComparer;
 
     /// <inheritdoc />
-    public ReactiveSchedulerState State => _state.Value;
+    public ReactiveSchedulerState State
+    {
+        get
+        {
+            using ( AcquireScheduleLock() )
+                return _state;
+        }
+    }
 
     /// <inheritdoc />
     public IReadOnlyCollection<TKey> TaskKeys
@@ -116,29 +129,28 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public void Dispose()
     {
-        var toRemove = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
-        if ( _state.Write( ReactiveSchedulerState.Disposed, ReactiveSchedulerState.Created ) )
-        {
-            using ( AcquireScheduleLock() )
-            {
-                _reset.Dispose();
-                DisposeAll( ref toRemove );
-            }
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
 
-            RemoveAll( toRemove );
-            return;
-        }
-
-        if ( ! _state.Write( ReactiveSchedulerState.Stopping, ReactiveSchedulerState.Running ) )
-            return;
-
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        TaskCompletionSource? disposed = null;
         using ( AcquireScheduleLock() )
         {
-            _reset.Set();
-            DisposeAll( ref toRemove );
+            if ( _state >= ReactiveSchedulerState.Disposing )
+                disposed = _disposed;
+            else
+                _state = ReactiveSchedulerState.Disposing;
         }
 
-        RemoveAll( toRemove );
+        if ( disposed is not null )
+        {
+            await disposed.Task.ConfigureAwait( false );
+            return;
+        }
+
+        await DisposeAsyncCore().ConfigureAwait( false );
     }
 
     /// <inheritdoc />
@@ -161,10 +173,29 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     }
 
     /// <inheritdoc />
-    public void Start()
+    public bool Start()
     {
-        if ( _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
-            RunCore();
+        using ( AcquireScheduleLock() )
+        {
+            if ( _state != ReactiveSchedulerState.Created )
+                return false;
+
+            Assume.IsNull( _task );
+            Assume.Equals( _reset, default );
+
+            _state = ReactiveSchedulerState.Running;
+            var delaySource = _delaySource.GetSource();
+            _reset = delaySource.GetResetEvent();
+        }
+
+        var task = RunCore();
+        using ( AcquireScheduleLock() )
+        {
+            if ( _state == ReactiveSchedulerState.Running )
+                _task = task;
+        }
+
+        return true;
     }
 
     /// <inheritdoc />
@@ -276,18 +307,27 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
                 _queue.Replace( key, entry.AsDisposed() );
         }
 
-        entry.Container.Dispose();
+        entry.Container.BeginDispose( TaskDisposalTimeout );
         return true;
     }
 
     /// <inheritdoc />
     public void Clear()
     {
-        ListSlim<ReactiveSchedulerEntry<TKey>> toRemove = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
+        ReactiveSchedulerEntry<TKey>[] entries;
         using ( AcquireScheduleLock() )
-            DisposeAll( ref toRemove );
+        {
+            if ( _state >= ReactiveSchedulerState.Disposing )
+                return;
 
-        RemoveAll( toRemove );
+            entries = _queue.ToArray();
+            MarkEntriesAsDisposed( entries );
+        }
+
+        var errors = Chain<Exception>.Empty;
+        BeginDisposing( entries, ref errors );
+        if ( errors.Count > 0 )
+            throw errors.Consolidate()!;
     }
 
     private bool TrySchedule(IScheduleTask<TKey> task, Timestamp timestamp, Duration interval, int repetitions)
@@ -299,7 +339,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         var key = task.Key;
         using ( AcquireScheduleLock() )
         {
-            if ( _state.Value > ReactiveSchedulerState.Running )
+            if ( _state >= ReactiveSchedulerState.Disposing )
                 return false;
 
             if ( _queue.TryGetValue( key, out var entry ) )
@@ -327,7 +367,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool TryGetMutableEntry(TKey key, out ReactiveSchedulerEntry<TKey> result)
     {
-        if ( _state.Value > ReactiveSchedulerState.Running
+        if ( _state >= ReactiveSchedulerState.Disposing
             || ! _queue.TryGetValue( key, out var entry )
             || entry.IsDisposed
             || entry.IsFinished )
@@ -340,61 +380,143 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         return true;
     }
 
-    private void DisposeAll(ref ListSlim<ReactiveSchedulerEntry<TKey>> toRemove)
+    private async ValueTask DisposeAsyncCore(bool ignoreTask = false)
     {
-        foreach ( var entry in _queue )
+        try
         {
-            if ( entry.IsDisposed )
-                continue;
+            Task? task;
+            ValueTaskDelaySource? ownedDelaySource;
+            ReactiveSchedulerEntry<TKey>[] entries;
 
-            if ( toRemove.Capacity == 0 )
-                toRemove.ResetCapacity( _queue.Count );
+            using ( AcquireScheduleLock() )
+            {
+                Assume.Equals( _state, ReactiveSchedulerState.Disposing );
+                ownedDelaySource = _delaySource.DiscardOwnedSource();
+                task = ignoreTask ? null : _task;
+                _task = null;
 
-            toRemove.Add( entry );
+                if ( ! ignoreTask )
+                    _reset.Set();
+
+                entries = _queue.ToArray();
+                MarkEntriesAsDisposed( entries );
+            }
+
+            var errors = Chain<Exception>.Empty;
+            BeginDisposing( entries, ref errors );
+
+            try
+            {
+                if ( task is not null )
+                    await task.ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                errors = errors.Extend( exc );
+            }
+
+            if ( TaskDisposalTimeout > Duration.Zero )
+            {
+                try
+                {
+                    await Task.WhenAll( entries.Select( e => e.Container.WaitForDisposalAsync( TaskDisposalTimeout ) ) )
+                        .ConfigureAwait( false );
+                }
+                catch ( Exception exc )
+                {
+                    errors = errors.Extend( exc );
+                }
+            }
+
+            using ( AcquireScheduleLock() )
+            {
+                _state = ReactiveSchedulerState.Disposed;
+                _reset.Dispose();
+                _reset = default;
+                _queue.Clear();
+            }
+
+            try
+            {
+                if ( ownedDelaySource is not null )
+                    await ownedDelaySource.DisposeAsync().ConfigureAwait( false );
+            }
+            catch ( Exception exc )
+            {
+                errors = errors.Extend( exc );
+            }
+
+            if ( errors.Count > 0 )
+                throw errors.Consolidate()!;
         }
-
-        if ( toRemove.IsEmpty )
-            return;
-
-        foreach ( var entry in toRemove )
-            _queue.Replace( entry.Container.Key, entry.AsDisposed() );
+        finally
+        {
+            _disposed.TrySetResult();
+        }
     }
 
-    private void RemoveAll(ListSlim<ReactiveSchedulerEntry<TKey>> toRemove)
+    private void MarkEntriesAsDisposed(ReadOnlyArray<ReactiveSchedulerEntry<TKey>> entries)
     {
-        if ( toRemove.IsEmpty )
-            return;
+        foreach ( var entry in entries )
+        {
+            if ( ! entry.IsDisposed )
+                _queue.Replace( entry.Container.Key, entry.AsDisposed() );
+        }
+    }
 
-        var errors = Chain<Exception>.Empty;
-        foreach ( var entry in toRemove )
+    private void BeginDisposing(ReadOnlyArray<ReactiveSchedulerEntry<TKey>> entries, ref Chain<Exception> errors)
+    {
+        foreach ( var entry in entries )
         {
             try
             {
-                entry.Container.Dispose();
+                entry.Container.BeginDispose( TaskDisposalTimeout );
             }
             catch ( Exception exc )
             {
                 errors = errors.Extend( exc );
             }
         }
-
-        if ( errors.Count > 0 )
-            throw new AggregateException( errors );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryRemoveFinishedTask(ScheduleTaskContainer<TKey> container)
+    internal bool TryRemoveAndDisposeFinishedTask(ScheduleTaskContainer<TKey> container, out Exception? exception)
     {
+        bool exists;
+        exception = null;
         using ( AcquireScheduleLock() )
         {
-            if ( ! _queue.TryGetValue( container.Key, out var entry )
-                || ! ReferenceEquals( entry.Container, container )
-                || (! entry.IsDisposed && ! entry.IsFinished) )
-                return false;
+            if ( _state >= ReactiveSchedulerState.Disposing
+                || ! _queue.TryGetValue( container.Key, out var entry )
+                || ! ReferenceEquals( entry.Container, container ) )
+                exists = false;
+            else
+            {
+                if ( entry.IsFinished )
+                    _queue.Replace( container.Key, entry.AsDisposed() );
+                else if ( ! entry.IsDisposed )
+                    return false;
 
-            _queue.Remove( container.Key );
-            return true;
+                exists = true;
+            }
         }
+
+        try
+        {
+            container.Source.Dispose();
+        }
+        catch ( Exception exc )
+        {
+            exception = exc;
+        }
+
+        if ( exists )
+        {
+            using ( AcquireScheduleLock() )
+                _queue.Remove( container.Key );
+        }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -403,15 +525,15 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         return ExclusiveLock.Enter( _queue );
     }
 
-    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private (Timestamp NextEventTimestamp, Duration Delay) UpdateNextEventTimestamp(Timestamp now)
     {
-        var delay = DefaultInterval;
-        if ( _queue.TryPeek( out var next ) )
+        var delay = MaxDelay;
+        if ( _queue.TryPeek( out var entry ) )
         {
-            var delayUntilNextEvent = next.Timestamp - now;
-            delay = delayUntilNextEvent.Min( DefaultInterval ).Max( Duration.Zero );
+            var next = entry.Timestamp;
+            var delayUntilNextEvent = next - now;
+            delay = delayUntilNextEvent.Clamp( Duration.Zero, delay );
         }
 
         _nextEventTimestamp = now + delay;
@@ -419,7 +541,39 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         return (_nextEventTimestamp, delay);
     }
 
-    private void RunCore()
+    private bool TrySpinUntilTimestampReached(Timestamp nextEventTimestamp, out Timestamp timestamp)
+    {
+        timestamp = Timestamps.GetNow();
+        if ( timestamp >= nextEventTimestamp )
+            return true;
+
+        var spinWait = new SpinWait();
+        var lockAcquiredAt = timestamp;
+        var lockAcquisitionInterval = Duration.FromMicroseconds( 500 );
+        do
+        {
+            if ( timestamp - lockAcquiredAt > lockAcquisitionInterval )
+            {
+                using ( AcquireScheduleLock() )
+                {
+                    if ( _state >= ReactiveSchedulerState.Disposing )
+                        return false;
+
+                    Assume.Equals( _state, ReactiveSchedulerState.Running );
+                }
+
+                lockAcquiredAt = timestamp;
+            }
+
+            spinWait.SpinOnce();
+            timestamp = Timestamps.GetNow();
+        }
+        while ( timestamp < nextEventTimestamp );
+
+        return true;
+    }
+
+    private async Task RunCore()
     {
         var eventBuffer = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
 
@@ -428,28 +582,40 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         Timestamp nextEventTimestamp;
         using ( AcquireScheduleLock() )
         {
+            if ( _state >= ReactiveSchedulerState.Disposing )
+                return;
+
             timestamp = Timestamps.GetNow();
             (nextEventTimestamp, delay) = UpdateNextEventTimestamp( timestamp );
         }
 
         while ( true )
         {
-            var signaled = _reset.Wait( delay );
-            if ( _state.Write( ReactiveSchedulerState.Disposed, ReactiveSchedulerState.Stopping ) )
-                break;
-
-            timestamp = Timestamps.GetNow();
-            if ( ! signaled )
+            var result = await _reset.WaitAsync( delay ).ConfigureAwait( false );
+            if ( result == AsyncManualResetEventResult.Disposed )
             {
-                while ( timestamp < nextEventTimestamp )
+                using ( AcquireScheduleLock() )
                 {
-                    Thread.SpinWait( 1 );
-                    timestamp = Timestamps.GetNow();
+                    if ( _state >= ReactiveSchedulerState.Disposing )
+                        return;
+
+                    _state = ReactiveSchedulerState.Disposing;
                 }
+
+                await DisposeAsyncCore( ignoreTask: true ).ConfigureAwait( false );
+                return;
             }
+
+            if ( result == AsyncManualResetEventResult.Signaled )
+                timestamp = Timestamps.GetNow();
+            else if ( ! TrySpinUntilTimestampReached( nextEventTimestamp, out timestamp ) )
+                return;
 
             using ( AcquireScheduleLock() )
             {
+                if ( _state >= ReactiveSchedulerState.Disposing )
+                    return;
+
                 while ( _queue.TryPeek( out var entry ) && entry.Timestamp <= timestamp )
                 {
                     var next = entry.Next();
@@ -458,21 +624,25 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
                 }
             }
 
-            foreach ( var e in eventBuffer )
-                e.Container.EnqueueInvocation( Timestamps.GetNow(), e.Timestamp );
-
+            EnqueueInvocations( ref eventBuffer );
             eventBuffer.Clear();
+
             using ( AcquireScheduleLock() )
             {
-                if ( _state.Write( ReactiveSchedulerState.Disposed, ReactiveSchedulerState.Stopping ) )
-                    break;
+                if ( _state >= ReactiveSchedulerState.Disposing )
+                    return;
 
                 _reset.Reset();
                 timestamp = Timestamps.GetNow();
                 (nextEventTimestamp, delay) = UpdateNextEventTimestamp( timestamp );
             }
         }
+    }
 
-        _reset.Dispose();
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void EnqueueInvocations(ref ListSlim<ReactiveSchedulerEntry<TKey>> events)
+    {
+        foreach ( var e in events )
+            e.Container.EnqueueInvocation( Timestamps.GetNow(), e.Timestamp );
     }
 }

@@ -26,6 +26,7 @@ namespace LfrlAnvil.Reactive.Chrono.Internal;
 internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInterval<long>>
     where TKey : notnull
 {
+    private readonly TaskCompletionSource _disposed;
     private TimerTaskContainer<TKey>[] _taskContainers;
     private TimerTaskCollection<TKey>? _owner;
     private Timestamp? _firstTimestamp;
@@ -40,6 +41,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         _eventCount = 0;
         _owner = owner;
         _taskContainers = taskContainers;
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
     }
 
     internal Timestamp? FirstTimestamp
@@ -71,6 +73,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
 
     public override void React(WithInterval<long> @event)
     {
+        TimerTaskContainer<TKey>[] taskContainers;
         using ( ExclusiveLock.Enter( this ) )
         {
             if ( _owner is null )
@@ -79,10 +82,11 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
             _firstTimestamp ??= @event.Timestamp;
             _lastTimestamp = @event.Timestamp;
             ++_eventCount;
-
-            foreach ( var container in _taskContainers )
-                container.EnqueueInvocation( @event.Timestamp );
+            taskContainers = _taskContainers;
         }
+
+        foreach ( var container in taskContainers )
+            container.EnqueueInvocation( @event.Timestamp );
     }
 
     public override void OnDispose(DisposalSource source)
@@ -90,6 +94,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         var errors = Chain<Exception>.Empty;
         TimerTaskContainer<TKey>[] taskContainers;
         CancellationTokenSource cancellationTokenSource;
+        TaskCompletionSource disposed;
         Duration taskDisposalTimeout;
 
         using ( ExclusiveLock.Enter( this ) )
@@ -97,6 +102,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
             if ( _owner is null )
                 return;
 
+            disposed = _disposed;
             taskContainers = _taskContainers;
             _taskContainers = Array.Empty<TimerTaskContainer<TKey>>();
             cancellationTokenSource = _owner.CancellationTokenSource;
@@ -105,7 +111,81 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
             _owner = null;
         }
 
-        foreach ( var container in taskContainers )
+        try
+        {
+            BeginDispose( taskContainers, cancellationTokenSource, taskDisposalTimeout, ref errors );
+            if ( taskDisposalTimeout > Duration.Zero )
+                errors = WaitForDisposalAsync( taskContainers, taskDisposalTimeout, errors ).GetAwaiter().GetResult();
+
+            if ( errors.Count > 0 )
+                throw errors.Consolidate()!;
+        }
+        finally
+        {
+            disposed.TrySetResult();
+        }
+    }
+
+    internal async ValueTask DisposeAsyncCore()
+    {
+        var errors = Chain<Exception>.Empty;
+        TimerTaskContainer<TKey>[]? taskContainers;
+        TimerTaskCollection<TKey>? owner;
+        IEventSubscriber? subscriber;
+        TaskCompletionSource disposed;
+
+        using ( ExclusiveLock.Enter( this ) )
+        {
+            disposed = _disposed;
+            if ( _owner is null )
+            {
+                taskContainers = null;
+                owner = null;
+                subscriber = null;
+            }
+            else
+            {
+                taskContainers = _taskContainers;
+                _taskContainers = Array.Empty<TimerTaskContainer<TKey>>();
+                owner = _owner;
+                subscriber = owner.Subscriber;
+                _owner.Subscriber = null;
+                _owner = null;
+            }
+        }
+
+        if ( owner is null )
+        {
+            await disposed.Task.ConfigureAwait( false );
+            return;
+        }
+
+        Assume.IsNotNull( taskContainers );
+
+        try
+        {
+            subscriber?.Dispose();
+            BeginDispose( taskContainers, owner.CancellationTokenSource, owner.TaskDisposalTimeout, ref errors );
+
+            if ( owner.TaskDisposalTimeout > Duration.Zero )
+                errors = await WaitForDisposalAsync( taskContainers, owner.TaskDisposalTimeout, errors ).ConfigureAwait( false );
+
+            if ( errors.Count > 0 )
+                throw errors.Consolidate()!;
+        }
+        finally
+        {
+            disposed.TrySetResult();
+        }
+    }
+
+    private static void BeginDispose(
+        TimerTaskContainer<TKey>[] containers,
+        CancellationTokenSource cts,
+        Duration taskDisposalTimeout,
+        ref Chain<Exception> errors)
+    {
+        foreach ( var container in containers )
         {
             try
             {
@@ -119,7 +199,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
 
         try
         {
-            cancellationTokenSource.Cancel();
+            cts.Cancel();
         }
         catch ( Exception exc )
         {
@@ -128,26 +208,29 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
 
         try
         {
-            cancellationTokenSource.Dispose();
+            cts.Dispose();
+        }
+        catch ( Exception exc )
+        {
+            errors = errors.Extend( exc );
+        }
+    }
+
+    private static async Task<Chain<Exception>> WaitForDisposalAsync(
+        TimerTaskContainer<TKey>[] containers,
+        Duration taskDisposalTimeout,
+        Chain<Exception> errors)
+    {
+        Assume.IsGreaterThan( taskDisposalTimeout, Duration.Zero );
+        try
+        {
+            await Task.WhenAll( containers.Select( c => c.WaitForDisposalAsync( taskDisposalTimeout ) ) ).ConfigureAwait( false );
         }
         catch ( Exception exc )
         {
             errors = errors.Extend( exc );
         }
 
-        if ( taskDisposalTimeout > Duration.Zero )
-        {
-            try
-            {
-                Task.WhenAll( taskContainers.Select( c => c.WaitForDisposalAsync( taskDisposalTimeout ) ) ).GetAwaiter().GetResult();
-            }
-            catch ( Exception exc )
-            {
-                errors = errors.Extend( exc );
-            }
-        }
-
-        if ( errors.Count > 0 )
-            throw errors.Consolidate()!;
+        return errors;
     }
 }

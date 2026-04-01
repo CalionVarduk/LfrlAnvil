@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
@@ -29,7 +30,7 @@ namespace LfrlAnvil.Reactive.Chrono;
 /// Represents an attached collection of <see cref="ITimerTask{TKey}"/> instances.
 /// </summary>
 /// <typeparam name="TKey">Task key type.</typeparam>
-public sealed class TimerTaskCollection<TKey> : IDisposable
+public sealed class TimerTaskCollection<TKey> : IDisposable, IAsyncDisposable
     where TKey : notnull
 {
     internal readonly CancellationTokenSource CancellationTokenSource;
@@ -97,7 +98,13 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        Subscriber?.Dispose();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        return _listener?.DisposeAsyncCore() ?? ValueTask.CompletedTask;
     }
 
     /// <summary>

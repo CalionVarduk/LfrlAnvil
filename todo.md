@@ -47,6 +47,8 @@ project idea:
 ### Sql: Refinements
 
 Low priority/probably won't do:
+- add CreateQuery, CreateInsertInto, CreateDeleteFrom, CreateUpdate, CreateUpsert extension methods for tables
+  - where the source is not a set of parameters but rather another table with matching identity
 - add support for some sort of BulkCopy operation
   - targets a single table
   - DataTable as the source...?
@@ -76,13 +78,8 @@ Low priority/probably won't do:
 
 ### Reactive: Refinements
 
-- refactor schedulers to use ValueTaskDelaySource
-  - also, their disposal should wait for disposal of all currently running tasks
-  - with some timeout
-  - add task container pooling?
-  - add worker task pool, for full async and efficient memory usage?
-
 Might do:
+- add some sort of PeriodicBatch
 - extension methods for converting between event sources and async enumerables
 - after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
   - lock everything? decorators may be a bit of an issue
@@ -114,6 +111,8 @@ Might do:
   - disposal should still happen in reverse order, based on first resolution
   - e.g. register Foo as disposable implementor, IBar as dependency using Foo
     - and IQux as dependency using factory method which resolves IBar
+  - this might not be necessary, due to explicit shared implementors
+    - should dependencies resolved via factory delegates renounce ownership by default?
 - hosted services registration?
 - options registration?
 

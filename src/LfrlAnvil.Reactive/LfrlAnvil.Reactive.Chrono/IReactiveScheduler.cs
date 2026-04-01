@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace LfrlAnvil.Reactive.Chrono;
 /// Represents a scheduler of <see cref="IScheduleTask{TKey}"/> instances.
 /// </summary>
 /// <typeparam name="TKey">Task key type.</typeparam>
-public interface IReactiveScheduler<TKey> : IDisposable
+public interface IReactiveScheduler<TKey> : IDisposable, IAsyncDisposable
     where TKey : notnull
 {
     /// <summary>
@@ -33,9 +33,9 @@ public interface IReactiveScheduler<TKey> : IDisposable
     ReactiveSchedulerState State { get; }
 
     /// <summary>
-    /// Maximum <see cref="Duration"/> to hang the underlying time tracking mechanism for.
+    /// Max time the disposal of scheduled tasks will wait for their invocations to complete.
     /// </summary>
-    Duration DefaultInterval { get; }
+    Duration TaskDisposalTimeout { get; }
 
     /// <summary>
     /// <see cref="SpinWait"/> duration hint for the underlying time tracking mechanism.
@@ -71,9 +71,13 @@ public interface IReactiveScheduler<TKey> : IDisposable
     ScheduleTaskState<TKey>? TryGetTaskState(TKey key);
 
     /// <summary>
-    /// Starts this scheduler synchronously. Does nothing when this scheduler has already been started.
+    /// Attempts to start this scheduler.
     /// </summary>
-    void Start();
+    /// <returns>
+    /// <b>false</b> when scheduler was not started because it was not in <see cref="ReactiveSchedulerState.Created"/> state,
+    /// otherwise <b>true</b>.
+    /// </returns>
+    bool Start();
 
     /// <summary>
     /// Attempts to schedule the provided <paramref name="task"/>.

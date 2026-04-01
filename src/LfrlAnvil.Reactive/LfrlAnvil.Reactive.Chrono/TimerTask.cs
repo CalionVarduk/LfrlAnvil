@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.Reactive.Chrono;
@@ -23,6 +24,8 @@ namespace LfrlAnvil.Reactive.Chrono;
 public abstract class TimerTask<TKey> : ITimerTask<TKey>
     where TKey : notnull
 {
+    private InterlockedInt64 _nextInvocationTimestamp;
+
     /// <summary>
     /// Creates a new <see cref="TimerTask{TKey}"/> instance.
     /// </summary>
@@ -46,7 +49,7 @@ public abstract class TimerTask<TKey> : ITimerTask<TKey>
         Key = key;
         MaxEnqueuedInvocations = Math.Max( maxEnqueuedInvocations, 0 );
         MaxConcurrentInvocations = Math.Max( maxConcurrentInvocations, 1 );
-        NextInvocationTimestamp = nextInvocationTimestamp;
+        _nextInvocationTimestamp = new InterlockedInt64( nextInvocationTimestamp?.UnixEpochTicks ?? long.MinValue );
     }
 
     /// <inheritdoc />
@@ -59,7 +62,15 @@ public abstract class TimerTask<TKey> : ITimerTask<TKey>
     public int MaxConcurrentInvocations { get; }
 
     /// <inheritdoc />
-    public Timestamp? NextInvocationTimestamp { get; protected set; }
+    public Timestamp? NextInvocationTimestamp
+    {
+        get
+        {
+            var result = _nextInvocationTimestamp.Value;
+            return result == long.MinValue ? null : new Timestamp( result );
+        }
+        protected set => _nextInvocationTimestamp.Write( value?.UnixEpochTicks ?? long.MinValue );
+    }
 
     /// <inheritdoc />
     public virtual void Dispose() { }

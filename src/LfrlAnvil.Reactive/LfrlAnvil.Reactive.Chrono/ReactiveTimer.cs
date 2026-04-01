@@ -135,7 +135,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <exception cref="ObjectDisposedException">The timer has been disposed.</exception>
     public bool Start()
     {
-        return RunCore( Interval );
+        return StartCore( Interval );
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public bool Start(Duration delay)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        return RunCore( delay );
+        return StartCore( delay );
     }
 
     /// <summary>
@@ -216,14 +216,32 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
             }
         }
 
-        if ( task is not null )
-            await task.ConfigureAwait( false );
+        var errors = Chain<Exception>.Empty;
+        try
+        {
+            if ( task is not null )
+                await task.ConfigureAwait( false );
+        }
+        catch ( Exception exc )
+        {
+            errors = errors.Extend( exc );
+        }
 
-        if ( ownedDelaySource is not null )
-            await ownedDelaySource.DisposeAsync().ConfigureAwait( false );
+        try
+        {
+            if ( ownedDelaySource is not null )
+                await ownedDelaySource.DisposeAsync().ConfigureAwait( false );
+        }
+        catch ( Exception exc )
+        {
+            errors = errors.Extend( exc );
+        }
+
+        if ( errors.Count > 0 )
+            throw errors.Consolidate()!;
     }
 
-    private bool RunCore(Duration delay)
+    private bool StartCore(Duration delay)
     {
         using ( ExclusiveLock.Enter( Sync ) )
         {
@@ -242,7 +260,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
             _expectedNextTimestamp = _prevStartTimestamp + delay;
         }
 
-        var task = RunTimer();
+        var task = RunCore();
         using ( ExclusiveLock.Enter( Sync ) )
         {
             if ( Base.IsDisposed )
@@ -298,7 +316,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         return true;
     }
 
-    private async Task RunTimer()
+    private async Task RunCore()
     {
         Duration delay;
         Timestamp expectedNextTimestamp;

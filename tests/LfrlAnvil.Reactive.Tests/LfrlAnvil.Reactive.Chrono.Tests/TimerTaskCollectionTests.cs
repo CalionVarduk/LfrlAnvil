@@ -7,6 +7,7 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Extensions;
+using LfrlAnvil.Reactive.Extensions;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests;
 
@@ -1058,6 +1059,32 @@ public class TimerTaskCollectionTests : TestsBase
         sut.Dispose();
 
         task.IsDisposed.TestTrue().Go();
+    }
+
+    [Fact]
+    public async Task Dispose_ShouldWaitForPendingDisposalToFinish()
+    {
+        var timestamp = Timestamp.Zero;
+        var continuation = new SafeTaskCompletionSource();
+        var task = new TimerTask(
+            "foo",
+            onInvoke: (_, _, _, _) =>
+            {
+                continuation.Complete();
+                return Task.Delay( 100 );
+            } );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        var sut = source.Catch( (Exception _) => { } )
+            .RegisterTasks( new[] { task }, taskDisposalTimeout: Duration.FromMilliseconds( 15 ) );
+
+        PublishEvents( source, timestamp );
+
+        await continuation.Task;
+        source.Dispose();
+        await sut.DisposeAsync();
+
+        source.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ namespace LfrlAnvil.Reactive.Chrono;
 /// <summary>
 /// Represents the state of <see cref="ReactiveScheduler{TKey}"/>.
 /// </summary>
-public enum ReactiveSchedulerState
+public enum ReactiveSchedulerState : byte
 {
     /// <summary>
     /// Specifies that the scheduler has not been started yet.
@@ -32,7 +32,7 @@ public enum ReactiveSchedulerState
     /// <summary>
     /// Specifies that the scheduler is currently in the process of being disposed.
     /// </summary>
-    Stopping = 2,
+    Disposing = 2,
 
     /// <summary>
     /// Specifies that the scheduler has been disposed.

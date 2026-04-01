@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
@@ -86,7 +87,7 @@ internal sealed class TimerTaskContainer<TKey>
             _disposed = true;
 
             if ( ! _info.HasActiveInvocations )
-                FinalizeDisposal();
+                FinalizeDisposal()?.Rethrow();
             else if ( disposalTimeout > Duration.Zero )
                 _disposalCompletion = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         }
@@ -278,10 +279,19 @@ internal sealed class TimerTaskContainer<TKey>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void FinalizeDisposal()
+    private Exception? FinalizeDisposal()
     {
         _owner = null;
         _info.Clear();
-        _source.Dispose();
+        try
+        {
+            _source.Dispose();
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
+
+        return null;
     }
 }

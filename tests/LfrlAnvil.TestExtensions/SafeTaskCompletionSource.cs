@@ -54,6 +54,26 @@ public sealed class SafeTaskCompletionSource
         _base.SetResult();
         return true;
     }
+
+    public bool TryComplete()
+    {
+        int count;
+        do
+        {
+            count = Volatile.Read( ref _currentCompletionCount );
+            if ( count >= _completionCount )
+                return false;
+        }
+        while ( Interlocked.CompareExchange( ref _currentCompletionCount, count + 1, count ) != count );
+
+        if ( count + 1 != _completionCount )
+            return false;
+
+        _registration.Dispose();
+        _cancellationSource.Dispose();
+        _base.SetResult();
+        return true;
+    }
 }
 
 public sealed class SafeTaskCompletionSource<T>
@@ -99,6 +119,26 @@ public sealed class SafeTaskCompletionSource<T>
     public bool Complete(T result)
     {
         if ( Interlocked.Increment( ref _currentCompletionCount ) < _completionCount )
+            return false;
+
+        _registration.Dispose();
+        _cancellationSource.Dispose();
+        _base.SetResult( result );
+        return true;
+    }
+
+    public bool TryComplete(T result)
+    {
+        int count;
+        do
+        {
+            count = Volatile.Read( ref _currentCompletionCount );
+            if ( count >= _completionCount )
+                return false;
+        }
+        while ( Interlocked.CompareExchange( ref _currentCompletionCount, count + 1, count ) != count );
+
+        if ( count + 1 != _completionCount )
             return false;
 
         _registration.Dispose();

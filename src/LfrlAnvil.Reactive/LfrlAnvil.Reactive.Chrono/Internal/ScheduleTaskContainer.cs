@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@ using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
-internal sealed class ScheduleTaskContainer<TKey> : IDisposable
+internal sealed class ScheduleTaskContainer<TKey>
     where TKey : notnull
 {
     private readonly Action<Task> _onActiveTaskCompleted;
     private readonly CancellationTokenSource _cancellationTokenSource;
+    private TaskCompletionSource? _disposalCompletion;
     private ReactiveScheduler<TKey>? _owner;
     private ReactiveTaskInfo _info;
     private bool _disposed;
@@ -72,8 +74,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
     internal TKey Key { get; }
     internal IScheduleTask<TKey> Source { get; }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void Dispose()
+    internal void BeginDispose(Duration disposalTimeout)
     {
         using ( ExclusiveLock.Enter( this ) )
         {
@@ -91,16 +92,34 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
                 errors = errors.Extend( exc );
             }
 
-            if ( ! _info.HasActiveInvocations && _owner is not null && _owner.TryRemoveFinishedTask( this ) )
+            if ( _owner is not null )
             {
-                var exc = FinalizeDisposal();
-                if ( exc is not null )
-                    errors = errors.Extend( exc );
+                if ( ! _info.HasActiveInvocations && _owner.TryRemoveAndDisposeFinishedTask( this, out var exc ) )
+                {
+                    if ( exc is not null )
+                        errors = errors.Extend( exc );
+
+                    exc = FinalizeDisposal();
+                    if ( exc is not null )
+                        errors = errors.Extend( exc );
+                }
+                else if ( disposalTimeout > Duration.Zero )
+                    _disposalCompletion = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
             }
 
             if ( errors.Count > 0 )
-                throw new AggregateException( errors );
+                throw errors.Consolidate()!;
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Task WaitForDisposalAsync(Duration timeout)
+    {
+        TaskCompletionSource? source;
+        using ( ExclusiveLock.Enter( this ) )
+            source = _disposalCompletion;
+
+        return source?.Task.WaitAsync( timeout ) ?? Task.CompletedTask;
     }
 
     internal void EnqueueInvocation(Timestamp timestamp, Timestamp expectedTimestamp)
@@ -252,8 +271,12 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
             // this is by design, no exceptions should be thrown by the OnCompleted invocation
         }
 
-        if ( ! _info.HasActiveInvocations && _owner is not null && _owner.TryRemoveFinishedTask( this ) )
+        if ( ! _info.HasActiveInvocations && _owner is not null && _owner.TryRemoveAndDisposeFinishedTask( this, out _ ) )
+        {
             FinalizeDisposal();
+            _disposalCompletion?.TrySetResult();
+            _disposalCompletion = null;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -283,20 +306,15 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         _owner = null;
         _info.Clear();
 
-        Exception? exception = null;
         try
-        {
-            Source.Dispose();
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
-        finally
         {
             _cancellationTokenSource.Dispose();
         }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
 
-        return exception;
+        return null;
     }
 }
