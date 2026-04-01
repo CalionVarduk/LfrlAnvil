@@ -79,7 +79,6 @@ Low priority/probably won't do:
 ### Reactive: Refinements
 
 Might do:
-- add some sort of PeriodicBatch
 - extension methods for converting between event sources and async enumerables
 - after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
   - lock everything? decorators may be a bit of an issue

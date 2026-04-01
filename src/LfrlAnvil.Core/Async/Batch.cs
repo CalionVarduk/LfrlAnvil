@@ -23,6 +23,7 @@ namespace LfrlAnvil.Async;
 public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
 {
     private readonly ManualResetValueTaskSource<bool> _flushContinuation;
+    private readonly TaskCompletionSource _disposed;
     private QueueSlim<T> _items;
     private Task? _flushTask;
 
@@ -59,6 +60,7 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
             queueSizeLimitHint = autoFlushCount;
 
         _flushContinuation = new ManualResetValueTaskSource<bool>();
+        _disposed = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _items = QueueSlim<T>.Create( minInitialCapacity );
         QueueOverflowStrategy = queueOverflowStrategy;
         AutoFlushCount = autoFlushCount;
@@ -94,18 +96,34 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        Task flushTask;
+        Task? flushTask;
+        TaskCompletionSource disposed;
+
         using ( AcquireLock() )
         {
-            if ( _flushTask is null )
-                return;
-
             flushTask = _flushTask;
-            _flushTask = null;
-            SignalFlush( disposing: true );
+            disposed = _disposed;
+            if ( _flushTask is not null )
+            {
+                _flushTask = null;
+                SignalFlush( disposing: true );
+            }
         }
 
-        await flushTask.ConfigureAwait( false );
+        if ( flushTask is null )
+        {
+            await disposed.Task.ConfigureAwait( false );
+            return;
+        }
+
+        try
+        {
+            await flushTask.ConfigureAwait( false );
+        }
+        finally
+        {
+            disposed.TrySetResult();
+        }
     }
 
     /// <inheritdoc />
