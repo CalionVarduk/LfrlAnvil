@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Threading;
 using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
 
@@ -25,46 +26,76 @@ namespace LfrlAnvil;
 public sealed class LazyDisposable<T> : IDisposable
     where T : IDisposable
 {
-    private InterlockedBoolean _canAssign;
-    private InterlockedBoolean _isDisposed;
+    private SpinLock _lock;
+    private T? _inner;
+    private bool _canAssign;
+    private bool _isDisposed;
 
     /// <summary>
     /// Creates a new <see cref="LazyDisposable{T}"/> instance without an <see cref="Inner"/> object.
     /// </summary>
     public LazyDisposable()
     {
-        Inner = default;
-        _canAssign = new InterlockedBoolean( true );
-        _isDisposed = new InterlockedBoolean( false );
+        _inner = default;
+        _canAssign = true;
+        _isDisposed = false;
     }
 
     /// <summary>
     /// Optional underlying disposable object.
     /// </summary>
-    public T? Inner { get; private set; }
+    public T? Inner
+    {
+        get
+        {
+            using ( SpinLockEntry.Enter( ref _lock ) )
+                return _inner;
+        }
+    }
 
     /// <summary>
     /// Specifies whether an underlying <see cref="Inner"/> object can be assigned to this instance.
     /// </summary>
-    public bool CanAssign => _canAssign.Value;
+    public bool CanAssign
+    {
+        get
+        {
+            using ( SpinLockEntry.Enter( ref _lock ) )
+                return _canAssign;
+        }
+    }
 
     /// <summary>
     /// Specifies whether this instance has already been disposed.
     /// </summary>
-    public bool IsDisposed => _isDisposed.Value;
+    public bool IsDisposed
+    {
+        get
+        {
+            using ( SpinLockEntry.Enter( ref _lock ) )
+                return _isDisposed;
+        }
+    }
 
     /// <inheritdoc />
     /// <remarks>Disposes the underlying <see cref="Inner"/> object if it exists.</remarks>
     public void Dispose()
     {
-        if ( ! _isDisposed.WriteTrue() )
-            return;
-
-        if ( ! _canAssign.Value )
+        T inner;
+        using ( SpinLockEntry.Enter( ref _lock ) )
         {
-            Assume.IsNotNull( Inner );
-            Inner.Dispose();
+            if ( _isDisposed )
+                return;
+
+            _isDisposed = true;
+            if ( _canAssign )
+                return;
+
+            Assume.IsNotNull( _inner );
+            inner = _inner;
         }
+
+        inner.Dispose();
     }
 
     /// <summary>
@@ -77,11 +108,19 @@ public sealed class LazyDisposable<T> : IDisposable
     /// </remarks>
     public void Assign(T inner)
     {
-        if ( ! _canAssign.WriteFalse() )
-            throw new InvalidOperationException( ExceptionResources.LazyDisposableCannotAssign );
+        var dispose = false;
+        using ( SpinLockEntry.Enter( ref _lock ) )
+        {
+            if ( ! _canAssign )
+                throw new InvalidOperationException( ExceptionResources.LazyDisposableCannotAssign );
 
-        Inner = inner;
-        if ( _isDisposed.Value )
-            Inner.Dispose();
+            _canAssign = false;
+            _inner = inner;
+            if ( _isDisposed )
+                dispose = true;
+        }
+
+        if ( dispose )
+            inner.Dispose();
     }
 }
