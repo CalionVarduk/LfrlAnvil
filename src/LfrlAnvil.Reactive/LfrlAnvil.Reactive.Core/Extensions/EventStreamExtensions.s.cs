@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1215,7 +1215,7 @@ public static class EventStreamExtensions
     /// <param name="cancellationToken">Task's cancellation token.</param>
     /// <typeparam name="TEvent">Event type.</typeparam>
     /// <returns>New <see cref="Task{TResult}"/> instance.</returns>
-    public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
+    public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken = default)
     {
         var completionSource = new TaskCompletionSource<TEvent?>( TaskCreationOptions.RunContinuationsAsynchronously );
         if ( cancellationToken.IsCancellationRequested )
@@ -1230,15 +1230,38 @@ public static class EventStreamExtensions
 
         if ( ! subscriber.IsDisposed )
         {
-            var actualCancellationTokenRegistration = cancellationToken.Register( () =>
-            {
-                listener.MarkAsCancelled();
-                subscriber.Dispose();
-            } );
+            var actualCancellationTokenRegistration = cancellationToken.UnsafeRegister(
+                _ =>
+                {
+                    listener.MarkAsCancelled();
+                    subscriber.Dispose();
+                },
+                null );
 
             cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
         }
 
         return completionSource.Task;
+    }
+
+    /// <summary>
+    /// Creates a new async enumerable from the provided event <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source event stream.</param>
+    /// <param name="maxBufferSize">Max size of the internal buffer of events. Equal to <see cref="int.MaxValue"/> by default.</param>
+    /// <param name="discardLatest">
+    /// Specifies whether to discard latest events when the internal buffer is full, otherwise earliest events will be discarded.
+    /// Equal to <b>false</b> by default.
+    /// </param>
+    /// <typeparam name="TEvent">Event type.</typeparam>
+    /// <returns>New async enumerable instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="maxBufferSize"/> is less than <b>0</b>.</exception>
+    public static IAsyncEnumerable<AsyncEnumerableEvent<TEvent>> ToAsyncEnumerable<TEvent>(
+        this IEventStream<TEvent> source,
+        int maxBufferSize = int.MaxValue,
+        bool discardLatest = false)
+    {
+        Ensure.IsGreaterThanOrEqualTo( maxBufferSize, 0 );
+        return new AsyncEnumerableStream<TEvent>( source, maxBufferSize, discardLatest );
     }
 }

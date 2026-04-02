@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
@@ -25,7 +26,7 @@ namespace LfrlAnvil.Reactive.Exchanges;
 /// <inheritdoc cref="IMutableEventExchange" />
 public sealed class EventExchange : IMutableEventExchange
 {
-    private readonly Dictionary<Type, IEventPublisher> _publishers;
+    private readonly ConcurrentDictionary<Type, IEventPublisher> _publishers;
     private InterlockedBoolean _isDisposed;
 
     /// <summary>
@@ -33,7 +34,7 @@ public sealed class EventExchange : IMutableEventExchange
     /// </summary>
     public EventExchange()
     {
-        _publishers = new Dictionary<Type, IEventPublisher>();
+        _publishers = new ConcurrentDictionary<Type, IEventPublisher>();
         _isDisposed = new InterlockedBoolean( false );
     }
 
@@ -50,7 +51,6 @@ public sealed class EventExchange : IMutableEventExchange
             publisher.Dispose();
 
         _publishers.Clear();
-        _publishers.TrimExcess();
     }
 
     /// <inheritdoc />
@@ -122,15 +122,24 @@ public sealed class EventExchange : IMutableEventExchange
         if ( ! _publishers.TryAdd( typeof( TEvent ), publisher ) )
             throw new EventPublisherAlreadyExistsException( typeof( TEvent ) );
 
-        var listener = new DisposalListener<TEvent>( this );
-        publisher.Listen( listener );
+        if ( IsDisposed )
+        {
+            if ( RemovePublisher( typeof( TEvent ) ) )
+                publisher.Dispose();
+        }
+        else
+        {
+            var listener = new DisposalListener<TEvent>( this );
+            publisher.Listen( listener );
+        }
+
         return publisher;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void RemovePublisher(Type eventType)
+    private bool RemovePublisher(Type eventType)
     {
-        _publishers.Remove( eventType );
+        return _publishers.Remove( eventType, out _ );
     }
 
     private sealed class DisposalListener<TEvent> : EventListener<TEvent>

@@ -2,7 +2,6 @@
 
 |        Project         |              Title               |                        Details                         |                  Requirements                  |
 |:----------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
 |      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |                       -                        |
 |      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
@@ -12,6 +11,7 @@
 |           -            |             Terminal             |                   [link](#terminal)                    |                       -                        |
 |  Computable.Automata   |     Add Context-free grammar     |                           -                            |                       -                        |
 |         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
+|       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
 |         Sql.*          |    Add Microsoft SQL support     |                           -                            |                       -                        |
 |      Collections       |           Add SkipList           |                           -                            |                       -                        |
 |     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
@@ -79,7 +79,6 @@ Low priority/probably won't do:
 ### Reactive: Refinements
 
 Might do:
-- extension methods for converting between event sources and async enumerables
 - after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
   - lock everything? decorators may be a bit of an issue
   - currently, there is a risk of deadlocks since e.g. Publish holds the lock while invoking subscriber callbacks
@@ -212,16 +211,6 @@ ideas for other LfrlAnvil.Computable projects:
 Add nodes for JSON column manipulation (read value, set value etc.)
 
 - this heavily depends on all sql providers' support for json
-
-### Sql.Core: Add Visitor for node CLR type extraction
-
-Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
-
-- this is a LOT of work, since every dialect needs to define its own visitor
-- and those visitors must handle all node types
-- not sure how necessary it is to have this functionality, since any visitor usage is expensive
-- and it requires intimate knowledge of each db type system
-    - type systems have to be basically re-implemented in those visitors which feels redundant
 
 ### Dependencies: AspNetCore
 
