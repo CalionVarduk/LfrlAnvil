@@ -13,8 +13,11 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Extensions;
 
@@ -47,5 +50,38 @@ public static class MemoryExtensions
     public static Span<T>.Enumerator GetEnumerator<T>(this Memory<T> source)
     {
         return source.Span.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Creates a new enumerable from the provided memory <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Memory to create an enumerable from.</param>
+    /// <typeparam name="T">Memory element type.</typeparam>
+    /// <returns>New enumerable instance.</returns>
+    [Pure]
+    public static IReadOnlyList<T> AsEnumerable<T>(this ReadOnlyMemory<T> source)
+    {
+        if ( MemoryMarshal.TryGetArray( source, out var segment ) )
+            return segment;
+
+        if ( typeof( T ) == typeof( char ) )
+        {
+            if ( MemoryMarshal.TryGetString( ( ReadOnlyMemory<char> )( object )source, out var text, out var start, out var length ) )
+                return ( IReadOnlyList<T> )( object )new StringSegment( text, start, length );
+        }
+
+        return new EnumerableMemory<T>( source );
+    }
+
+    /// <summary>
+    /// Creates a new enumerable from the provided memory <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Memory to create an enumerable from.</param>
+    /// <typeparam name="T">Memory element type.</typeparam>
+    /// <returns>New enumerable instance.</returns>
+    [Pure]
+    public static IReadOnlyList<T> AsEnumerable<T>(this Memory<T> source)
+    {
+        return (( ReadOnlyMemory<T> )source).AsEnumerable();
     }
 }
