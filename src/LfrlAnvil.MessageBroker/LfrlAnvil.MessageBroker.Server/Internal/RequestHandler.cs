@@ -221,10 +221,14 @@ internal struct RequestHandler
             var readPacket = client.Logger.ReadPacket;
             bool channelCreated;
             bool isEphemeral;
+            var disposingExistingStream = false;
+            var disposingExistingPublisher = false;
             var streamCreated = false;
             ulong channelTraceId = 0;
+            ulong existingStreamTraceId = 0;
             ulong streamTraceId = 0;
             MessageBrokerChannel channel;
+            MessageBrokerStream? existingStream = null;
             MessageBrokerStream? stream = null;
             MessageBrokerChannelPublisherBinding? existingPublisher = null;
             MessageBrokerChannelPublisherBinding? publisher = null;
@@ -320,10 +324,14 @@ internal struct RequestHandler
                             isEphemeral,
                             ref existingPublisher,
                             ref publisher,
-                            ref channelTraceId,
+                            ref existingStream,
                             ref stream,
+                            ref channelTraceId,
+                            ref existingStreamTraceId,
                             ref streamTraceId,
-                            ref streamCreated );
+                            ref streamCreated,
+                            ref disposingExistingStream,
+                            ref disposingExistingPublisher );
                     }
                     catch
                     {
@@ -384,6 +392,13 @@ internal struct RequestHandler
                             created.Emit( MessageBrokerChannelCreatedEvent.Create( channel, channelTraceId ) );
                     }
 
+                    if ( disposingExistingPublisher && channel.Logger.PublisherUnbound is { } channelPublisherUnbound )
+                        channelPublisherUnbound.Emit(
+                            MessageBrokerChannelPublisherUnboundEvent.Create(
+                                existingPublisher!,
+                                channelTraceId,
+                                disposingExistingStream ) );
+
                     if ( channel.Logger.PublisherBound is { } channelPublisherBound )
                         channelPublisherBound.Emit(
                             MessageBrokerChannelPublisherBoundEvent.Create(
@@ -391,6 +406,31 @@ internal struct RequestHandler
                                 channelTraceId,
                                 streamCreated,
                                 reactivated: existingPublisher is not null ) );
+                }
+
+                if ( disposingExistingPublisher )
+                {
+                    Assume.IsNotNull( existingStream );
+                    Assume.IsNotNull( existingPublisher );
+                    using ( MessageBrokerStreamTraceEvent.CreateScope(
+                        existingStream,
+                        existingStreamTraceId,
+                        MessageBrokerStreamTraceEventType.UnbindPublisher ) )
+                    {
+                        if ( existingStream.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit(
+                                MessageBrokerStreamClientTraceEvent.Create( existingStream, existingStreamTraceId, client, traceId ) );
+
+                        if ( existingStream.Logger.PublisherUnbound is { } streamPublisherUnbound )
+                            streamPublisherUnbound.Emit(
+                                MessageBrokerStreamPublisherUnboundEvent.Create(
+                                    existingPublisher,
+                                    existingStreamTraceId,
+                                    channelRemoved: false ) );
+
+                        if ( disposingExistingStream )
+                            await existingStream.DisposeDueToLackOfReferencesAsync( existingStreamTraceId ).ConfigureAwait( false );
+                    }
                 }
 
                 using ( MessageBrokerStreamTraceEvent.CreateScope(
@@ -415,6 +455,18 @@ internal struct RequestHandler
                                 streamTraceId,
                                 channelCreated,
                                 reactivated: existingPublisher is not null ) );
+                }
+
+                if ( disposingExistingPublisher )
+                {
+                    existingPublisher!.EndDisposingDueToRebind();
+                    if ( client.Logger.PublisherUnbound is { } publisherUnbound )
+                        publisherUnbound.Emit(
+                            MessageBrokerRemoteClientPublisherUnboundEvent.Create(
+                                existingPublisher,
+                                traceId,
+                                channelRemoved: false,
+                                disposingExistingStream ) );
                 }
 
                 publisher.MarkAsRunning();

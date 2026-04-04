@@ -248,21 +248,34 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryReactivate(string streamName, bool isEphemeral)
+    internal ReactivationResult TryReactivate(string streamName, bool isEphemeral)
     {
         using ( AcquireLock() )
         {
-            // TODO
-            // implement rebinding to a different stream
-            if ( _state != MessageBrokerChannelPublisherBindingState.Inactive
-                || ! Stream.Name.Equals( streamName, StringComparison.OrdinalIgnoreCase ) )
-                return false;
+            if ( _state != MessageBrokerChannelPublisherBindingState.Inactive )
+                return ReactivationResult.AlreadyBound;
+
+            if ( ! Stream.Name.Equals( streamName, StringComparison.OrdinalIgnoreCase ) )
+            {
+                _state = MessageBrokerChannelPublisherBindingState.Created;
+                return ReactivationResult.Rebinding;
+            }
 
             _isEphemeral = isEphemeral;
             _state = MessageBrokerChannelPublisherBindingState.Created;
         }
 
-        return true;
+        return ReactivationResult.Reactivated;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RevertRebinding()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerChannelPublisherBindingState.Created )
+                _state = MessageBrokerChannelPublisherBindingState.Inactive;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -477,6 +490,26 @@ public sealed class MessageBrokerChannelPublisherBinding : IMessageBrokerMessage
                     Client.PublishersByChannelId.Remove( Channel.Id );
             }
 
+            using ( AcquireLock() )
+            {
+                _state = MessageBrokerChannelPublisherBindingState.Disposed;
+                deactivated = _deactivated;
+                _deactivated = null;
+            }
+        }
+        finally
+        {
+            deactivated?.TrySetResult();
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void EndDisposingDueToRebind()
+    {
+        TaskCompletionSource? deactivated = null;
+        try
+        {
+            Assume.Equals( State, MessageBrokerChannelPublisherBindingState.Disposing );
             using ( AcquireLock() )
             {
                 _state = MessageBrokerChannelPublisherBindingState.Disposed;

@@ -686,10 +686,14 @@ public sealed partial class MessageBrokerRemoteClient
         bool isEphemeral,
         ref MessageBrokerChannelPublisherBinding? existingPublisher,
         ref MessageBrokerChannelPublisherBinding? publisher,
-        ref ulong channelTraceId,
+        ref MessageBrokerStream? existingStream,
         ref MessageBrokerStream? stream,
+        ref ulong channelTraceId,
+        ref ulong existingStreamTraceId,
         ref ulong streamTraceId,
-        ref bool streamCreated)
+        ref bool streamCreated,
+        ref bool disposingExistingStream,
+        ref bool disposingExistingPublisher)
     {
         using ( channel.AcquireLock() )
         {
@@ -701,7 +705,8 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 publisher = token.GetObject();
                 existingPublisher = publisher;
-                stream = publisher.Stream;
+                existingStream = publisher.Stream;
+                stream = existingStream;
 
                 using ( stream.AcquireLock() )
                 {
@@ -711,12 +716,71 @@ public sealed partial class MessageBrokerRemoteClient
                         return BindResult.ParentDisposed;
                     }
 
-                    if ( ! publisher.TryReactivate( streamName, isEphemeral ) )
-                        return BindResult.AlreadyBound;
+                    var reactivationResult = publisher.TryReactivate( streamName, isEphemeral );
+                    if ( reactivationResult == ReactivationResult.Reactivated )
+                    {
+                        streamTraceId = stream.GetTraceId();
+                        return BindResult.Success;
+                    }
 
-                    streamTraceId = stream.GetTraceId();
-                    return BindResult.Success;
+                    if ( reactivationResult == ReactivationResult.AlreadyBound )
+                        return BindResult.AlreadyBound;
                 }
+
+                try
+                {
+                    stream = StreamCollection.RegisterUnsafe( Server, streamName, out streamCreated );
+                    using ( stream.AcquireLock() )
+                    {
+                        if ( stream.IsDisposed )
+                        {
+                            Assume.False( channelCreated );
+                            return BindResult.ParentDisposed;
+                        }
+
+                        try
+                        {
+                            publisher = token.SetObject(
+                                ref channel.PublishersByClientId,
+                                MessageBrokerChannelPublisherBinding.Create( this, channel, stream, isEphemeral ) );
+                        }
+                        catch
+                        {
+                            if ( streamCreated )
+                                StreamCollection.RemoveUnsafe( stream );
+
+                            throw;
+                        }
+
+                        PublishersByChannelId.Set( channel.Id, publisher );
+                        stream.PublishersByClientChannelIdPair.Add( Pair.Create( Id, channel.Id ), publisher );
+                        channelTraceId = channel.GetTraceId();
+                        streamTraceId = stream.GetTraceId();
+                    }
+                }
+                catch
+                {
+                    existingPublisher.RevertRebinding();
+                    throw;
+                }
+
+                using ( existingStream.AcquireLock() )
+                {
+                    if ( ! existingStream.IsDisposed )
+                    {
+                        using ( existingPublisher.AcquireLock() )
+                        {
+                            if ( existingPublisher.TryBeginDisposingUnsafe() )
+                            {
+                                disposingExistingPublisher = true;
+                                disposingExistingStream = existingStream.TryDisposeByRemovingPublisherUnsafe( Id, channel.Id );
+                                existingStreamTraceId = existingStream.GetTraceId();
+                            }
+                        }
+                    }
+                }
+
+                return BindResult.Success;
             }
 
             try

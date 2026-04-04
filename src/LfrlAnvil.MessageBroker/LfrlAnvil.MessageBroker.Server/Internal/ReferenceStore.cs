@@ -78,6 +78,19 @@ internal struct ReferenceStore<TKey, T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void Set(TKey key, T obj)
+    {
+        try
+        {
+            _map[key] = obj;
+        }
+        finally
+        {
+            _cache = null;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool Remove(TKey key)
     {
         try
@@ -133,7 +146,6 @@ internal struct ReferenceStore<TKey, T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal T SetObject(ref ReferenceStore<TKey, T> store, T obj)
         {
-            Assume.False( Exists );
             _ref = obj;
             store._cache = null;
             return obj;
