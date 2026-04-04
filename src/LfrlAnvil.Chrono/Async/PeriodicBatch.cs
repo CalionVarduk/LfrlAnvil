@@ -1,0 +1,226 @@
+﻿// Copyright 2026 Łukasz Furlepa
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using LfrlAnvil.Async;
+
+namespace LfrlAnvil.Chrono.Async;
+
+/// <summary>
+/// Represents a queue of elements, which are processed in batches, automatically or on demand, with delayed auto-flushing.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
+public abstract class PeriodicBatch<T> : Batch<T>
+{
+    private readonly AutoFlush _autoFlush;
+
+    /// <summary>
+    /// Creates a new <see cref="PeriodicBatch{T}"/> instance.
+    /// </summary>
+    /// <param name="delaySource">Delay source to use for scheduling auto-flushing.</param>
+    /// <param name="autoFlushDelay">
+    /// Specifies the delay with which auto-flush should be scheduled after first item was added to an empty batch.
+    /// </param>
+    /// <param name="queueOverflowStrategy">
+    /// Specifies the maximum number of enqueued elements that, when exceeded while adding new elements,
+    /// will cause this batch to react according to its <see cref="Batch{T}.QueueOverflowStrategy"/>.
+    /// Equal to <see cref="BatchQueueOverflowStrategy.DiscardLast"/> by default.
+    /// </param>
+    /// <param name="autoFlushCount">
+    /// Specifies the number of enqueued elements, which acts as a threshold that, when reached while adding new elements,
+    /// will cause this batch to automatically <see cref="Batch{T}.Flush()"/> itself.
+    /// Equal to <b>1 000</b> by default.
+    /// </param>
+    /// <param name="queueSizeLimitHint">
+    /// Specifies the maximum number of enqueued elements that, when exceeded while adding new elements,
+    /// will cause this batch to react according to its <see cref="Batch{T}.QueueOverflowStrategy"/>.
+    /// Equal to <b>100 000 000</b> by default.
+    /// </param>
+    /// <param name="minInitialCapacity">Specifies minimum initial capacity of the internal queue. Equal to <b>0</b> by default.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="autoFlushDelay"/> is less than or equal to <see cref="Duration.Zero"/>
+    /// or when <paramref name="autoFlushCount"/> is less than <b>1</b>.
+    /// </exception>
+    protected PeriodicBatch(
+        ValueTaskDelaySource delaySource,
+        Duration autoFlushDelay,
+        BatchQueueOverflowStrategy queueOverflowStrategy = BatchQueueOverflowStrategy.DiscardLast,
+        int autoFlushCount = 1000,
+        int queueSizeLimitHint = 100000000,
+        int minInitialCapacity = 0)
+        : base( queueOverflowStrategy, autoFlushCount, queueSizeLimitHint, minInitialCapacity )
+    {
+        Ensure.IsGreaterThan( autoFlushDelay, Duration.Zero );
+        AutoFlushDelay = autoFlushDelay;
+        _autoFlush = new AutoFlush( this, delaySource );
+    }
+
+    /// <summary>
+    /// Specifies the delay with which auto-flush should be scheduled after first item was added to an empty batch.
+    /// </summary>
+    public Duration AutoFlushDelay { get; }
+
+    /// <inheritdoc/>
+    protected override void OnDisposed()
+    {
+        base.OnDisposed();
+        _autoFlush.Dispose();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnEnqueued(QueueSlimMemory<T> items, bool autoFlushing)
+    {
+        base.OnEnqueued( items, autoFlushing );
+        _autoFlush.ScheduleIfActive( autoFlushing );
+    }
+
+    private sealed class AutoFlush : IDisposable
+    {
+        private readonly object _lock = new object();
+        private readonly AsyncManualResetEvent _reset;
+        private PeriodicBatch<T>? _owner;
+        private bool _scheduled;
+
+        internal AutoFlush(PeriodicBatch<T> owner, ValueTaskDelaySource delaySource)
+        {
+            _owner = owner;
+            _reset = delaySource.GetResetEvent();
+            _ = RunCore( owner.AutoFlushDelay );
+        }
+
+        public void Dispose()
+        {
+            using ( AcquireLock() )
+            {
+                if ( _owner is null )
+                    return;
+
+                _owner = null;
+                _reset.Dispose();
+            }
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void ScheduleIfActive(bool autoFlushing)
+        {
+            using ( AcquireLock() )
+            {
+                if ( _owner is null )
+                    return;
+
+                if ( autoFlushing )
+                {
+                    if ( ! _scheduled )
+                        return;
+
+                    _scheduled = false;
+                    _reset.Set();
+                }
+                else if ( ! _scheduled )
+                {
+                    _scheduled = true;
+                    _reset.Set();
+                }
+            }
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _lock );
+        }
+
+        private async ValueTask DisposeOwnerAsync()
+        {
+            PeriodicBatch<T> owner;
+            using ( AcquireLock() )
+            {
+                if ( _owner is null )
+                    return;
+
+                owner = _owner;
+                _owner = null;
+            }
+
+            await owner.DisposeAsync().ConfigureAwait( false );
+        }
+
+        private async Task RunCore(Duration delay)
+        {
+            while ( true )
+            {
+                var result = await _reset.WaitAsync().ConfigureAwait( false );
+                if ( result == AsyncManualResetEventResult.Disposed )
+                {
+                    await DisposeOwnerAsync().ConfigureAwait( false );
+                    return;
+                }
+
+                Assume.Equals( result, AsyncManualResetEventResult.Signaled );
+
+                using ( AcquireLock() )
+                {
+                    if ( _owner is null )
+                        return;
+
+                    _reset.Reset();
+                    if ( ! _scheduled )
+                        continue;
+                }
+
+                result = await _reset.WaitAsync( delay ).ConfigureAwait( false );
+                if ( result == AsyncManualResetEventResult.Disposed )
+                {
+                    await DisposeOwnerAsync().ConfigureAwait( false );
+                    return;
+                }
+
+                if ( result == AsyncManualResetEventResult.Signaled )
+                {
+                    using ( AcquireLock() )
+                    {
+                        if ( _owner is null )
+                            return;
+
+                        if ( ! _scheduled )
+                            _reset.Reset();
+                    }
+
+                    continue;
+                }
+
+                Assume.Equals( result, AsyncManualResetEventResult.TimedOut );
+
+                PeriodicBatch<T> owner;
+                using ( AcquireLock() )
+                {
+                    if ( _owner is null )
+                        return;
+
+                    _reset.Reset();
+                    if ( ! _scheduled )
+                        continue;
+
+                    _scheduled = false;
+                    owner = _owner;
+                }
+
+                if ( ! owner.Flush() )
+                    return;
+            }
+        }
+    }
+}

@@ -109,11 +109,12 @@ public class ReactiveSchedulerBatchTests : TestsBase
     {
         var completion = new SafeTaskCompletionSource();
         var scheduler = new ReactiveScheduler<int>();
-        var sut = new Batch( scheduler, 123, Duration.FromMilliseconds( 15 ), 2 );
+        var sut = new Batch( scheduler, 123, Duration.FromMilliseconds( 30 ), 2 );
         sut.OnProcessCallback = () => completion.Complete();
         scheduler.Start();
 
         sut.Add( "foo" );
+        await Task.Delay( 15 );
         sut.Add( "bar" );
         await completion.Task;
         var state = scheduler.TryGetTaskState( 123 );
@@ -160,6 +161,7 @@ public class ReactiveSchedulerBatchTests : TestsBase
         scheduler.Start();
 
         sut.Add( "foo" );
+        await Task.Delay( 15 );
         sut.Add( "bar" );
         await completion.Task;
         var state = scheduler.TryGetTaskState( 123 );
