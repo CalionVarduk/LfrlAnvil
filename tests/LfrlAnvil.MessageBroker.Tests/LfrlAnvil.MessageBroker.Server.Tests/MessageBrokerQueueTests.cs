@@ -138,8 +138,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
                             $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
@@ -147,8 +147,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
                             $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
@@ -156,8 +156,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2, Retry = 0, Redelivery = 0, Length = 3",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 48)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 48)",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 52)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 52)",
                             $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 2, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] )
@@ -612,8 +612,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 51)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 51)",
                     "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                 ] ),
@@ -621,8 +621,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
                     "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 1, Retry = 0, Redelivery = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                 ] )
@@ -696,8 +696,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
                     "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                 ] )
@@ -829,8 +829,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0, Length = 2",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 47)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 51)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 51)",
                     "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [2] 'test2', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', MessageId = 0, Retry = 0, Redelivery = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                 ] ),
@@ -856,8 +856,8 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 [
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 9 (start)",
                     "[ProcessingMessage] Client = [1] 'test', TraceId = 9, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 48)",
-                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 48)",
+                    "[SendPacket:Sending] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 52)",
+                    "[SendPacket:Sent] Client = [1] 'test', TraceId = 9, Packet = (MessageNotification, Length = 52)",
                     "[MessageProcessed] Client = [1] 'test', TraceId = 9, Sender = [2] 'test3', Channel = [1] 'd', Stream = [1] 'd', Queue = [1] 'd', MessageId = 0, Retry = 0, Redelivery = 0",
                     "[Trace:MessageNotification] Client = [1] 'test', TraceId = 9 (end)"
                 ] )

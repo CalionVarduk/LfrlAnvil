@@ -438,6 +438,7 @@ internal struct ListenerCollection
 
     internal static async ValueTask<Result<bool>> SendMessageAckAsync(
         MessageBrokerListener listener,
+        int queueId,
         int ackId,
         int streamId,
         ulong messageId,
@@ -445,10 +446,11 @@ internal struct ListenerCollection
         int redelivery,
         ulong? messageTraceId)
     {
+        Ensure.IsGreaterThan( queueId, 0 );
         Ensure.IsGreaterThan( ackId, 0 );
         Ensure.IsGreaterThan( streamId, 0 );
-        Ensure.IsInRange( retry, 0, listener.MaxRetries );
-        Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
+        Ensure.IsGreaterThanOrEqualTo( retry, 0 );
+        Ensure.IsGreaterThanOrEqualTo( redelivery, 0 );
         if ( ! listener.AreAcksEnabled )
             ExceptionThrower.Throw( listener.Client.MessageException( listener, Resources.DisabledAcks( listener ) ) );
 
@@ -474,6 +476,7 @@ internal struct ListenerCollection
                     MessageBrokerClientAcknowledgingMessageEvent.Create(
                         listener,
                         traceId,
+                        queueId,
                         ackId,
                         streamId,
                         messageId,
@@ -486,14 +489,7 @@ internal struct ListenerCollection
             var poolToken = MemoryPoolToken<byte>.Empty;
             try
             {
-                var request = new Protocol.MessageNotificationAck(
-                    listener.QueueId,
-                    ackId,
-                    streamId,
-                    messageId,
-                    retry,
-                    redelivery );
-
+                var request = new Protocol.MessageNotificationAck( queueId, ackId, streamId, messageId, retry, redelivery );
                 poolToken = client.MemoryPool.Rent( Protocol.MessageNotificationAck.Length, client.ClearBuffers, out var buffer );
                 request.Serialize( buffer, reverseEndianness );
 
@@ -545,6 +541,7 @@ internal struct ListenerCollection
                         MessageBrokerClientMessageAcknowledgedEvent.Create(
                             listener,
                             traceId,
+                            queueId,
                             ackId,
                             streamId,
                             messageId,
@@ -567,6 +564,7 @@ internal struct ListenerCollection
 
     internal static async ValueTask<Result<bool>> SendNegativeMessageAckAsync(
         MessageBrokerListener listener,
+        int queueId,
         int ackId,
         int streamId,
         ulong messageId,
@@ -576,10 +574,11 @@ internal struct ListenerCollection
         MessageBrokerNegativeAck nack,
         bool automatic)
     {
+        Ensure.IsGreaterThan( queueId, 0 );
         Ensure.IsGreaterThan( ackId, 0 );
         Ensure.IsGreaterThan( streamId, 0 );
-        Ensure.IsInRange( retry, 0, listener.MaxRetries );
-        Ensure.IsInRange( redelivery, 0, listener.MaxRedeliveries );
+        Ensure.IsGreaterThanOrEqualTo( retry, 0 );
+        Ensure.IsGreaterThanOrEqualTo( redelivery, 0 );
         if ( ! listener.AreAcksEnabled )
             ExceptionThrower.Throw( listener.Client.MessageException( listener, Resources.DisabledAcks( listener ) ) );
 
@@ -610,6 +609,7 @@ internal struct ListenerCollection
                     MessageBrokerClientAcknowledgingMessageEvent.Create(
                         listener,
                         traceId,
+                        queueId,
                         ackId,
                         streamId,
                         messageId,
@@ -623,7 +623,7 @@ internal struct ListenerCollection
             try
             {
                 var request = new Protocol.MessageNotificationNegativeAck(
-                    listener.QueueId,
+                    queueId,
                     ackId,
                     streamId,
                     messageId,
@@ -684,6 +684,7 @@ internal struct ListenerCollection
                         MessageBrokerClientMessageAcknowledgedEvent.Create(
                             listener,
                             traceId,
+                            queueId,
                             ackId,
                             streamId,
                             messageId,

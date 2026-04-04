@@ -1570,8 +1570,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
@@ -1579,8 +1579,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active), Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active)",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                             ] ),
@@ -1588,8 +1588,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 2 (active), Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 2 (active)",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                             ] )
@@ -1715,8 +1715,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
@@ -1724,8 +1724,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active), Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 5, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 2, MessageId = 0, Retry = 0, Redelivery = 1 (active)",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 5 (end)"
                             ] )
@@ -1854,8 +1854,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
@@ -1965,8 +1965,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
@@ -1974,8 +1974,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                             ] ),
@@ -1983,8 +1983,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 2 (active), Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 2 (active), Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (end)"
                             ] )
@@ -2109,8 +2109,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
@@ -2118,8 +2118,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                             ] ),
@@ -2127,8 +2127,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 2 (active), Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 8, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 8, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 2 (active), Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 8 (end)"
                             ] )
@@ -2250,8 +2250,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] ),
@@ -2259,8 +2259,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 6, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 6, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 6 (end)"
                             ] )
@@ -2373,8 +2373,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
@@ -2474,8 +2474,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
@@ -2586,8 +2586,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                                 $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
-                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
-                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
+                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
                                 $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                             ] ),
@@ -2595,8 +2595,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                                 $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
-                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
-                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
+                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
                                 $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0",
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                             ] ),
@@ -2604,8 +2604,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                                 $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0, Length = 1",
-                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
-                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                                $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
+                                $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
                                 $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 1 (active), Redelivery = 0",
                                 $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                             ] )
@@ -2742,8 +2742,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 4, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )

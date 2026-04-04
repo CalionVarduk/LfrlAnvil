@@ -30,6 +30,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     private MessageBrokerClientProcessingMessageEvent(
         MessageBrokerClient client,
         ulong traceId,
+        int queueId,
         int ackId,
         int senderId,
         int streamId,
@@ -40,6 +41,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         int length)
     {
         Source = MessageBrokerClientEventSource.Create( client, traceId );
+        QueueId = queueId;
         AckId = ackId;
         SenderId = senderId;
         StreamId = streamId;
@@ -54,6 +56,11 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     /// Event source.
     /// </summary>
     public MessageBrokerClientEventSource Source { get; }
+
+    /// <summary>
+    /// Unique id of the queue that processed this message.
+    /// </summary>
+    public int QueueId { get; }
 
     /// <summary>
     /// Id of the pending ACK associated with the message.
@@ -123,7 +130,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}{ackId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, ChannelId = {ChannelId}, SenderId = {SenderId}, Length = {Length}";
+            $"[ProcessingMessage] {Source}, QueueId = {QueueId}{ackId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, ChannelId = {ChannelId}, SenderId = {SenderId}, Length = {Length}";
     }
 
     [Pure]
@@ -131,6 +138,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
     internal static MessageBrokerClientProcessingMessageEvent Create(
         MessageBrokerClient client,
         ulong traceId,
+        int queueId,
         int ackId,
         int senderId,
         int streamId,
@@ -143,6 +151,7 @@ public readonly struct MessageBrokerClientProcessingMessageEvent
         return new MessageBrokerClientProcessingMessageEvent(
             client,
             traceId,
+            queueId,
             ackId,
             senderId,
             streamId,

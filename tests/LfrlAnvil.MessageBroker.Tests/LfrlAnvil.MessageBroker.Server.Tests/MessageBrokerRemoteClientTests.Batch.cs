@@ -573,11 +573,11 @@ public partial class MessageBrokerRemoteClientTests
                         [
                             "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 17)",
                             "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 17), PacketCount = 2",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 32734)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 32730)",
                             """
-                            [AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 32734)
+                            [AwaitPacket] Client = [1] 'test', Packet = (PushMessage, Length = 32730)
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Server received an invalid PushMessage from client [1] 'test'. Encountered 1 error(s):
-                            1. Expected total packet length to be in [5, 32733] range but found 32734.
+                            1. Expected total packet length to be in [5, 32729] range but found 32730.
                             """
                         ] ) )
                 .Go();
@@ -837,8 +837,8 @@ public partial class MessageBrokerRemoteClientTests
                         "[Trace:Ping] Client = [2] 'test2', TraceId = 2 (start)",
                         "[ReadPacket:Received] Client = [2] 'test2', TraceId = 2, Packet = (Ping, Length = 5)",
                         "[ReadPacket:Accepted] Client = [2] 'test2', TraceId = 2, Packet = (Ping, Length = 5)",
-                        "[SendPacket:Sending] Client = [2] 'test2', TraceId = 2, Packet = (Batch, Length = 161), PacketCount = 10",
-                        "[SendPacket:Sent] Client = [2] 'test2', TraceId = 2, Packet = (Batch, Length = 161)",
+                        "[SendPacket:Sending] Client = [2] 'test2', TraceId = 2, Packet = (Batch, Length = 165), PacketCount = 10",
+                        "[SendPacket:Sent] Client = [2] 'test2', TraceId = 2, Packet = (Batch, Length = 165)",
                         "[SendPacket:Batched] Client = [2] 'test2', TraceId = 2, BatchTraceId = 2, Packet = (Pong, Length = 5)",
                         "[Trace:Ping] Client = [2] 'test2', TraceId = 2 (end)"
                     ] ),
@@ -922,7 +922,7 @@ public partial class MessageBrokerRemoteClientTests
                     [
                         "[Trace:MessageNotification] Client = [2] 'test2', TraceId = 11 (start)",
                         "[ProcessingMessage] Client = [2] 'test2', TraceId = 11, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0, Length = 3",
-                        "[SendPacket:Batched] Client = [2] 'test2', TraceId = 11, BatchTraceId = 2, Packet = (MessageNotification, Length = 48)",
+                        "[SendPacket:Batched] Client = [2] 'test2', TraceId = 11, BatchTraceId = 2, Packet = (MessageNotification, Length = 52)",
                         "[MessageProcessed] Client = [2] 'test2', TraceId = 11, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0",
                         "[Trace:MessageNotification] Client = [2] 'test2', TraceId = 11 (end)"
                     ] ),
@@ -1154,7 +1154,7 @@ public partial class MessageBrokerRemoteClientTests
                     (t, _) => t.Logs.TestSequence(
                     [
                         "[Trace:MessageNotification] Client = [2] 'test2', TraceId = 3 (start)",
-                        "[ProcessingMessage] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0, Length = 16297",
+                        "[ProcessingMessage] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0, Length = 16293",
                         "[SendPacket:Batched] Client = [2] 'test2', TraceId = 3, BatchTraceId = 2, Packet = (MessageNotification, Length = 16342)",
                         "[MessageProcessed] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0",
                         "[Trace:MessageNotification] Client = [2] 'test2', TraceId = 3 (end)"
@@ -1299,7 +1299,7 @@ public partial class MessageBrokerRemoteClientTests
                     (t, _) => t.Logs.TestSequence(
                     [
                         "[Trace:MessageNotification] Client = [2] 'test2', TraceId = 3 (start)",
-                        "[ProcessingMessage] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0, Length = 16332",
+                        "[ProcessingMessage] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0, Length = 16328",
                         "[SendPacket:Sending] Client = [2] 'test2', TraceId = 3, Packet = (MessageNotification, Length = 16377)",
                         "[SendPacket:Sent] Client = [2] 'test2', TraceId = 3, Packet = (MessageNotification, Length = 16377)",
                         "[MessageProcessed] Client = [2] 'test2', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Queue = [1] 'foo', MessageId = 0, Retry = 0, Redelivery = 0",

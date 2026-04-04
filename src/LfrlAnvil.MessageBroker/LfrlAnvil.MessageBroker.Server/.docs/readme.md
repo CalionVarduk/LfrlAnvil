@@ -3,7 +3,7 @@
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.MessageBroker.Core](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Server)
 
-This project contains server-side message broker implementation.
+This project contains server-side message broker implementation, which follows at-least-once delivery semantics.
 
 ### Documentation
 

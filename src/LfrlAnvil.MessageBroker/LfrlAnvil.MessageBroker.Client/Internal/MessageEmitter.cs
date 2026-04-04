@@ -145,6 +145,7 @@ internal struct MessageEmitter
         listener.MessageEmitter._messages.Enqueue(
             new Notification(
                 listener,
+                request.QueueId,
                 request.AckId,
                 request.MessageId,
                 request.PushedAt,
@@ -198,6 +199,7 @@ internal struct MessageEmitter
                     {
                         await ListenerCollection.SendNegativeMessageAckAsync(
                                 listener,
+                                notification.Args.QueueId,
                                 notification.Args.AckId,
                                 notification.Args.Stream.Id,
                                 notification.Args.MessageId,
@@ -216,6 +218,7 @@ internal struct MessageEmitter
                             MessageBrokerClientMessageProcessedEvent.Create(
                                 listener,
                                 notification.Args.TraceId,
+                                notification.Args.QueueId,
                                 notification.Args.Stream.Id,
                                 notification.Args.MessageId,
                                 notification.Args.Retry,
@@ -249,6 +252,7 @@ internal struct MessageEmitter
     {
         internal Notification(
             MessageBrokerListener listener,
+            int queueId,
             int ackId,
             ulong messageId,
             Timestamp pushedAt,
@@ -263,6 +267,7 @@ internal struct MessageEmitter
         {
             Args = new MessageBrokerListenerCallbackArgs(
                 listener,
+                queueId,
                 ackId,
                 messageId,
                 pushedAt,

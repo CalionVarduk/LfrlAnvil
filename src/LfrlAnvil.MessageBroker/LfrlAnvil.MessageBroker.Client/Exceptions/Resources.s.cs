@@ -200,20 +200,6 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MaxRetriesExceeded(MessageBrokerListener listener, int received)
-    {
-        return $"Retry {received} exceeds listener's {listener.MaxRetries} max retries.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MaxRedeliveriesExceeded(MessageBrokerListener listener, int received)
-    {
-        return $"Redelivery {received} exceeds listener's {listener.MaxRedeliveries} max redeliveries.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string InvalidMessageParameters(MessageBrokerListener listener, Chain<string> errors)
     {
         Assume.IsGreaterThan( errors.Count, 0 );

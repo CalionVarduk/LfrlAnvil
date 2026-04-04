@@ -1035,8 +1035,9 @@ internal static class Protocol
 
     internal readonly struct MessageNotificationHeader
     {
-        internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 6;
+        internal const int Payload = sizeof( ulong ) * 2 + sizeof( uint ) * 7;
         internal readonly PacketHeader Header;
+        internal readonly int QueueId;
         internal readonly int AckId;
         internal readonly int StreamId;
         internal readonly ulong MessageId;
@@ -1047,6 +1048,7 @@ internal static class Protocol
         internal readonly Timestamp PushedAt;
 
         internal MessageNotificationHeader(
+            int queueId,
             int ackId,
             int streamId,
             Int31BoolPair retry,
@@ -1058,6 +1060,7 @@ internal static class Protocol
             int length)
         {
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.MessageNotification, unchecked( Payload + ( uint )length ) );
+            QueueId = queueId;
             AckId = ackId;
             StreamId = streamId;
             MessageId = messageId;
@@ -1072,7 +1075,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"[{Header}] AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
+                $"[{Header}] QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1082,6 +1085,7 @@ internal static class Protocol
             var writer = new BinaryContractWriter( target.Span );
             writer.MoveWrite( Header.EndpointCode );
             writer.MoveWrite( Header.Payload );
+            writer.MoveWrite( unchecked( ( uint )QueueId ) );
             writer.MoveWrite( unchecked( ( uint )AckId ) );
             writer.MoveWrite( unchecked( ( uint )StreamId ) );
             writer.MoveWrite( MessageId );

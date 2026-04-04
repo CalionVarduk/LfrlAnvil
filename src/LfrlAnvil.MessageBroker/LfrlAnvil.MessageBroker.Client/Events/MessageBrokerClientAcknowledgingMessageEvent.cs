@@ -38,6 +38,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     private MessageBrokerClientAcknowledgingMessageEvent(
         MessageBrokerListener listener,
         ulong traceId,
+        int queueId,
         int ackId,
         int streamId,
         ulong messageId,
@@ -48,6 +49,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
+        QueueId = queueId;
         AckId = ackId;
         StreamId = streamId;
         MessageId = messageId;
@@ -66,6 +68,11 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     /// <see cref="MessageBrokerListener"/> related to this event.
     /// </summary>
     public MessageBrokerListener Listener { get; }
+
+    /// <summary>
+    /// Unique id of the server-side queue that processed the message.
+    /// </summary>
+    public int QueueId { get; }
 
     /// <summary>
     /// Id of the pending ACK associated with the message.
@@ -129,7 +136,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
             : string.Empty;
 
         return
-            $"[AcknowledgingMessage] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}{messageTraceId}{nack}";
+            $"[AcknowledgingMessage] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}{messageTraceId}{nack}";
     }
 
     [Pure]
@@ -137,6 +144,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
     internal static MessageBrokerClientAcknowledgingMessageEvent Create(
         MessageBrokerListener listener,
         ulong traceId,
+        int queueId,
         int ackId,
         int streamId,
         ulong messageId,
@@ -160,6 +168,7 @@ public readonly struct MessageBrokerClientAcknowledgingMessageEvent
         return new MessageBrokerClientAcknowledgingMessageEvent(
             listener,
             traceId,
+            queueId,
             ackId,
             streamId,
             messageId,

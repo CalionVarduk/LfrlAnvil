@@ -708,11 +708,11 @@ public class MessageBrokerPushContextTests : TestsBase, IClassFixture<SharedReso
                         (t, _) => t.Logs.TestSequence(
                         [
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (start)",
-                            "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 20436, RoutingTargetCount = 32, Confirm = True",
+                            "[PushingMessage] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Stream = [1] 'foo', Length = 20432, RoutingTargetCount = 32, Confirm = True",
                             """
                             [Error] Client = [1] 'test', TraceId = 2
                             System.InvalidOperationException: Message could not be pushed to the server. Encountered 2 error(s):
-                            1. Max network message packet length of 20445 B has been exceeded by 1 B.
+                            1. Max network message packet length of 20441 B has been exceeded by 1 B.
                             2. Max network packet length of 16384 B for message routing has been exceeded by 1 B.
                             """,
                             "[Trace:PushMessage] Client = [1] 'test', TraceId = 2 (end)"

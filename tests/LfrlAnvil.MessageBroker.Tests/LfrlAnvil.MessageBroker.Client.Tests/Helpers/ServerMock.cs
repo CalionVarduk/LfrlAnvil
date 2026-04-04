@@ -196,6 +196,7 @@ internal sealed class ServerMock : IDisposable
 
     [Pure]
     internal static byte[] PrepareMessageNotification(
+        int queueId,
         int ackId,
         ulong messageId,
         int senderId,
@@ -213,6 +214,7 @@ internal sealed class ServerMock : IDisposable
         var writer = new BinaryContractWriter( buffer );
         writer.MoveWrite( ( byte )MessageBrokerClientEndpoint.MessageNotification );
         writer.MoveWrite( payload ?? ( uint )(Protocol.MessageNotificationHeader.Length + data.Length) );
+        writer.MoveWrite( ( uint )queueId );
         writer.MoveWrite( ( uint )ackId );
         writer.MoveWrite( ( uint )streamId );
         writer.MoveWrite( messageId );
@@ -545,6 +547,7 @@ internal sealed class ServerMock : IDisposable
     }
 
     internal void SendMessageNotification(
+        int queueId,
         int ackId,
         ulong messageId,
         int senderId,
@@ -560,6 +563,7 @@ internal sealed class ServerMock : IDisposable
     {
         Send(
             PrepareMessageNotification(
+                queueId,
                 ackId,
                 messageId,
                 senderId,

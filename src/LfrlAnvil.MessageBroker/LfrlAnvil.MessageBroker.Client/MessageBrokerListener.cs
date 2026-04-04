@@ -106,7 +106,7 @@ public sealed class MessageBrokerListener
     /// Specifies how many messages intended for this listener can be sent by the server to the <see cref="Client"/> at the same time.
     /// </summary>
     /// <remarks>
-    /// This is a max potential value. Actual value is dependant on all listeners attached to the queue
+    /// This is a max potential value. Actual value is dependent on all listeners attached to the queue
     /// and all of its currently pending messages.
     /// </remarks>
     public short PrefetchHint { get; }
@@ -143,7 +143,7 @@ public sealed class MessageBrokerListener
     /// Specifies how many messages will be stored at most by the dead letter.
     /// </summary>
     /// <remarks>
-    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// This is a min value. Actual value is dependent on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public int DeadLetterCapacityHint { get; }
 
@@ -151,7 +151,7 @@ public sealed class MessageBrokerListener
     /// Specifies retention period for messages stored in the dead letter.
     /// </summary>
     /// <remarks>
-    /// This is a min value. Actual value is dependant on all listeners attached to the queue and the state of the queue's dead letter.
+    /// This is a min value. Actual value is dependent on all listeners attached to the queue and the state of the queue's dead letter.
     /// </remarks>
     public Duration MinDeadLetterRetention { get; }
 
@@ -229,11 +229,15 @@ public sealed class MessageBrokerListener
     /// <param name="messageId">Unique message id.</param>
     /// <param name="retry">Retry attempt of the message.</param>
     /// <param name="redelivery">Redelivery number of the message.</param>
+    /// <param name="queueId">
+    /// Optional unique id of the server-side queue that processed the message. Equal to listener's <see cref="QueueId"/> by default.
+    /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
     /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
-    /// or when <paramref name="retry"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
-    /// or when <paramref name="redelivery"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// or when <paramref name="retry"/> is less than <b>0</b>
+    /// or when <paramref name="redelivery"/> is less than <b>0</b>
+    /// or when <paramref name="queueId"/> is not null and is less than <b>0</b>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
@@ -247,9 +251,15 @@ public sealed class MessageBrokerListener
     /// Returned <see cref="Result{T}"/> will only be valid when either the client has successfully sent the ACK to the server,
     /// or the listener is already locally ubound from the channel, which will cancel the request to the server.
     /// </remarks>
-    public ValueTask<Result<bool>> SendMessageAckAsync(int ackId, int streamId, ulong messageId, int retry, int redelivery)
+    public ValueTask<Result<bool>> SendMessageAckAsync(
+        int ackId,
+        int streamId,
+        ulong messageId,
+        int retry,
+        int redelivery,
+        int? queueId = null)
     {
-        return ListenerCollection.SendMessageAckAsync( this, ackId, streamId, messageId, retry, redelivery, null );
+        return ListenerCollection.SendMessageAckAsync( this, queueId ?? QueueId, ackId, streamId, messageId, retry, redelivery, null );
     }
 
     /// <summary>
@@ -260,6 +270,9 @@ public sealed class MessageBrokerListener
     /// <param name="messageId">Unique message id.</param>
     /// <param name="retry">Retry attempt of the message.</param>
     /// <param name="redelivery">Redelivery attempt of the message.</param>
+    /// <param name="queueId">
+    /// Optional unique id of the server-side queue that processed the message. Equal to listener's <see cref="QueueId"/> by default.
+    /// </param>
     /// <param name="nack">
     /// Optional <see cref="MessageBrokerNegativeAck"/> instance that allows to modify the ACK.
     /// Equal to <see cref="MessageBrokerNegativeAck.Default"/> by default.
@@ -267,8 +280,8 @@ public sealed class MessageBrokerListener
     /// <exception cref="ArgumentOutOfRangeException">
     /// When <paramref name="ackId"/> is less than or equal to <b>0</b>
     /// or when <paramref name="streamId"/> is less than or equal to <b>0</b>
-    /// or when <paramref name="retry"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRetries"/>
-    /// or when <paramref name="redelivery"/> is less than <b>0</b> or greater than the listener's <see cref="MaxRedeliveries"/>.
+    /// or when <paramref name="retry"/> is less than <b>0</b>
+    /// or when <paramref name="redelivery"/> is less than <b>0</b>.
     /// </exception>
     /// <exception cref="MessageBrokerClientDisposedException">When client has already been disposed.</exception>
     /// <exception cref="MessageBrokerClientMessageException">When ACKs are not enabled for this listener.</exception>
@@ -288,10 +301,12 @@ public sealed class MessageBrokerListener
         ulong messageId,
         int retry,
         int redelivery,
+        int? queueId = null,
         MessageBrokerNegativeAck nack = default)
     {
         return ListenerCollection.SendNegativeMessageAckAsync(
             this,
+            queueId ?? QueueId,
             ackId,
             streamId,
             messageId,

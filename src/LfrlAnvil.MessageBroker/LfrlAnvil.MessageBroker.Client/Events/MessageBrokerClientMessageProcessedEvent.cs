@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     private MessageBrokerClientMessageProcessedEvent(
         MessageBrokerListener listener,
         ulong traceId,
+        int queueId,
         int streamId,
         ulong messageId,
         int retry,
@@ -33,6 +34,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     {
         Source = MessageBrokerClientEventSource.Create( listener.Client, traceId );
         Listener = listener;
+        QueueId = queueId;
         StreamId = streamId;
         MessageId = messageId;
         Retry = retry;
@@ -48,6 +50,11 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     /// <see cref="MessageBrokerListener"/> that processed the message.
     /// </summary>
     public MessageBrokerListener Listener { get; }
+
+    /// <summary>
+    /// Unique id of the queue that processed the message.
+    /// </summary>
+    public int QueueId { get; }
 
     /// <summary>
     /// Unique id of the stream through which the message was pushed.
@@ -77,7 +84,7 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     public override string ToString()
     {
         return
-            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}";
+            $"[MessageProcessed] {Source}, Channel = [{Listener.ChannelId}] '{Listener.ChannelName}', Queue = [{Listener.QueueId}] '{Listener.QueueName}', QueueId = {QueueId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = {Retry}, Redelivery = {Redelivery}";
     }
 
     [Pure]
@@ -85,11 +92,12 @@ public readonly struct MessageBrokerClientMessageProcessedEvent
     internal static MessageBrokerClientMessageProcessedEvent Create(
         MessageBrokerListener listener,
         ulong traceId,
+        int queueId,
         int streamId,
         ulong messageId,
         int retry,
         int redelivery)
     {
-        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, streamId, messageId, retry, redelivery );
+        return new MessageBrokerClientMessageProcessedEvent( listener, traceId, queueId, streamId, messageId, retry, redelivery );
     }
 }

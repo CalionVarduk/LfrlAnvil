@@ -967,8 +967,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 46)",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 50)",
                             $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
@@ -976,8 +976,8 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (start)",
                             $"[ProcessingMessage] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
-                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
-                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 47)",
+                            $"[SendPacket:Sending] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
+                            $"[SendPacket:Sent] Client = [1] 'test', TraceId = {t.Id}, Packet = (MessageNotification, Length = 51)",
                             $"[MessageProcessed] Client = [1] 'test', TraceId = {t.Id}, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 1, Retry = 0, Redelivery = 0",
                             $"[Trace:MessageNotification] Client = [1] 'test', TraceId = {t.Id} (end)"
                         ] ),
@@ -985,7 +985,7 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
                         [
                             "[Trace:MessageNotification] Client = [1] 'test', TraceId = 11 (start)",
                             "[ProcessingMessage] Client = [1] 'test', TraceId = 11, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = 1, MessageId = 2, Retry = 0, Redelivery = 0, Length = 3",
-                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 11, Packet = (MessageNotification, Length = 48)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 11, Packet = (MessageNotification, Length = 52)",
                             """
                             [Error] Client = [1] 'test', TraceId = 11
                             LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerRemoteClientDeactivatedException: Operation has been cancelled because remote client [1] 'test' is disposed.

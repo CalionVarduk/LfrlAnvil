@@ -269,6 +269,7 @@ internal struct NotificationHandler
                             MessageBrokerClientProcessingMessageEvent.Create(
                                 client,
                                 traceId,
+                                request.QueueId,
                                 request.AckId,
                                 request.SenderId,
                                 request.StreamId,

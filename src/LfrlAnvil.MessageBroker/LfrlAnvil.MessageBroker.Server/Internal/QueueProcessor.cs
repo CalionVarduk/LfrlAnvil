@@ -317,6 +317,7 @@ internal struct QueueProcessor
                         }
 
                         var header = new Protocol.MessageNotificationHeader(
+                            queue.Id,
                             ackId,
                             message.Publisher.Stream.Id,
                             retry,

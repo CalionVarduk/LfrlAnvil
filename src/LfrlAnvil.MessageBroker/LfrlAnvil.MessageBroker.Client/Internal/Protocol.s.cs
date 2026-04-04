@@ -1324,7 +1324,8 @@ internal static class Protocol
 
     internal readonly struct MessageNotificationHeader
     {
-        internal const int Length = sizeof( ulong ) * 2 + sizeof( uint ) * 6;
+        internal const int Length = sizeof( ulong ) * 2 + sizeof( uint ) * 7;
+        internal readonly int QueueId;
         internal readonly int AckId;
         internal readonly int StreamId;
         internal readonly ulong MessageId;
@@ -1335,6 +1336,7 @@ internal static class Protocol
         internal readonly Timestamp PushedAt;
 
         private MessageNotificationHeader(
+            int queueId,
             int ackId,
             int streamId,
             ulong messageId,
@@ -1344,6 +1346,7 @@ internal static class Protocol
             int senderId,
             Timestamp pushedAt)
         {
+            QueueId = queueId;
             AckId = ackId;
             StreamId = streamId;
             MessageId = messageId;
@@ -1358,7 +1361,7 @@ internal static class Protocol
         public override string ToString()
         {
             return
-                $"AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
+                $"QueueId = {QueueId}, AckId = {AckId}, StreamId = {StreamId}, MessageId = {MessageId}, Retry = ({Retry}), Redelivery = ({Redelivery}), ChannelId = {ChannelId}, SenderId = {SenderId}, PushedAt = {PushedAt}";
         }
 
         [Pure]
@@ -1368,6 +1371,7 @@ internal static class Protocol
             Assume.IsGreaterThanOrEqualTo( source.Length, Length );
 
             var reader = new BinaryContractReader( source.Span );
+            var queueId = unchecked( ( int )reader.MoveReadInt32() );
             var ackId = unchecked( ( int )reader.MoveReadInt32() );
             var streamId = unchecked( ( int )reader.MoveReadInt32() );
             var messageId = reader.MoveReadInt64();
@@ -1379,6 +1383,7 @@ internal static class Protocol
 
             if ( reverseEndianness )
             {
+                queueId = BinaryPrimitives.ReverseEndianness( queueId );
                 ackId = BinaryPrimitives.ReverseEndianness( ackId );
                 streamId = BinaryPrimitives.ReverseEndianness( streamId );
                 messageId = BinaryPrimitives.ReverseEndianness( messageId );
@@ -1390,6 +1395,7 @@ internal static class Protocol
             }
 
             return new MessageNotificationHeader(
+                queueId,
                 ackId,
                 streamId,
                 messageId,
@@ -1409,6 +1415,9 @@ internal static class Protocol
             var isRetry = Retry.BoolValue;
             var redelivery = Redelivery.IntValue;
             var isRedelivery = Redelivery.BoolValue;
+
+            if ( QueueId <= 0 )
+                result = result.Extend( Resources.QueueIdIsNotPositive( QueueId ) );
 
             if ( AckId <= 0 )
             {
@@ -1470,12 +1479,6 @@ internal static class Protocol
             }
             else if ( AckId != 0 )
                 result = result.Extend( Resources.ListenerDoesNotExpectAckId );
-
-            if ( Retry.IntValue > listener.MaxRetries )
-                result = result.Extend( Resources.MaxRetriesExceeded( listener, Retry.IntValue ) );
-
-            if ( Redelivery.IntValue > listener.MaxRedeliveries )
-                result = result.Extend( Resources.MaxRedeliveriesExceeded( listener, Redelivery.IntValue ) );
 
             return result;
         }

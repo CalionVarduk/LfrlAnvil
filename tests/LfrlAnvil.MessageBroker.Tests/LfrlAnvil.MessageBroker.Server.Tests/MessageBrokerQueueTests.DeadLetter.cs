@@ -649,8 +649,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 19 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 19, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 19, Packet = (MessageNotification, Length = 46)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 19, Packet = (MessageNotification, Length = 46)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 19, Packet = (MessageNotification, Length = 50)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 19, Packet = (MessageNotification, Length = 50)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 19, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 19 (end)"
                             ] ),
@@ -658,8 +658,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 20 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 20, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 1, Retry = 0, Redelivery = 0, Length = 2",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 20, Packet = (MessageNotification, Length = 47)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 20, Packet = (MessageNotification, Length = 47)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 20, Packet = (MessageNotification, Length = 51)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 20, Packet = (MessageNotification, Length = 51)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 20, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 1, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 20 (end)"
                             ] ),
@@ -667,8 +667,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 21 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 21, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 2, Retry = 0, Redelivery = 0, Length = 3",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 21, Packet = (MessageNotification, Length = 48)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 21, Packet = (MessageNotification, Length = 48)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 21, Packet = (MessageNotification, Length = 52)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 21, Packet = (MessageNotification, Length = 52)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 21, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 2, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 21 (end)"
                             ] )
@@ -799,8 +799,8 @@ public partial class MessageBrokerQueueTests
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 16 (start)",
                                 "[ProcessingMessage] Client = [1] 'test', TraceId = 16, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 0, Retry = 0, Redelivery = 0, Length = 1",
-                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 16, Packet = (MessageNotification, Length = 46)",
-                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 16, Packet = (MessageNotification, Length = 46)",
+                                "[SendPacket:Sending] Client = [1] 'test', TraceId = 16, Packet = (MessageNotification, Length = 50)",
+                                "[SendPacket:Sent] Client = [1] 'test', TraceId = 16, Packet = (MessageNotification, Length = 50)",
                                 "[MessageProcessed] Client = [1] 'test', TraceId = 16, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Queue = [1] 'c', AckId = <dead-letter>, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 16 (end)"
                             ] )

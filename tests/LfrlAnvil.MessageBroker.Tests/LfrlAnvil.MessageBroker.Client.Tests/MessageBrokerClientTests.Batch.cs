@@ -85,7 +85,7 @@ public partial class MessageBrokerClientTests
             await server.GetTask( s => s.SendBatch(
             [
                 ServerMock.PrepareObjectNameNotification( MessageBrokerSystemNotificationType.SenderName, 2, "foo" ),
-                ServerMock.PrepareMessageNotification( 0, 0, 2, 1, 1, [ 1, 2, 3 ] ),
+                ServerMock.PrepareMessageNotification( 1, 0, 0, 2, 1, 1, [ 1, 2, 3 ] ),
                 ServerMock.PrepareDeadLetterQueryResponse( 0, 0, Timestamp.Zero )
             ] ) );
 
@@ -120,20 +120,20 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (start)",
-                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
-                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 48)",
-                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 4, QueueId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 4, Packet = (MessageNotification, Length = 52)",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 4, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[Trace:MessageNotification] Client = [1] 'test', TraceId = 4 (end)"
                             ] )
                         ] ),
                     logs.GetAllAwaitPacket()
                         .TestContainsSequence(
                         [
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 89)",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 89), PacketCount = 3",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 93)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 93), PacketCount = 3",
                             "[AwaitPacket] Client = [1] 'test', Packet = (SystemNotification, Length = 13)",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 48)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 52)",
                             "[AwaitPacket] Client = [1] 'test', Packet = (DeadLetterQueryResponse, Length = 21)"
                         ] ) )
                 .Go();
@@ -475,6 +475,7 @@ public partial class MessageBrokerClientTests
                 [
                     ServerMock.PrepareMessageNotification(
                         1,
+                        1,
                         0,
                         1,
                         1,
@@ -502,8 +503,8 @@ public partial class MessageBrokerClientTests
                     logs.GetAllAwaitPacket()
                         .TestContainsSequence(
                         [
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 52)",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 52), PacketCount = 2",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 56)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 56), PacketCount = 2",
                             "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 32769)",
                             """
                             [AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 32769)
@@ -547,6 +548,7 @@ public partial class MessageBrokerClientTests
                 [
                     ServerMock.PrepareMessageNotification(
                         1,
+                        1,
                         0,
                         1,
                         1,
@@ -574,13 +576,13 @@ public partial class MessageBrokerClientTests
                     logs.GetAllAwaitPacket()
                         .TestContainsSequence(
                         [
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 52)",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 52), PacketCount = 2",
-                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 56)",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (Batch, Length = 56), PacketCount = 2",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 50)",
                             """
-                            [AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 46)
+                            [AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 50)
                             LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Client 'test' received an invalid MessageNotification from the server. Encountered 1 error(s):
-                            1. Expected payload of the packet at index 0 in batch to be less than or equal to 40 but found 41.
+                            1. Expected payload of the packet at index 0 in batch to be less than or equal to 44 but found 45.
                             """
                         ] ) )
                 .Go();
@@ -1347,17 +1349,17 @@ public partial class MessageBrokerClientTests
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 5 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
                                 "[SendPacket:Batched] Client = [1] 'test', TraceId = 5, BatchTraceId = 4, Packet = (MessageNotificationAck, Length = 33)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = False",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 5, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, AckId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, IsNack = False",
                                 "[Trace:Ack] Client = [1] 'test', TraceId = 5 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(
                             [
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 6 (start)",
-                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 6, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 2, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NACK = (SkipRetry = False, SkipDeadLetter = False, IsAutomatic = False)",
+                                "[AcknowledgingMessage] Client = [1] 'test', TraceId = 6, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, AckId = 2, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, NACK = (SkipRetry = False, SkipDeadLetter = False, IsAutomatic = False)",
                                 "[SendPacket:Batched] Client = [1] 'test', TraceId = 6, BatchTraceId = 4, Packet = (MessageNotificationNack, Length = 38)",
-                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 6, Channel = [1] 'foo', Queue = [1] 'foo', AckId = 2, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
+                                "[MessageAcknowledged] Client = [1] 'test', TraceId = 6, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, AckId = 2, StreamId = 1, MessageId = 1, Retry = 0, Redelivery = 0, IsNack = True",
                                 "[Trace:NegativeAck] Client = [1] 'test', TraceId = 6 (end)"
                             ] ),
                             (t, _) => t.Logs.TestSequence(

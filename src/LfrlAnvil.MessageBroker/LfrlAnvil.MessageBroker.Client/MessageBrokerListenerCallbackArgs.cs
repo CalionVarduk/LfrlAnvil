@@ -32,6 +32,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
 
     internal MessageBrokerListenerCallbackArgs(
         MessageBrokerListener listener,
+        int queueId,
         int ackId,
         ulong messageId,
         Timestamp pushedAt,
@@ -46,6 +47,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
         _retry = retry;
         _redelivery = redelivery;
         Listener = listener;
+        QueueId = queueId;
         AckId = ackId;
         MessageId = messageId;
         PushedAt = pushedAt;
@@ -60,6 +62,11 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// <see cref="MessageBrokerListener"/> that received this message.
     /// </summary>
     public MessageBrokerListener Listener { get; }
+
+    /// <summary>
+    /// Unique id of the queue which processed this message.
+    /// </summary>
+    public int QueueId { get; }
 
     /// <summary>
     /// Id of the ACK associated with the message.
@@ -158,7 +165,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"Listener = ({Listener}), Stream = ({Stream}){ackId}, Id = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Data.Length}, PushedAt = {PushedAt}, ReceivedAt = {ReceivedAt}, Sender = ({Sender}), TraceId = {TraceId}";
+            $"Listener = ({Listener}), QueueId = {QueueId}, Stream = ({Stream}){ackId}, Id = {MessageId}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, Length = {Data.Length}, PushedAt = {PushedAt}, ReceivedAt = {ReceivedAt}, Sender = ({Sender}), TraceId = {TraceId}";
     }
 
     /// <summary>
@@ -179,7 +186,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     /// </remarks>
     public ValueTask<Result<bool>> AckAsync()
     {
-        return ListenerCollection.SendMessageAckAsync( Listener, AckId, Stream.Id, MessageId, Retry, Redelivery, TraceId );
+        return ListenerCollection.SendMessageAckAsync( Listener, QueueId, AckId, Stream.Id, MessageId, Retry, Redelivery, TraceId );
     }
 
     /// <summary>
@@ -206,6 +213,7 @@ public readonly struct MessageBrokerListenerCallbackArgs
     {
         return ListenerCollection.SendNegativeMessageAckAsync(
             Listener,
+            QueueId,
             AckId,
             Stream.Id,
             MessageId,
