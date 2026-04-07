@@ -47,6 +47,37 @@ public class MemoryExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void AsEnumerable_ShouldReturnCorrectEnumerable_ForFullArrayBackedMemory()
+    {
+        var sut = new[] { 1, 2, 3, 4, 5 }.AsMemory();
+
+        var result = sut.AsEnumerable();
+
+        Assertion.All(
+                result.Count.TestEquals( sut.Length ),
+                result[0].TestEquals( 1 ),
+                result[1].TestEquals( 2 ),
+                result[2].TestEquals( 3 ),
+                result[3].TestEquals( 4 ),
+                result[4].TestEquals( 5 ),
+                result.TestSequence( [ 1, 2, 3, 4, 5 ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void AsEnumerable_ShouldReturnCorrectEnumerable_ForEmptyArrayBackedMemory()
+    {
+        var sut = new[] { 1, 2, 3, 4, 5 }.AsMemory( 1, 0 );
+
+        var result = sut.AsEnumerable();
+
+        Assertion.All(
+                result.Count.TestEquals( sut.Length ),
+                result.TestEmpty() )
+            .Go();
+    }
+
+    [Fact]
     public void AsEnumerable_ShouldReturnCorrectEnumerable_ForStringBackedMemory()
     {
         var sut = "abcde".AsMemory( 1, 2 );

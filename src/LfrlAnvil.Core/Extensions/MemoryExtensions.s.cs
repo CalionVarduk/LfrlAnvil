@@ -61,13 +61,20 @@ public static class MemoryExtensions
     [Pure]
     public static IReadOnlyList<T> AsEnumerable<T>(this ReadOnlyMemory<T> source)
     {
-        if ( MemoryMarshal.TryGetArray( source, out var segment ) )
-            return segment;
-
         if ( typeof( T ) == typeof( char ) )
         {
             if ( MemoryMarshal.TryGetString( ( ReadOnlyMemory<char> )( object )source, out var text, out var start, out var length ) )
                 return ( IReadOnlyList<T> )( object )new StringSegment( text, start, length );
+        }
+
+        if ( MemoryMarshal.TryGetArray( source, out var segment ) )
+        {
+            if ( segment.Array is null || segment.Count == 0 )
+                return Array.Empty<T>();
+
+            return segment.Offset == 0 && segment.Count == segment.Array.Length
+                ? segment.Array
+                : segment;
         }
 
         return new EnumerableMemory<T>( source );
