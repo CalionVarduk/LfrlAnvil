@@ -23,7 +23,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerQueueListenerBoundEvent
 {
     private MessageBrokerQueueListenerBoundEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         bool channelCreated,
         bool reactivated)
@@ -42,7 +42,7 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     /// <summary>
     /// Bound listener.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// Specifies whether creation of the channel bound to the <see cref="Listener"/> was part of the binding operation.
@@ -63,13 +63,14 @@ public readonly struct MessageBrokerQueueListenerBoundEvent
     {
         var channelCreated = ChannelCreated ? " (created)" : string.Empty;
         var reactivated = Reactivated ? " (reactivated)" : string.Empty;
-        return $"[ListenerBound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelCreated}{reactivated}";
+        return
+            $"[ListenerBound] {Source}, Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}'{channelCreated}{reactivated}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueListenerBoundEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         bool channelCreated,
         bool reactivated)

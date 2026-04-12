@@ -24,7 +24,7 @@ public readonly struct MessageBrokerQueueUnackedMessage
 {
     internal MessageBrokerQueueUnackedMessage(
         IMessageBrokerMessagePublisher publisher,
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         int storeKey,
         ulong messageId,
         int retry,
@@ -46,9 +46,9 @@ public readonly struct MessageBrokerQueueUnackedMessage
     public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that handles this message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that handles this message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// Stream store key of this message.

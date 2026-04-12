@@ -281,7 +281,7 @@ internal struct NotificationSender
                                 }
                             }
 
-                            if ( notification.AckId <= 0 && notification.Listener.DecrementPrefetchCounter() )
+                            if ( notification.AckId <= 0 && notification.Listener.RemoveSentMessage() )
                             {
                                 using ( notification.Listener.Queue.AcquireLock() )
                                 {
@@ -500,7 +500,7 @@ internal struct NotificationSender
         }
 
         internal readonly IMessageBrokerMessagePublisher Publisher;
-        internal readonly MessageBrokerChannelListenerBinding Listener;
+        internal readonly MessageBrokerQueueListenerBinding Listener;
         internal readonly ulong MessageId;
         internal readonly Int31BoolPair Retry;
         internal readonly Int31BoolPair Redelivery;

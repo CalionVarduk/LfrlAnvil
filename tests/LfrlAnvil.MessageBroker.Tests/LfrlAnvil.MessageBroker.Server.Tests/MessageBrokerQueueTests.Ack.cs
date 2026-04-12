@@ -99,7 +99,7 @@ public partial class MessageBrokerQueueTests
                         Assertion.All(
                             "unackedMessage",
                             m.Publisher.TestRefEquals( publisher ),
-                            m.Listener.TestRefEquals( listener ),
+                            m.Listener.TestRefEquals( listener?.QueueBindings.Primary ),
                             m.StoreKey.TestEquals( 0 ),
                             m.MessageId.TestEquals( 0UL ),
                             m.Retry.TestEquals( 0 ),
@@ -107,7 +107,7 @@ public partial class MessageBrokerQueueTests
                             m.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinAckTimeout ?? Timestamp.Zero ),
                             m.ToString()
                                 .TestEquals(
-                                    $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, MessageId = 0, Retry = 0, Redelivery = 0, ExpiresAt = {m.ExpiresAt}" ) ) ),
+                                    $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' queue listener binding (using [1] 'c' queue) (Primary:Running)), StoreKey = 0, MessageId = 0, Retry = 0, Redelivery = 0, ExpiresAt = {m.ExpiresAt}" ) ) ),
                     clientLogs.GetAll()
                         .Skip( 5 )
                         .TestSequence(
@@ -745,14 +745,14 @@ public partial class MessageBrokerQueueTests
                             .TestNotNull( r => Assertion.All(
                                 "retryMessage",
                                 r.Publisher.TestRefEquals( publisher ),
-                                r.Listener.TestRefEquals( listener ),
+                                r.Listener.TestRefEquals( listener?.QueueBindings.Primary ),
                                 r.StoreKey.TestEquals( 0 ),
                                 r.Retry.TestEquals( 1 ),
                                 r.Redelivery.TestEquals( 0 ),
                                 r.SendAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.RetryDelay ?? Timestamp.Zero ),
                                 r.ToString()
                                     .TestEquals(
-                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 1, Redelivery = 0, SendAt = {r.SendAt}" ),
+                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' queue listener binding (using [1] 'c' queue) (Primary:Running)), StoreKey = 0, Retry = 1, Redelivery = 0, SendAt = {r.SendAt}" ),
                                 r.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( r.StoreKey ) ) ) ) ) ),
                     clientLogs.GetAll()
                         .Skip( 5 )
@@ -1705,7 +1705,7 @@ public partial class MessageBrokerQueueTests
                                 d.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinDeadLetterRetention ?? Timestamp.Zero ),
                                 d.ToString()
                                     .TestEquals(
-                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)), StoreKey = 0, Retry = 0, Redelivery = 1, ExpiresAt = {d.ExpiresAt}" ),
+                                        $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' queue listener binding (using [1] 'c' queue) (Primary:Running)), StoreKey = 0, Retry = 0, Redelivery = 1, ExpiresAt = {d.ExpiresAt}" ),
                                 d.TryGetMessage().TestNotNull( m => m.StoreKey.TestEquals( d.StoreKey ) ) ) ) ) ),
                     clientLogs.GetAll()
                         .Skip( 4 )
@@ -2779,6 +2779,339 @@ public partial class MessageBrokerQueueTests
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (start)",
                                 $"[MessageDiscarded] Client = [1] 'test', Queue = [1] 'c', TraceId = 5, Sender = [1] 'test', Channel = [1] 'c', Stream = [1] 'c', Reason = DisposedRetry, StoreKey = 0, Retry = 1, Redelivery = 0, MessageRemoved = {messageRemoved.Value}, MovedToDeadLetter = False",
                                 "[Trace:ProcessMessage] Client = [1] 'test', Queue = [1] 'c', TraceId = 5 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task NegativeAck_ShouldProcessSecondaryListenerMessage_WithMoveToDeadLetter()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+            storage.WriteStreamMessages(
+                streamId: 1,
+                messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+            storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRetries: 5,
+                retryDelay: Duration.FromMinutes( 1 ),
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ),
+                deadLetterCapacityHint: 5,
+                minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+            storage.WriteQueuePendingMessages(
+                clientId: 1,
+                queueId: 2,
+                messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+            var queueLogs = new QueueEventLogger();
+
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetRootStoragePath( storage.Path )
+                    .SetQueueLoggerFactory( q => q.Id == 2
+                        ? queueLogs
+                            .GetLogger(
+                                MessageBrokerQueueLogger.Create(
+                                    traceEnd: e =>
+                                    {
+                                        if ( e.Type is MessageBrokerQueueTraceEventType.ProcessMessage
+                                            or MessageBrokerQueueTraceEventType.NegativeAck )
+                                            endSource.Complete();
+                                    } ) )
+                        : null ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server, isEphemeral: false );
+            await client.GetTask( c =>
+            {
+                c.SendBindListenerRequest(
+                    channelName: "foo",
+                    true,
+                    isEphemeral: false,
+                    maxRetries: 5,
+                    retryDelay: Duration.FromMinutes( 1 ),
+                    maxRedeliveries: 5,
+                    minAckTimeout: Duration.FromMinutes( 1 ),
+                    deadLetterCapacityHint: 5,
+                    minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+                c.ReadListenerBoundResponse();
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 2, 1, 1, 0, noRetry: true );
+            } );
+
+            await endSource.Task;
+            var listener = server.Clients.TryGetById( 1 )?.Listeners.TryGetByChannelId( 1 );
+
+            Assertion.All(
+                    listener.TestNotNull( l => Assertion.All(
+                        "listener",
+                        l.QueueBindings.Count.TestEquals( 2 ),
+                        l.QueueBindings.TryGetByQueueId( 1 ).TestRefEquals( l.QueueBindings.Primary ),
+                        l.QueueBindings.TryGetByQueueId( 2 )
+                            .TestNotNull( b => Assertion.All(
+                                "secondaryBinding",
+                                b.IsPrimary.TestFalse(),
+                                b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ) ) ),
+                        l.Client.Queues.Count.TestEquals( 2 ) ) ),
+                    queueLogs
+                        .GetAll()
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, MessageRemoved = False",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task NegativeAck_ShouldProcessSecondaryListenerMessage_WithRetry()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+            storage.WriteStreamMessages(
+                streamId: 1,
+                messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+            storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRetries: 5,
+                retryDelay: Duration.FromMinutes( 1 ),
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ),
+                deadLetterCapacityHint: 5,
+                minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+            storage.WriteQueuePendingMessages(
+                clientId: 1,
+                queueId: 2,
+                messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+            var queueLogs = new QueueEventLogger();
+
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetRootStoragePath( storage.Path )
+                    .SetQueueLoggerFactory( q => q.Id == 2
+                        ? queueLogs
+                            .GetLogger(
+                                MessageBrokerQueueLogger.Create(
+                                    traceEnd: e =>
+                                    {
+                                        if ( e.Type is MessageBrokerQueueTraceEventType.ProcessMessage
+                                            or MessageBrokerQueueTraceEventType.NegativeAck )
+                                            endSource.Complete();
+                                    } ) )
+                        : null ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server, isEphemeral: false );
+            await client.GetTask( c =>
+            {
+                c.SendBindListenerRequest(
+                    channelName: "foo",
+                    true,
+                    isEphemeral: false,
+                    maxRetries: 5,
+                    retryDelay: Duration.FromMinutes( 1 ),
+                    maxRedeliveries: 5,
+                    minAckTimeout: Duration.FromMinutes( 1 ),
+                    deadLetterCapacityHint: 5,
+                    minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+                c.ReadListenerBoundResponse();
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 2, 1, 1, 0 );
+            } );
+
+            await endSource.Task;
+            var listener = server.Clients.TryGetById( 1 )?.Listeners.TryGetByChannelId( 1 );
+
+            Assertion.All(
+                    listener.TestNotNull( l => Assertion.All(
+                        "listener",
+                        l.QueueBindings.Count.TestEquals( 2 ),
+                        l.QueueBindings.TryGetByQueueId( 1 ).TestRefEquals( l.QueueBindings.Primary ),
+                        l.QueueBindings.TryGetByQueueId( 2 )
+                            .TestNotNull( b => Assertion.All(
+                                "secondaryBinding",
+                                b.IsPrimary.TestFalse(),
+                                b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ) ) ),
+                        l.Client.Queues.Count.TestEquals( 2 ) ) ),
+                    queueLogs
+                        .GetAll()
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, Delay = 60 second(s)",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            ] )
+                        ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public async Task NegativeAck_ShouldProcessSecondaryListenerMessage_WithNoRetryAndNoDeadLetter()
+        {
+            using var storage = StorageScope.Create();
+            storage.WriteServerMetadata();
+            storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+            storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+            storage.WriteStreamMessages(
+                streamId: 1,
+                messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+            storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+            storage.WriteListenerMetadata(
+                clientId: 1,
+                channelId: 1,
+                queueId: 1,
+                maxRetries: 5,
+                retryDelay: Duration.FromMinutes( 1 ),
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+            storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+            storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+            storage.WriteQueuePendingMessages(
+                clientId: 1,
+                queueId: 2,
+                messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+            storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+            storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+            var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+            var queueLogs = new QueueEventLogger();
+
+            await using var server = new MessageBrokerServer(
+                new IPEndPoint( IPAddress.Loopback, 0 ),
+                MessageBrokerServerOptions.Default
+                    .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySourceFactory( _ => _sharedDelaySource )
+                    .SetRootStoragePath( storage.Path )
+                    .SetQueueLoggerFactory( q => q.Id == 2
+                        ? queueLogs
+                            .GetLogger(
+                                MessageBrokerQueueLogger.Create(
+                                    traceEnd: e =>
+                                    {
+                                        if ( e.Type is MessageBrokerQueueTraceEventType.ProcessMessage
+                                            or MessageBrokerQueueTraceEventType.NegativeAck )
+                                            endSource.Complete();
+                                    } ) )
+                        : null ) );
+
+            await server.StartAsync();
+
+            using var client = new ClientMock();
+            await client.EstablishHandshake( server, isEphemeral: false );
+            await client.GetTask( c =>
+            {
+                c.SendBindListenerRequest(
+                    channelName: "foo",
+                    true,
+                    isEphemeral: false,
+                    maxRetries: 5,
+                    retryDelay: Duration.FromMinutes( 1 ),
+                    maxRedeliveries: 5,
+                    minAckTimeout: Duration.FromMinutes( 1 ) );
+
+                c.ReadListenerBoundResponse();
+                c.ReadMessageNotification( 1 );
+                c.SendMessageNotificationNegativeAck( 2, 1, 1, 0, noRetry: true );
+            } );
+
+            await endSource.Task;
+            var listener = server.Clients.TryGetById( 1 )?.Listeners.TryGetByChannelId( 1 );
+
+            Assertion.All(
+                    listener.TestNotNull( l => Assertion.All(
+                        "listener",
+                        l.QueueBindings.Count.TestEquals( 1 ),
+                        l.QueueBindings.TryGetByQueueId( 1 ).TestRefEquals( l.QueueBindings.Primary ),
+                        l.QueueBindings.TryGetByQueueId( 2 ).TestNull(),
+                        l.Client.Queues.Count.TestEquals( 1 ) ) ),
+                    queueLogs
+                        .GetAll()
+                        .TakeLast( 1 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, MessageRemoved = True",
+                                "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
+                                "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                             ] )
                         ] ) )
                 .Go();

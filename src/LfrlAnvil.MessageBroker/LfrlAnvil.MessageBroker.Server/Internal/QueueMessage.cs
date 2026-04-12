@@ -18,7 +18,7 @@ namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal readonly struct QueueMessage
 {
-    internal QueueMessage(IMessageBrokerMessagePublisher publisher, MessageBrokerChannelListenerBinding listener, int storeKey)
+    internal QueueMessage(IMessageBrokerMessagePublisher publisher, MessageBrokerQueueListenerBinding listener, int storeKey)
     {
         Publisher = publisher;
         Listener = listener;
@@ -26,7 +26,7 @@ internal readonly struct QueueMessage
     }
 
     internal readonly IMessageBrokerMessagePublisher Publisher;
-    internal readonly MessageBrokerChannelListenerBinding Listener;
+    internal readonly MessageBrokerQueueListenerBinding Listener;
     internal readonly int StoreKey;
 
     [Pure]

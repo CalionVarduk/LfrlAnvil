@@ -283,7 +283,7 @@ public partial class MessageBrokerServerTests
                                 listenerBound: e =>
                                 {
                                     if ( e.Listener.Queue.Name == "q1" )
-                                        q1Order.Add( $"[{e.Listener.Channel.Id}] '{e.Listener.Channel.Name}'" );
+                                        q1Order.Add( $"[{e.Listener.Owner.Channel.Id}] '{e.Listener.Owner.Channel.Name}'" );
                                 } ) ) ) ) )
             {
                 await server.StartAsync();
@@ -392,7 +392,7 @@ public partial class MessageBrokerServerTests
                                 ] ) ) ),
                         queue1.TestNotNull( q => Assertion.All(
                             "queue1",
-                            q.Listeners.GetAll().Select( l => l.Channel.Id ).TestSetEqual( [ 1, 2 ] ),
+                            q.Listeners.GetAll().Select( l => l.Owner.Channel.Id ).TestSetEqual( [ 1, 2 ] ),
                             q.Messages.DeadLetter.Count.TestEquals( 2 ),
                             q.Messages.DeadLetter.TryPeekAt( 0 )
                                 .TestNotNull( m => Assertion.All(
@@ -401,7 +401,7 @@ public partial class MessageBrokerServerTests
                                     m.Retry.TestEquals( 0 ),
                                     m.Redelivery.TestEquals( 0 ),
                                     m.ExpiresAt.TestGreaterThan( now ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 2 ) ) ),
                             q.Messages.DeadLetter.TryPeekAt( 1 )
                                 .TestNotNull( m => Assertion.All(
@@ -410,7 +410,7 @@ public partial class MessageBrokerServerTests
                                     m.Retry.TestEquals( 0 ),
                                     m.Redelivery.TestEquals( 0 ),
                                     m.ExpiresAt.TestGreaterThan( now ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 1 ) ) ),
                             q.Messages.Retries.Count.TestEquals( 2 ),
                             q.Messages.Retries.TryGetNext()
@@ -420,7 +420,7 @@ public partial class MessageBrokerServerTests
                                     m.Retry.TestEquals( 1 ),
                                     m.Redelivery.TestEquals( 0 ),
                                     m.SendAt.TestGreaterThan( now ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 2 ) ) ),
                             q.Messages.Unacked.Count.TestEquals( 1 ),
                             q.Messages.Unacked.TryGetByAckId( 1 )
@@ -431,24 +431,24 @@ public partial class MessageBrokerServerTests
                                     m.Redelivery.TestEquals( 0 ),
                                     m.MessageId.TestEquals( 4UL ),
                                     m.ExpiresAt.TestLessThanOrEqualTo( now ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 2 ) ) ),
                             q.Messages.Pending.Count.TestEquals( 2 ),
                             q.Messages.Pending.TryPeekAt( 0 )
                                 .TestNotNull( m => Assertion.All(
                                     "pending0",
                                     m.StoreKey.TestEquals( 5 ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 2 ) ) ),
                             q.Messages.Pending.TryPeekAt( 1 )
                                 .TestNotNull( m => Assertion.All(
                                     "pending1",
                                     m.StoreKey.TestEquals( 6 ),
-                                    m.Listener.Channel.Id.TestEquals( 1 ),
+                                    m.Listener.Owner.Channel.Id.TestEquals( 1 ),
                                     m.Publisher.ClientId.TestEquals( 1 ) ) ) ) ),
                         queue2.TestNotNull( q => Assertion.All(
                             "queue2",
-                            q.Listeners.GetAll().Select( l => l.Channel.Id ).TestSetEqual( [ 2 ] ),
+                            q.Listeners.GetAll().Select( l => l.Owner.Channel.Id ).TestSetEqual( [ 2 ] ),
                             q.Messages.DeadLetter.Count.TestEquals( 0 ),
                             q.Messages.Retries.Count.TestEquals( 0 ),
                             q.Messages.Unacked.Count.TestEquals( 0 ),
@@ -898,7 +898,7 @@ public partial class MessageBrokerServerTests
                                     "queue",
                                     q.State.TestEquals( MessageBrokerQueueState.Inactive ),
                                     q.Listeners.Count.TestEquals( 1 ),
-                                    q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( listener ),
+                                    q.Listeners.TryGetByChannelId( 2 ).TestRefEquals( listener?.QueueBindings.Primary ),
                                     q.Messages.Unacked.Count.TestEquals( 1 ) ) ) ) ) )
                     .Go();
             }
@@ -2904,7 +2904,6 @@ public partial class MessageBrokerServerTests
                 queueId: 1,
                 messages: [ StorageScope.PrepareQueueDeadLetterMessage( streamId: 1, storeKey: 3, retry: 0, redelivery: 0 ) ] );
 
-            storage.WriteListenerMetadata( clientId: 1, channelId: 1, queueId: 2 );
             storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "bar" );
             storage.WriteQueuePendingMessages( clientId: 1, queueId: 2, messages: [ ] );
             storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
@@ -2929,22 +2928,22 @@ public partial class MessageBrokerServerTests
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "pending.mbpm" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 0 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 0 in queue [1] 'foo' because listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "unacked.mbue" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 1 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 1 in queue [1] 'foo' because listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "retries.mbre" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 2 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 2 in queue [1] 'foo' because listener for channel [1] 'foo' does not exist.
                              """,
                             $"""
                              [Error] Server = {originalEndPoint}, TraceId = 1
                              LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerStorageException: Server storage file '{Path.Combine( server.RootStorageDirectoryPath!, "clients", "_1", "queues", "_1", "deadletter.mbdl" )}' contains invalid data. Encountered 1 error(s):
-                             1. Failed to enqueue a message from stream [1] 'foo' with store key 3 in queue [1] 'foo' because Listener for channel [1] 'foo' does not exist.
+                             1. Failed to enqueue a message from stream [1] 'foo' with store key 3 in queue [1] 'foo' because listener for channel [1] 'foo' does not exist.
                              """
                         ] ) ) )
                 .Go();

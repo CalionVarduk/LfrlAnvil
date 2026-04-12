@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ using System.Diagnostics.Contracts;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a collection of <see cref="MessageBrokerChannelListenerBinding"/> instances attached to a single queue, identified by channel ids.
+/// Represents a collection of <see cref="MessageBrokerQueueListenerBinding"/> instances attached to a single queue,
+/// identified by channel ids.
 /// </summary>
 public readonly struct MessageBrokerQueueListenerCollection
 {
@@ -45,7 +46,7 @@ public readonly struct MessageBrokerQueueListenerCollection
     /// </summary>
     /// <returns>All listeners.</returns>
     [Pure]
-    public ReadOnlyArray<MessageBrokerChannelListenerBinding> GetAll()
+    public ReadOnlyArray<MessageBrokerQueueListenerBinding> GetAll()
     {
         using ( _queue.AcquireLock() )
             return _queue.ListenersByChannelId.GetAll();
@@ -56,11 +57,11 @@ public readonly struct MessageBrokerQueueListenerCollection
     /// </summary>
     /// <param name="channelId">Channel's unique <see cref="MessageBrokerChannel.Id"/>.</param>
     /// <returns>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> instance associated with the queue and the provided <paramref name="channelId"/>
+    /// <see cref="MessageBrokerQueueListenerBinding"/> instance associated with the queue and the provided <paramref name="channelId"/>
     /// or <b>null</b>, when such a listener does not exist.
     /// </returns>
     [Pure]
-    public MessageBrokerChannelListenerBinding? TryGetByChannelId(int channelId)
+    public MessageBrokerQueueListenerBinding? TryGetByChannelId(int channelId)
     {
         using ( _queue.AcquireLock() )
             return _queue.ListenersByChannelId.TryGet( channelId, out var result ) ? result : null;

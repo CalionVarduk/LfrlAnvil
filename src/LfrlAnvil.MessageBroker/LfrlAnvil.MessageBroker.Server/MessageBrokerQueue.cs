@@ -33,7 +33,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerQueue
 {
     internal readonly MessageBrokerQueueLogger Logger;
-    internal ReferenceStore<int, MessageBrokerChannelListenerBinding> ListenersByChannelId;
+    internal ReferenceStore<int, MessageBrokerQueueListenerBinding> ListenersByChannelId;
     internal QueueProcessor QueueProcessor;
     internal QueueMessageStore MessageStore;
     internal int EventHeapIndex;
@@ -62,7 +62,7 @@ public sealed class MessageBrokerQueue
         _state = state;
         _nextTraceId = nextTraceId;
         _autoStopTraceId = null;
-        ListenersByChannelId = ReferenceStore<int, MessageBrokerChannelListenerBinding>.Create();
+        ListenersByChannelId = ReferenceStore<int, MessageBrokerQueueListenerBinding>.Create();
         MessageStore = QueueMessageStore.Create();
         QueueProcessor = QueueProcessor.Create( state == MessageBrokerQueueState.Running );
         Logger = Client.Server.QueueLoggerFactory?.Invoke( this ) ?? default;
@@ -194,7 +194,7 @@ public sealed class MessageBrokerQueue
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal bool PushMessage(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         int storeKey,
         in StreamMessage message,
         MessageBrokerStream stream,
@@ -230,6 +230,7 @@ public sealed class MessageBrokerQueue
                     return false;
 
                 MessageStore.Enqueue( message.Publisher, listener, storeKey );
+                listener.AddReferencingMessage();
                 if ( ! IsInactive )
                     QueueProcessor.SignalContinuation();
             }
@@ -250,7 +251,8 @@ public sealed class MessageBrokerQueue
         int redelivery,
         ref QueueMessage message,
         ref ulong traceId,
-        ref bool disposing)
+        ref bool disposingQueue,
+        ref bool disposingListener)
     {
         using ( AcquireLock() )
         {
@@ -266,8 +268,16 @@ public sealed class MessageBrokerQueue
                 return AckResult.MessageVersionNotFound;
 
             MessageStore.RemoveUnacked( ackId );
-            disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
-            if ( message.Listener.DecrementPrefetchCounter() && ! MessageStore.IsEmpty )
+
+            if ( message.Listener.RemoveReferencingMessage() )
+            {
+                disposingListener = true;
+                ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
+            }
+
+            disposingQueue = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+            if ( message.Listener.RemoveSentMessage() && ! MessageStore.IsEmpty )
                 QueueProcessor.SignalContinuation();
 
             traceId = GetTraceId();
@@ -289,7 +299,8 @@ public sealed class MessageBrokerQueue
         ref QueueMessage message,
         ref Duration delay,
         ref ulong traceId,
-        ref bool disposing)
+        ref bool disposingQueue,
+        ref bool disposingListener)
     {
         using ( AcquireLock() )
         {
@@ -304,19 +315,28 @@ public sealed class MessageBrokerQueue
             if ( info.Retry != retry || info.Redelivery != redelivery )
                 return AckResult.MessageVersionNotFound;
 
+            // TODO: better listener locking
             if ( noRetry || retry >= message.Listener.MaxRetries )
             {
-                var signalProcessor = message.Listener.DecrementPrefetchCounter();
+                var signalProcessor = message.Listener.RemoveSentMessage();
                 if ( ! noDeadLetter && message.Listener.DeadLetterCapacityHint > 0 )
                 {
                     MessageStore.AddToDeadLetter( message, retry, redelivery );
                     MessageStore.RemoveUnacked( ackId );
-                    signalProcessor |= message.Listener.IncrementDeadLetterCounter();
+                    signalProcessor |= message.Listener.AddDeadLetterMessage();
                 }
                 else
                 {
                     MessageStore.RemoveUnacked( ackId );
-                    disposing = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+
+                    if ( message.Listener.RemoveReferencingMessage() )
+                    {
+                        disposingListener = true;
+                        ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                        message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
+                    }
+
+                    disposingQueue = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
                     signalProcessor &= ! MessageStore.IsEmpty;
                 }
 
@@ -328,7 +348,7 @@ public sealed class MessageBrokerQueue
                 delay = explicitDelay ?? message.Listener.RetryDelay;
                 MessageStore.ScheduleRetry( message, retry, redelivery, delay );
                 MessageStore.RemoveUnacked( ackId );
-                message.Listener.DecrementPrefetchCounter();
+                message.Listener.RemoveSentMessage();
                 QueueProcessor.SignalContinuation();
             }
 
@@ -401,7 +421,9 @@ public sealed class MessageBrokerQueue
         ListenersByChannelId.Remove( channelId );
         if ( ListenersByChannelId.Count > 0 || ! MessageStore.IsEmpty )
         {
-            QueueProcessor.SignalContinuation();
+            if ( ! IsInactive )
+                QueueProcessor.SignalContinuation();
+
             return false;
         }
 

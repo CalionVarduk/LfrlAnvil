@@ -23,7 +23,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerRemoteClientAckProcessedEvent
 {
     private MessageBrokerRemoteClientAckProcessedEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int ackId,
@@ -32,7 +32,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
         int redelivery,
         bool isNack)
     {
-        Source = MessageBrokerRemoteClientEventSource.Create( listener.Client, traceId );
+        Source = MessageBrokerRemoteClientEventSource.Create( listener.Owner.Client, traceId );
         Listener = listener;
         Publisher = publisher;
         AckId = ackId;
@@ -48,9 +48,9 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     public MessageBrokerRemoteClientEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that received the message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that received the message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
@@ -96,7 +96,7 @@ public readonly struct MessageBrokerRemoteClientAckProcessedEvent
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerRemoteClientAckProcessedEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int ackId,

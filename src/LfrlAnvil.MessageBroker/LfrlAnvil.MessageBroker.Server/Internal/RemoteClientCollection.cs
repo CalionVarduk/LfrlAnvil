@@ -424,6 +424,7 @@ internal struct RemoteClientCollection
 
             MessageBrokerQueue? queue;
             MessageBrokerChannelListenerBinding listener;
+            MessageBrokerQueueListenerBinding primaryBinding;
             using ( client.AcquireLock() )
             {
                 if ( client.IsDisposed )
@@ -440,6 +441,9 @@ internal struct RemoteClientCollection
                     in metadata,
                     filterExpression,
                     filterExpressionDelegate );
+
+                using ( listener.AcquireLock() )
+                    primaryBinding = listener.QueueBindingCollection.Primary;
 
                 client.ListenersByChannelId.Add( channel.Id, listener );
             }
@@ -475,7 +479,7 @@ internal struct RemoteClientCollection
                     break;
 
                 queueTraceId = queue.GetTraceId();
-                queue.ListenersByChannelId.Add( channel.Id, listener );
+                queue.ListenersByChannelId.Add( channel.Id, primaryBinding );
             }
 
             using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.BindListener ) )
@@ -485,7 +489,11 @@ internal struct RemoteClientCollection
 
                 if ( queue.Logger.ListenerBound is { } queueListenerBound )
                     queueListenerBound.Emit(
-                        MessageBrokerQueueListenerBoundEvent.Create( listener, queueTraceId, channelCreated: false, reactivated: false ) );
+                        MessageBrokerQueueListenerBoundEvent.Create(
+                            primaryBinding,
+                            queueTraceId,
+                            channelCreated: false,
+                            reactivated: false ) );
             }
 
             if ( client.Logger.ListenerBound is { } listenerBound )

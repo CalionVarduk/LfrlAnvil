@@ -809,6 +809,136 @@ public partial class MessageBrokerRemoteClientTests : TestsBase, IClassFixture<S
     }
 
     [Fact]
+    public async Task DisconnectAsync_ShouldPreserveNonEphemeralSecondaryQueueListenerBindings()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteChannelMetadata( channelId: 2, channelName: "bar" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 2, data: [ 2, 3 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ),
+            deadLetterCapacityHint: 5,
+            minDeadLetterRetention: Duration.FromHours( 5 ) );
+
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 2,
+            queueId: 2,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ),
+            deadLetterCapacityHint: 5,
+            minDeadLetterRetention: Duration.FromHours( 5 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages(
+            clientId: 1,
+            queueId: 1,
+            messages:
+            [
+                StorageScope.PrepareQueueDeadLetterMessage(
+                    streamId: 1,
+                    storeKey: 1,
+                    retry: 0,
+                    redelivery: 0,
+                    expiresAt: TimestampProvider.Shared.GetNow() + Duration.FromHours( 1 ) )
+            ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "bar" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueueDeadLetterMessage(
+                    streamId: 1,
+                    storeKey: 0,
+                    retry: 0,
+                    redelivery: 0,
+                    expiresAt: TimestampProvider.Shared.GetNow() + Duration.FromHours( 1 ) )
+            ] );
+
+        var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );
+        await using var server = new MessageBrokerServer(
+            originalEndPoint,
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path ) );
+
+        await server.StartAsync();
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, "test", isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                channelName: "bar",
+                true,
+                isEphemeral: true,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ),
+                deadLetterCapacityHint: 5,
+                minDeadLetterRetention: Duration.FromHours( 5 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var listener1 = remoteClient?.Listeners.TryGetByChannelId( 1 );
+        var listener2 = remoteClient?.Listeners.TryGetByChannelId( 2 );
+        var queue1 = remoteClient?.Queues.TryGetById( 1 );
+        var queue2 = remoteClient?.Queues.TryGetById( 2 );
+
+        if ( remoteClient is not null )
+            await remoteClient.DisconnectAsync();
+
+        Assertion.All(
+                listener1.TestNotNull( l => Assertion.All(
+                    "listener1",
+                    l.State.TestEquals( MessageBrokerChannelListenerBindingState.Inactive ),
+                    l.QueueBindings.Count.TestEquals( 2 ),
+                    l.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Inactive ),
+                    l.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => b.State.TestEquals( MessageBrokerQueueListenerBindingState.Inactive ) ) ) ),
+                listener2.TestNotNull( l => Assertion.All(
+                    "listener2",
+                    l.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
+                    l.QueueBindings.Count.TestEquals( 1 ),
+                    l.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Disposed ) ) ),
+                queue1.TestNotNull( q => Assertion.All(
+                    "queue1",
+                    q.State.TestEquals( MessageBrokerQueueState.Inactive ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( listener1?.QueueBindings.Primary ) ) ),
+                queue2.TestNotNull( q => Assertion.All(
+                    "queue2",
+                    q.State.TestEquals( MessageBrokerQueueState.Inactive ),
+                    q.Listeners.Count.TestEquals( 1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( listener1?.QueueBindings.TryGetByQueueId( 2 ) ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public async Task DisposingExternalDelaySource_ShouldDisconnectClient()
     {
         var endSource = new SafeTaskCompletionSource();

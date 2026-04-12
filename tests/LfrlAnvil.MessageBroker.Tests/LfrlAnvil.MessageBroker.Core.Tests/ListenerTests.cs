@@ -77,7 +77,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                     q.Name.TestEquals( "foo" ),
                     q.Client.TestRefEquals( remoteClient ),
                     q.Listeners.Count.TestEquals( 1 ),
-                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding?.QueueBindings.Primary ),
                     q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
                 binding.TestNotNull( s => Assertion.All(
                     "binding",
@@ -169,7 +169,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                     q.Name.TestEquals( "foo" ),
                     q.Client.TestRefEquals( remoteClient1 ),
                     q.Listeners.Count.TestEquals( 1 ),
-                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding1?.QueueBindings.Primary ),
                     q.State.TestEquals( MessageBrokerQueueState.Running ) ) ),
                 queue2.TestNotNull( q => Assertion.All(
                     "queue2",
@@ -177,7 +177,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                     q.Name.TestEquals( "foo" ),
                     q.Client.TestRefEquals( remoteClient2 ),
                     q.Listeners.Count.TestEquals( 1 ),
-                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2 ),
+                    q.Listeners.TryGetByChannelId( 1 ).TestRefEquals( binding2?.QueueBindings.Primary ),
                     q.State.TestEquals( MessageBrokerQueueState.Running ) ) ) )
             .Go();
     }

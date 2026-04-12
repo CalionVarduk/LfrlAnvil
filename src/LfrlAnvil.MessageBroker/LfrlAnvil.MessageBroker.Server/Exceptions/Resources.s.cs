@@ -849,7 +849,7 @@ internal static class Resources
         int storeKey)
     {
         return
-            $"Failed to enqueue a message from stream [{stream.Id}] '{stream.Name}' with store key {storeKey} in queue [{queue.Id}] '{queue.Name}' because Listener for channel [{channel.Id}] '{channel.Name}' does not exist.";
+            $"Failed to enqueue a message from stream [{stream.Id}] '{stream.Name}' with store key {storeKey} in queue [{queue.Id}] '{queue.Name}' because listener for channel [{channel.Id}] '{channel.Name}' does not exist.";
     }
 
     [Pure]

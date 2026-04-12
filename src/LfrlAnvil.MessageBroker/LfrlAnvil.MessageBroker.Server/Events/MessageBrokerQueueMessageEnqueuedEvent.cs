@@ -23,7 +23,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerQueueMessageEnqueuedEvent
 {
     private MessageBrokerQueueMessageEnqueuedEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         ulong messageId)
@@ -40,9 +40,9 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that received the message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that received the message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
@@ -62,13 +62,13 @@ public readonly struct MessageBrokerQueueMessageEnqueuedEvent
     public override string ToString()
     {
         return
-            $"[MessageEnqueued] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}";
+            $"[MessageEnqueued] {Source}, Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}', Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', MessageId = {MessageId}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueMessageEnqueuedEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         ulong messageId)

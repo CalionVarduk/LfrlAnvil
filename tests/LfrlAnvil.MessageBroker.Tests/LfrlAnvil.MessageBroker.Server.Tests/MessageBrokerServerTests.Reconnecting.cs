@@ -734,7 +734,15 @@ public partial class MessageBrokerServerTests
             storage.WriteQueueDeadLetterMessages(
                 clientId: 1,
                 queueId: 1,
-                messages: [ StorageScope.PrepareQueueDeadLetterMessage( streamId: 1, storeKey: 0, retry: 0, redelivery: 0 ) ] );
+                messages:
+                [
+                    StorageScope.PrepareQueueDeadLetterMessage(
+                        streamId: 1,
+                        storeKey: 0,
+                        retry: 0,
+                        redelivery: 0,
+                        expiresAt: TimestampProvider.Shared.GetNow() + Duration.FromMinutes( 1 ) )
+                ] );
 
             var connectEndSource = new SafeTaskCompletionSource();
             var originalEndPoint = new IPEndPoint( IPAddress.Loopback, 0 );

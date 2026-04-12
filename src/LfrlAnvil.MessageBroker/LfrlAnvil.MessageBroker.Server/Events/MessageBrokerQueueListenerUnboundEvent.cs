@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 /// </summary>
 public readonly struct MessageBrokerQueueListenerUnboundEvent
 {
-    private MessageBrokerQueueListenerUnboundEvent(MessageBrokerChannelListenerBinding listener, ulong traceId, bool channelRemoved)
+    private MessageBrokerQueueListenerUnboundEvent(MessageBrokerQueueListenerBinding listener, ulong traceId, bool channelRemoved)
     {
         Source = MessageBrokerQueueEventSource.Create( listener.Queue, traceId );
         Listener = listener;
@@ -37,7 +37,7 @@ public readonly struct MessageBrokerQueueListenerUnboundEvent
     /// <summary>
     /// Unbound listener.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// Specifies whether removal of the channel bound to the <see cref="Listener"/> was part of the unbinding operation.
@@ -52,13 +52,13 @@ public readonly struct MessageBrokerQueueListenerUnboundEvent
     public override string ToString()
     {
         var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
-        return $"[ListenerUnbound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelRemoved}";
+        return $"[ListenerUnbound] {Source}, Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}'{channelRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueListenerUnboundEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         bool channelRemoved)
     {

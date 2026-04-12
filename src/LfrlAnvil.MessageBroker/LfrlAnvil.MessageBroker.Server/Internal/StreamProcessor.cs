@@ -220,8 +220,15 @@ internal struct StreamProcessor
                 {
                     if ( ! MessageRouting.Contains( routingData, listener.Client.Id ) )
                         ++filtered;
-                    else if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
-                        ++failures;
+                    else
+                    {
+                        MessageBrokerQueueListenerBinding primaryBinding;
+                        using ( listener.AcquireLock() )
+                            primaryBinding = listener.QueueBindingCollection.Primary;
+
+                        if ( ! primaryBinding.Queue.PushMessage( primaryBinding, storeKey, in message, stream, traceId ) )
+                            ++failures;
+                    }
                 }
                 catch ( Exception exc )
                 {
@@ -237,7 +244,11 @@ internal struct StreamProcessor
             {
                 try
                 {
-                    if ( ! listener.Queue.PushMessage( listener, storeKey, in message, stream, traceId ) )
+                    MessageBrokerQueueListenerBinding primaryBinding;
+                    using ( listener.AcquireLock() )
+                        primaryBinding = listener.QueueBindingCollection.Primary;
+
+                    if ( ! primaryBinding.Queue.PushMessage( primaryBinding, storeKey, in message, stream, traceId ) )
                         ++failures;
                 }
                 catch ( Exception exc )

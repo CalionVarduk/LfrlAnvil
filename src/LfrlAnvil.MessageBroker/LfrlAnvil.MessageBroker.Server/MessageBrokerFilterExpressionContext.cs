@@ -22,7 +22,7 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a context for a single message filter predicate applied by a <see cref="MessageBrokerChannelListenerBinding"/>.
+/// Represents a context for a single message filter predicate applied by a <see cref="MessageBrokerQueueListenerBinding"/>.
 /// </summary>
 public readonly struct MessageBrokerFilterExpressionContext
 {
@@ -30,7 +30,7 @@ public readonly struct MessageBrokerFilterExpressionContext
     private readonly int _startIndex;
     private readonly int _length;
 
-    internal MessageBrokerFilterExpressionContext(MessageBrokerChannelListenerBinding listener, in StreamMessage message)
+    internal MessageBrokerFilterExpressionContext(MessageBrokerQueueListenerBinding listener, in StreamMessage message)
     {
         MemoryMarshal.TryGetArray( message.Data, out var segment );
         _source = segment.Array ?? Array.Empty<byte>();
@@ -43,9 +43,9 @@ public readonly struct MessageBrokerFilterExpressionContext
     }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that filters the message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that filters the message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.

@@ -23,7 +23,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerQueueMessageDiscardedEvent
 {
     private MessageBrokerQueueMessageDiscardedEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int storeKey,
@@ -50,9 +50,9 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that received this message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that received this message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed this message.
@@ -99,13 +99,13 @@ public readonly struct MessageBrokerQueueMessageDiscardedEvent
     public override string ToString()
     {
         return
-            $"[MessageDiscarded] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}, MovedToDeadLetter = {MovedToDeadLetter}";
+            $"[MessageDiscarded] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', Reason = {Reason}, StoreKey = {StoreKey}, Retry = {Retry}, Redelivery = {Redelivery}, MessageRemoved = {MessageRemoved}, MovedToDeadLetter = {MovedToDeadLetter}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueMessageDiscardedEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int storeKey,

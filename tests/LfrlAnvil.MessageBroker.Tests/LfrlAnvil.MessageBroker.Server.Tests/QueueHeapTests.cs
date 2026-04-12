@@ -189,9 +189,9 @@ public class QueueHeapTests : TestsBase
             .MessageStore
             .ScheduleRetry( new QueueMessage( publisher, listener, 12 ), 0, 0, Duration.FromSeconds( 1 ) );
 
-        listener.TryIncrementPrefetchCounter( out _ );
+        listener.CanSendMessage( out _ );
         sut.Update( queues[9] );
-        listener.DecrementPrefetchCounter();
+        listener.RemoveSentMessage();
 
         var indexes = new List<int[]>();
         indexes.Add( queues.Select( q => q.EventHeapIndex ).ToArray() );
@@ -383,10 +383,10 @@ public class QueueHeapTests : TestsBase
     }
 
     [Pure]
-    private static MessageBrokerChannelListenerBinding CreateListener(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
+    private static MessageBrokerQueueListenerBinding CreateListener(MessageBrokerRemoteClient client, MessageBrokerChannel channel)
     {
         var queue = CreateQueue( client, 1 );
-        return MessageBrokerChannelListenerBinding.Create(
+        var listener = MessageBrokerChannelListenerBinding.Create(
             client,
             channel,
             queue,
@@ -404,6 +404,8 @@ public class QueueHeapTests : TestsBase
             null,
             null,
             true );
+
+        return listener.QueueBindings.Primary;
     }
 
     private sealed class TimestampProviderMock : TimestampProviderBase

@@ -27,7 +27,7 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     private readonly Int31BoolPair _redelivery;
 
     private MessageBrokerQueueProcessingMessageEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int storeKey,
@@ -50,9 +50,9 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that received the message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that received the message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
@@ -99,13 +99,13 @@ public readonly struct MessageBrokerQueueProcessingMessageEvent
         var isRetry = IsRetry ? " (active)" : string.Empty;
         var isRedelivery = IsRedelivery ? " (active)" : string.Empty;
         return
-            $"[ProcessingMessage] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, IsFromDeadLetter = {IsFromDeadLetter}";
+            $"[ProcessingMessage] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', StoreKey = {StoreKey}, Retry = {Retry}{isRetry}, Redelivery = {Redelivery}{isRedelivery}, IsFromDeadLetter = {IsFromDeadLetter}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueProcessingMessageEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         int storeKey,

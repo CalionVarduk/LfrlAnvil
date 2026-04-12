@@ -133,7 +133,7 @@ internal struct QueueProcessor
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static async ValueTask RunCore(MessageBrokerQueue queue)
     {
-        var discardedBuffer = ListSlim<QueueMessageStore.DiscardedMessage>.Create( minCapacity: 16 );
+        var disposedBuffer = ListSlim<QueueMessageStore.DisposedMessage>.Create( minCapacity: 16 );
         while ( true )
         {
             var @continue = await queue.QueueProcessor._continuation.GetTask().ConfigureAwait( false );
@@ -156,13 +156,13 @@ internal struct QueueProcessor
 
                     hasMessage = queue.MessageStore.TryPeekNext(
                         queue.Client.GetTimestamp(),
-                        ref discardedBuffer,
+                        ref disposedBuffer,
                         ref message,
                         ref messageType,
                         ref retryNo,
                         ref lastRedeliveryNo );
 
-                    if ( ! hasMessage && discardedBuffer.Count == 0 )
+                    if ( ! hasMessage && disposedBuffer.Count == 0 )
                     {
                         if ( queue.TryDisposeDueToPotentiallyEmptyStoreUnsafe() )
                             disposed = true;
@@ -177,7 +177,7 @@ internal struct QueueProcessor
 
                 using ( MessageBrokerQueueTraceEvent.CreateScope( queue, traceId, MessageBrokerQueueTraceEventType.ProcessMessage ) )
                 {
-                    DiscardMessages( queue, ref discardedBuffer, traceId );
+                    DiscardDisposedMessages( queue, ref disposedBuffer, traceId );
                     if ( ! hasMessage )
                         continue;
 
@@ -186,50 +186,14 @@ internal struct QueueProcessor
                     Int31BoolPair redelivery;
                     switch ( messageType )
                     {
+                        case QueueMessageStore.MessageType.Pending:
+                            retry = Int31BoolPair.GetData( 0 );
+                            redelivery = Int31BoolPair.GetData( 0 );
+                            break;
                         case QueueMessageStore.MessageType.Redelivery:
-                        {
-                            if ( lastRedeliveryNo >= message.Listener.MaxRedeliveries )
-                            {
-                                var messageRemoved = false;
-                                message.Listener.DecrementPrefetchCounter();
-                                var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
-                                if ( deadLetterCapacityHint > 0 )
-                                {
-                                    using ( queue.AcquireLock() )
-                                    {
-                                        queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
-                                        queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
-                                        message.Listener.IncrementDeadLetterCounter();
-                                    }
-                                }
-                                else
-                                {
-                                    using ( queue.AcquireLock() )
-                                        queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
-
-                                    messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                                }
-
-                                if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
-                                    messageDiscarded.Emit(
-                                        MessageBrokerQueueMessageDiscardedEvent.Create(
-                                            message.Listener,
-                                            traceId,
-                                            message.Publisher,
-                                            message.StoreKey,
-                                            retryNo,
-                                            lastRedeliveryNo,
-                                            messageRemoved,
-                                            deadLetterCapacityHint > 0,
-                                            MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
-
-                                continue;
-                            }
-
                             retry = Int31BoolPair.GetData( retryNo );
                             redelivery = Int31BoolPair.GetActiveData( unchecked( lastRedeliveryNo + 1 ) );
                             break;
-                        }
                         case QueueMessageStore.MessageType.Retry:
                             retry = Int31BoolPair.GetActiveData( retryNo );
                             redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
@@ -239,10 +203,106 @@ internal struct QueueProcessor
                             retry = Int31BoolPair.GetData( retryNo );
                             redelivery = Int31BoolPair.GetData( lastRedeliveryNo );
                             break;
+                        case QueueMessageStore.MessageType.MaxRedeliveriesReached:
+                        {
+                            var messageRemoved = false;
+                            message.Listener.RemoveSentMessage();
+                            var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
+                            if ( deadLetterCapacityHint > 0 )
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+                                    message.Listener.AddDeadLetterMessage();
+                                }
+                            }
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+
+                                messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                                RemoveReferencingMessage( message.Listener, traceId );
+                            }
+
+                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                                messageDiscarded.Emit(
+                                    MessageBrokerQueueMessageDiscardedEvent.Create(
+                                        message.Listener,
+                                        traceId,
+                                        message.Publisher,
+                                        message.StoreKey,
+                                        retryNo,
+                                        lastRedeliveryNo,
+                                        messageRemoved,
+                                        deadLetterCapacityHint > 0,
+                                        MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
+
+                            continue;
+                        }
+                        case QueueMessageStore.MessageType.MaxRetriesReached:
+                        {
+                            var messageRemoved = false;
+                            var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
+                            if ( deadLetterCapacityHint > 0 )
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
+                                    message.Listener.AddDeadLetterMessage();
+                                }
+                            }
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
+
+                                messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                                RemoveReferencingMessage( message.Listener, traceId );
+                            }
+
+                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                                messageDiscarded.Emit(
+                                    MessageBrokerQueueMessageDiscardedEvent.Create(
+                                        message.Listener,
+                                        traceId,
+                                        message.Publisher,
+                                        message.StoreKey,
+                                        retryNo,
+                                        lastRedeliveryNo,
+                                        messageRemoved,
+                                        deadLetterCapacityHint > 0,
+                                        MessageBrokerQueueDiscardMessageReason.MaxRetriesReached ) );
+
+                            continue;
+                        }
                         default:
-                            retry = Int31BoolPair.GetData( 0 );
-                            redelivery = Int31BoolPair.GetData( 0 );
-                            break;
+                        {
+                            using ( queue.AcquireLock() )
+                                queue.MessageStore.Dequeue( QueueMessageStore.MessageType.DeadLetter );
+
+                            var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                            RemoveReferencingMessage( message.Listener, traceId );
+
+                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+                                messageDiscarded.Emit(
+                                    MessageBrokerQueueMessageDiscardedEvent.Create(
+                                        message.Listener,
+                                        traceId,
+                                        message.Publisher,
+                                        message.StoreKey,
+                                        retryNo,
+                                        lastRedeliveryNo,
+                                        messageRemoved,
+                                        movedToDeadLetter: false,
+                                        messageType == QueueMessageStore.MessageType.DeadLetterExpiration
+                                            ? MessageBrokerQueueDiscardMessageReason.DeadLetterExpiration
+                                            : MessageBrokerQueueDiscardMessageReason.DeadLetterCapacityExceeded ) );
+
+                            continue;
+                        }
                     }
 
                     if ( queue.Logger.ProcessingMessage is { } processingMessage )
@@ -263,9 +323,11 @@ internal struct QueueProcessor
 
                     if ( ! messageDataExists )
                     {
-                        message.Listener.DecrementPrefetchCounter();
+                        message.Listener.RemoveSentMessage();
                         using ( queue.AcquireLock() )
                             queue.MessageStore.Dequeue( messageType );
+
+                        RemoveReferencingMessage( message.Listener, traceId );
 
                         if ( queue.Logger.Error is { } error )
                         {
@@ -279,11 +341,13 @@ internal struct QueueProcessor
                     if ( messageType == QueueMessageStore.MessageType.Pending
                         && ! message.Listener.FilterMessage( in streamMessage, traceId ) )
                     {
-                        message.Listener.DecrementPrefetchCounter();
+                        message.Listener.RemoveSentMessage();
                         using ( queue.AcquireLock() )
                             queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Pending );
 
                         var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
+                        RemoveReferencingMessage( message.Listener, traceId );
+
                         if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
                             messageDiscarded.Emit(
                                 MessageBrokerQueueMessageDiscardedEvent.Create(
@@ -307,6 +371,7 @@ internal struct QueueProcessor
                     {
                         if ( ackId == 0 && message.Listener.AreAcksEnabled )
                         {
+                            message.Listener.AddReferencingMessage();
                             using ( queue.AcquireLock() )
                                 ackId = queue.MessageStore.AddUnacked(
                                     message,
@@ -478,12 +543,14 @@ internal struct QueueProcessor
                         if ( failed )
                         {
                             if ( messageType != QueueMessageStore.MessageType.Redelivery )
-                                message.Listener.DecrementPrefetchCounter();
+                                message.Listener.RemoveSentMessage();
 
                             if ( ackId > 0 )
                             {
                                 using ( queue.AcquireLock() )
                                     queue.MessageStore.RemoveUnacked( ackId );
+
+                                RemoveReferencingMessage( message.Listener, traceId );
                             }
 
                             Return( queue, traceId, poolToken );
@@ -494,6 +561,8 @@ internal struct QueueProcessor
                                 queue.MessageStore.Dequeue( messageType );
 
                             var messageRemoved = ackId <= 0 && queue.RemoveFromStreamMessageStore( message, traceId );
+                            RemoveReferencingMessage( message.Listener, traceId );
+
                             if ( queue.Logger.MessageProcessed is { } messageProcessed )
                                 messageProcessed.Emit(
                                     MessageBrokerQueueMessageProcessedEvent.Create(
@@ -531,7 +600,24 @@ internal struct QueueProcessor
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void DiscardMessages(MessageBrokerQueue queue, ref ListSlim<QueueMessageStore.DiscardedMessage> messages, ulong traceId)
+    private static void RemoveReferencingMessage(MessageBrokerQueueListenerBinding listener, ulong traceId)
+    {
+        if ( ! listener.RemoveReferencingMessage() )
+            return;
+
+        using ( listener.Queue.AcquireLock() )
+            listener.Queue.ListenersByChannelId.Remove( listener.Owner.Channel.Id );
+
+        listener.Owner.RemoveSecondaryQueueBinding( listener );
+        if ( listener.Queue.Logger.ListenerUnbound is { } listenerUnbound )
+            listenerUnbound.Emit( MessageBrokerQueueListenerUnboundEvent.Create( listener, traceId, channelRemoved: false ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void DiscardDisposedMessages(
+        MessageBrokerQueue queue,
+        ref ListSlim<QueueMessageStore.DisposedMessage> messages,
+        ulong traceId)
     {
         foreach ( ref readonly var message in messages )
         {

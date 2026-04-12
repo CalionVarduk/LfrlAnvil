@@ -20,6 +20,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
+using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
@@ -574,6 +575,7 @@ internal readonly struct ServerStorage
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
+                    // TODO: this could be extracted under a single listener lock
                     var metadata = new Storage.ListenerMetadata(
                         listener.Queue.Id,
                         unchecked( ( short )listener.PrefetchHint ),
@@ -1031,21 +1033,35 @@ internal readonly struct ServerStorage
                             if ( ! context.TryIncrementMessageRefCount( message.StreamId, message.StoreKey, out var streamMessage ) )
                                 return;
 
-                            var enqueued = false;
+                            MessageBrokerQueueListenerBinding? listener;
                             using ( queue.AcquireLock() )
                             {
                                 if ( queue.IsDisposed )
                                     return;
 
-                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out var listener ) )
+                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out listener ) )
                                 {
-                                    queue.MessageStore.Enqueue( streamMessage.Publisher, listener, message.StoreKey );
-                                    enqueued = true;
+                                    EnqueuePendingMessage( queue, in streamMessage, listener, message.StoreKey );
+                                    continue;
                                 }
                             }
 
-                            if ( ! enqueued )
+                            if ( ! TryCreateSecondaryBinding( queue, streamMessage.Publisher, ref listener ) )
+                                return;
+
+                            if ( listener is null )
                                 context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    if ( queue.IsDisposed )
+                                        return;
+
+                                    queue.ListenersByChannelId.Add( listener.Owner.Channel.Id, listener );
+                                    EnqueuePendingMessage( queue, in streamMessage, listener, message.StoreKey );
+                                }
+                            }
                         }
                     }
                     finally
@@ -1092,29 +1108,35 @@ internal readonly struct ServerStorage
                             if ( ! context.TryIncrementMessageRefCount( message.StreamId, message.StoreKey, out var streamMessage ) )
                                 return;
 
-                            var enqueued = false;
+                            MessageBrokerQueueListenerBinding? listener;
                             using ( queue.AcquireLock() )
                             {
                                 if ( queue.IsDisposed )
                                     return;
 
-                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out var listener ) )
+                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out listener ) )
                                 {
-                                    queue.MessageStore.Unacked.Add(
-                                        new QueueMessageStore.UnackedEntry(
-                                            new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
-                                            streamMessage.Id,
-                                            message.Retry,
-                                            message.Redelivery,
-                                            expiresAt ) );
-
-                                    listener.IncrementInactivePrefetchCounter();
-                                    enqueued = true;
+                                    EnqueueUnackedMessage( queue, in streamMessage, listener, in message, expiresAt );
+                                    continue;
                                 }
                             }
 
-                            if ( ! enqueued )
+                            if ( ! TryCreateSecondaryBinding( queue, streamMessage.Publisher, ref listener ) )
+                                return;
+
+                            if ( listener is null )
                                 context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    if ( queue.IsDisposed )
+                                        return;
+
+                                    queue.ListenersByChannelId.Add( listener.Owner.Channel.Id, listener );
+                                    EnqueueUnackedMessage( queue, in streamMessage, listener, in message, expiresAt );
+                                }
+                            }
                         }
                     }
                     finally
@@ -1161,26 +1183,35 @@ internal readonly struct ServerStorage
                             if ( ! context.TryIncrementMessageRefCount( message.StreamId, message.StoreKey, out var streamMessage ) )
                                 return;
 
-                            var enqueued = false;
+                            MessageBrokerQueueListenerBinding? listener;
                             using ( queue.AcquireLock() )
                             {
                                 if ( queue.IsDisposed )
                                     return;
 
-                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out var listener ) )
+                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out listener ) )
                                 {
-                                    queue.MessageStore.Retries.Add(
-                                        new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
-                                        message.Retry,
-                                        message.Redelivery,
-                                        message.SendAt );
-
-                                    enqueued = true;
+                                    EnqueueRetry( queue, in streamMessage, listener, in message );
+                                    continue;
                                 }
                             }
 
-                            if ( ! enqueued )
+                            if ( ! TryCreateSecondaryBinding( queue, streamMessage.Publisher, ref listener ) )
+                                return;
+
+                            if ( listener is null )
                                 context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    if ( queue.IsDisposed )
+                                        return;
+
+                                    queue.ListenersByChannelId.Add( listener.Owner.Channel.Id, listener );
+                                    EnqueueRetry( queue, in streamMessage, listener, in message );
+                                }
+                            }
                         }
                     }
                     finally
@@ -1226,27 +1257,35 @@ internal readonly struct ServerStorage
                             if ( ! context.TryIncrementMessageRefCount( message.StreamId, message.StoreKey, out var streamMessage ) )
                                 return;
 
-                            var enqueued = false;
+                            MessageBrokerQueueListenerBinding? listener;
                             using ( queue.AcquireLock() )
                             {
                                 if ( queue.IsDisposed )
                                     return;
 
-                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out var listener ) )
+                                if ( queue.ListenersByChannelId.TryGet( streamMessage.Publisher.Channel.Id, out listener ) )
                                 {
-                                    queue.MessageStore.AddToDeadLetter(
-                                        new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
-                                        message.Retry,
-                                        message.Redelivery,
-                                        message.ExpiresAt );
-
-                                    listener.IncrementInactiveDeadLetterCounter();
-                                    enqueued = true;
+                                    EnqueueDeadLetterMessage( queue, in streamMessage, listener, in message );
+                                    continue;
                                 }
                             }
 
-                            if ( ! enqueued )
+                            if ( ! TryCreateSecondaryBinding( queue, streamMessage.Publisher, ref listener ) )
+                                return;
+
+                            if ( listener is null )
                                 context.DecrementFailedMessageRefCount( queue, streamMessage, message.StoreKey, serverTraceId );
+                            else
+                            {
+                                using ( queue.AcquireLock() )
+                                {
+                                    if ( queue.IsDisposed )
+                                        return;
+
+                                    queue.ListenersByChannelId.Add( listener.Owner.Channel.Id, listener );
+                                    EnqueueDeadLetterMessage( queue, in streamMessage, listener, in message );
+                                }
+                            }
                         }
                     }
                     finally
@@ -1269,6 +1308,92 @@ internal readonly struct ServerStorage
                     if ( Directory.Exists( rootDir ) )
                         Directory.Delete( rootDir, recursive: true );
                 }
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            private static void EnqueuePendingMessage(
+                MessageBrokerQueue queue,
+                in StreamMessage streamMessage,
+                MessageBrokerQueueListenerBinding listener,
+                int storeKey)
+            {
+                queue.MessageStore.Enqueue( streamMessage.Publisher, listener, storeKey );
+                listener.AddReferencingMessage();
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            private static void EnqueueUnackedMessage(
+                MessageBrokerQueue queue,
+                in StreamMessage streamMessage,
+                MessageBrokerQueueListenerBinding listener,
+                in Storage.QueueUnackedMessage message,
+                Timestamp expiresAt)
+            {
+                queue.MessageStore.Unacked.Add(
+                    new QueueMessageStore.UnackedEntry(
+                        new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
+                        streamMessage.Id,
+                        message.Retry,
+                        message.Redelivery,
+                        expiresAt ) );
+
+                listener.AddInactiveSentMessage();
+                listener.AddReferencingMessage();
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            private static void EnqueueRetry(
+                MessageBrokerQueue queue,
+                in StreamMessage streamMessage,
+                MessageBrokerQueueListenerBinding listener,
+                in Storage.QueueMessageRetry message)
+            {
+                queue.MessageStore.Retries.Add(
+                    new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
+                    message.Retry,
+                    message.Redelivery,
+                    message.SendAt );
+
+                listener.AddReferencingMessage();
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            private static void EnqueueDeadLetterMessage(
+                MessageBrokerQueue queue,
+                in StreamMessage streamMessage,
+                MessageBrokerQueueListenerBinding listener,
+                in Storage.QueueDeadLetterMessage message)
+            {
+                queue.MessageStore.AddToDeadLetter(
+                    new QueueMessage( streamMessage.Publisher, listener, message.StoreKey ),
+                    message.Retry,
+                    message.Redelivery,
+                    message.ExpiresAt );
+
+                listener.AddInactiveDeadLetterMessage();
+                listener.AddReferencingMessage();
+            }
+
+            [MethodImpl( MethodImplOptions.AggressiveInlining )]
+            private static bool TryCreateSecondaryBinding(
+                MessageBrokerQueue queue,
+                IMessageBrokerMessagePublisher publisher,
+                ref MessageBrokerQueueListenerBinding? result)
+            {
+                Assume.IsNull( result );
+                MessageBrokerChannelListenerBinding? channelListener;
+                using ( queue.Client.AcquireLock() )
+                {
+                    if ( queue.Client.IsDisposed )
+                        return false;
+
+                    queue.Client.ListenersByChannelId.TryGet( publisher.Channel.Id, out channelListener );
+                }
+
+                if ( channelListener is not null )
+                    result = channelListener.AddSecondaryQueueBinding( queue );
+
+                return true;
             }
         }
     }

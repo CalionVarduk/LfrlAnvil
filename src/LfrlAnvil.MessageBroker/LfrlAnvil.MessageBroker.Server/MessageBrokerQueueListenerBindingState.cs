@@ -1,4 +1,4 @@
-﻿// Copyright 2025-2026 Łukasz Furlepa
+﻿// Copyright 2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,32 +15,27 @@
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Defines possible <see cref="MessageBrokerQueue"/> states.
+/// Defines possible <see cref="MessageBrokerQueueListenerBinding"/> states.
 /// </summary>
-public enum MessageBrokerQueueState : byte
+public enum MessageBrokerQueueListenerBindingState : byte
 {
     /// <summary>
-    /// Specifies that the queue is currently running.
+    /// Specifies that the listener is in the process of being bound.
     /// </summary>
-    Running = 0,
+    Created = 0,
 
     /// <summary>
-    /// Specifies that the queue is currently being deactivated.
+    /// Specifies that the listener binding is currently running.
     /// </summary>
-    Deactivating = 1,
+    Running = 1,
 
     /// <summary>
-    /// Specifies that the queue is currently inactive.
+    /// Specifies that the listener binding is currently inactive.
     /// </summary>
     Inactive = 2,
 
     /// <summary>
-    /// Specifies that the queue is currently being disposed.
+    /// Specifies that the listener binding has been disposed.
     /// </summary>
-    Disposing = 3,
-
-    /// <summary>
-    /// Specifies that the queue has been disposed.
-    /// </summary>
-    Disposed = 4
+    Disposed = 3
 }

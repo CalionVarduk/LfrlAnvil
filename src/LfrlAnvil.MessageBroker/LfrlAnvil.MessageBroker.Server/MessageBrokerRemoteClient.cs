@@ -876,6 +876,7 @@ public sealed partial class MessageBrokerRemoteClient
         in Protocol.BindListenerRequestHeader header,
         ref MessageBrokerChannelListenerBinding? existingListener,
         ref MessageBrokerChannelListenerBinding? listener,
+        ref MessageBrokerQueueListenerBinding? queueBinding,
         ref ulong channelTraceId,
         ref MessageBrokerQueue? queue,
         ref ulong queueTraceId,
@@ -891,7 +892,11 @@ public sealed partial class MessageBrokerRemoteClient
             {
                 listener = token.GetObject();
                 existingListener = listener;
-                queue = listener.Queue;
+
+                using ( listener.AcquireLock() )
+                    queueBinding = listener.QueueBindingCollection.Primary;
+
+                queue = queueBinding.Queue;
 
                 using ( queue.AcquireLock() )
                 {
@@ -935,6 +940,9 @@ public sealed partial class MessageBrokerRemoteClient
                                 filterExpression,
                                 filterExpressionDelegate,
                                 isEphemeral ) );
+
+                        using ( listener.AcquireLock() )
+                            queueBinding = listener.QueueBindingCollection.Primary;
                     }
                     catch
                     {
@@ -945,7 +953,7 @@ public sealed partial class MessageBrokerRemoteClient
                     }
 
                     ListenersByChannelId.Add( channel.Id, listener );
-                    queue.ListenersByChannelId.Add( channel.Id, listener );
+                    queue.ListenersByChannelId.Add( channel.Id, queueBinding );
                     channelTraceId = channel.GetTraceId();
                     queueTraceId = queue.GetTraceId();
 
@@ -967,10 +975,9 @@ public sealed partial class MessageBrokerRemoteClient
         MessageBrokerChannel channel,
         ref MessageBrokerChannelListenerBinding? listener,
         ref ulong channelTraceId,
-        ref MessageBrokerQueue? queue,
-        ref ulong queueTraceId,
         ref bool disposingChannel,
-        ref bool disposingQueue)
+        ref QueueListenerUnbindingPayload primaryBindingPayload,
+        ref QueueListenerUnbindingPayload[] secondaryBindingPayloads)
     {
         using ( channel.AcquireLock() )
         {
@@ -980,22 +987,46 @@ public sealed partial class MessageBrokerRemoteClient
             if ( ! ListenersByChannelId.TryGet( channel.Id, out listener ) )
                 return UnbindResult.NotBound;
 
-            queue = listener.Queue;
-            using ( queue.AcquireLock() )
+            MessageBrokerQueueListenerBinding? primaryBinding;
+            ReadOnlyArray<MessageBrokerQueueListenerBinding> secondaryBindings;
+            using ( listener.AcquireLock() )
             {
-                if ( queue.IsInactive )
-                    return UnbindResult.ParentDisposed;
+                if ( ! listener.TryBeginDisposingUnsafe( out primaryBinding, out secondaryBindings ) )
+                    return UnbindResult.BindingDisposed;
 
-                using ( listener.AcquireLock() )
+                disposingChannel = channel.TryDisposeByRemovingListenerUnsafe( Id );
+                channelTraceId = channel.GetTraceId();
+            }
+
+            using ( primaryBinding.Queue.AcquireLock() )
+            {
+                if ( ! primaryBinding.Queue.IsInactive && primaryBinding.TryMarkAsDisposed() )
                 {
-                    if ( ! listener.TryBeginDisposingUnsafe() )
-                        return UnbindResult.BindingDisposed;
-
-                    disposingChannel = channel.TryDisposeByRemovingListenerUnsafe( Id );
-                    disposingQueue = queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
-                    channelTraceId = channel.GetTraceId();
-                    queueTraceId = queue.GetTraceId();
+                    var disposingQueue = primaryBinding.Queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
+                    var queueTraceId = primaryBinding.Queue.GetTraceId();
+                    primaryBindingPayload = new QueueListenerUnbindingPayload( primaryBinding, queueTraceId, disposingQueue );
                 }
+            }
+
+            if ( secondaryBindings.Count > 0 )
+            {
+                var i = 0;
+                secondaryBindingPayloads = new QueueListenerUnbindingPayload[secondaryBindings.Count];
+                foreach ( var binding in secondaryBindings )
+                {
+                    using ( binding.Queue.AcquireLock() )
+                    {
+                        if ( ! binding.Queue.IsInactive && binding.TryMarkAsDisposed() )
+                        {
+                            var disposingQueue = binding.Queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
+                            var queueTraceId = binding.Queue.GetTraceId();
+                            secondaryBindingPayloads[i++] = new QueueListenerUnbindingPayload( binding, queueTraceId, disposingQueue );
+                        }
+                    }
+                }
+
+                if ( i < secondaryBindingPayloads.Length )
+                    Array.Resize( ref secondaryBindingPayloads, i );
             }
         }
 

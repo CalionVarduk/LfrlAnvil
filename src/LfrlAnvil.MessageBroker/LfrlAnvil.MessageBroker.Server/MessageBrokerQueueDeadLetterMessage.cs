@@ -24,7 +24,7 @@ public readonly struct MessageBrokerQueueDeadLetterMessage
 {
     internal MessageBrokerQueueDeadLetterMessage(
         IMessageBrokerMessagePublisher publisher,
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         int storeKey,
         int retry,
         int redelivery,
@@ -44,9 +44,9 @@ public readonly struct MessageBrokerQueueDeadLetterMessage
     public IMessageBrokerMessagePublisher Publisher { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelListenerBinding"/> that handles this message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that handles this message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// Stream store key of this message.

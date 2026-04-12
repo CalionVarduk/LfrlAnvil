@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -29,18 +30,17 @@ using LfrlAnvil.MessageBroker.Server.Internal;
 namespace LfrlAnvil.MessageBroker.Server;
 
 /// <summary>
-/// Represents a message broker channel binding for a listener, which allows clients to listen to messages published through channels.
+/// Represents a message broker channel binding for a listener, which allows clients to listen to messages published through channels
+/// via queue bindings.
 /// </summary>
 public sealed class MessageBrokerChannelListenerBinding
 {
-    private const int DisposedCounterValue = int.MinValue;
-    private const int InactiveZeroCounterValue = -1;
-
+    internal QueueBindingCollection QueueBindingCollection;
     private readonly object _sync = new object();
-    private MessageBrokerFilterExpressionContext[] _filterPredicateArgs = Array.Empty<MessageBrokerFilterExpressionContext>();
-    private Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
-    private string? _filterExpression;
+
     private TaskCompletionSource? _deactivated;
+
+    private string? _filterExpression;
     private int _prefetchHint;
     private int _maxRetries;
     private int _maxRedeliveries;
@@ -48,9 +48,7 @@ public sealed class MessageBrokerChannelListenerBinding
     private Duration _retryDelay;
     private Duration _minAckTimeout;
     private Duration _minDeadLetterRetention;
-    private InterlockedInt32 _prefetchCounter;
-    private InterlockedInt32 _deadLetterCounter;
-    private InterlockedInt32 _state;
+    private MessageBrokerChannelListenerBindingState _state;
     private bool _isEphemeral;
     private bool _autoDisposed;
 
@@ -67,21 +65,14 @@ public sealed class MessageBrokerChannelListenerBinding
         Duration minDeadLetterRetention,
         string? filterExpression,
         IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
-        int counter,
         bool isEphemeral,
-        MessageBrokerChannelListenerBindingState state)
+        MessageBrokerChannelListenerBindingState state,
+        MessageBrokerQueueListenerBindingState queueBindingState)
     {
-        Assume.IsGreaterThan( prefetchHint, 0 );
-        Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
-        Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
-        Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
-        Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
-        Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
-        Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
         Client = client;
         Channel = channel;
-        Queue = queue;
-        _state = new InterlockedInt32( ( int )state );
+        _state = state;
+        _isEphemeral = isEphemeral;
 
         SetProperties(
             prefetchHint,
@@ -91,12 +82,24 @@ public sealed class MessageBrokerChannelListenerBinding
             minAckTimeout,
             deadLetterCapacityHint,
             minDeadLetterRetention,
-            filterExpression,
-            filterExpressionDelegate );
+            filterExpression );
 
-        _prefetchCounter = new InterlockedInt32( counter );
-        _deadLetterCounter = new InterlockedInt32( counter );
-        _isEphemeral = isEphemeral;
+        QueueBindingCollection = QueueBindingCollection.Create(
+            new MessageBrokerQueueListenerBinding(
+                client,
+                this,
+                queue,
+                prefetchHint,
+                maxRetries,
+                retryDelay,
+                maxRedeliveries,
+                minAckTimeout,
+                deadLetterCapacityHint,
+                minDeadLetterRetention,
+                filterExpression,
+                filterExpressionDelegate?.Delegate,
+                queueBindingState,
+                isPrimary: true ) );
     }
 
     /// <summary>
@@ -112,7 +115,14 @@ public sealed class MessageBrokerChannelListenerBinding
     /// <summary>
     /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this listener get enqueued into.
     /// </summary>
-    public MessageBrokerQueue Queue { get; }
+    public MessageBrokerQueue Queue
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return QueueBindingCollection.Primary.Queue;
+        }
+    }
 
     /// <summary>
     /// Specifies how many messages intended for this listener can be sent by the <see cref="Queue"/>
@@ -241,10 +251,23 @@ public sealed class MessageBrokerChannelListenerBinding
     /// Current listener's state.
     /// </summary>
     /// <remarks>See <see cref="MessageBrokerChannelListenerBindingState"/> for more information.</remarks>
-    public MessageBrokerChannelListenerBindingState State => ( MessageBrokerChannelListenerBindingState )_state.Value;
+    public MessageBrokerChannelListenerBindingState State
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return _state;
+        }
+    }
 
-    internal bool IsInactive => State >= MessageBrokerChannelListenerBindingState.Deactivating;
-    internal bool IsDisposed => State >= MessageBrokerChannelListenerBindingState.Disposing;
+    /// <summary>
+    /// Collection of <see cref="MessageBrokerQueueListenerBinding"/> instances attached to this channel listener, identified by queue ids.
+    /// </summary>
+    public MessageBrokerChannelListenerBindingQueueBindingCollection QueueBindings =>
+        new MessageBrokerChannelListenerBindingQueueBindingCollection( this );
+
+    internal bool IsInactive => _state >= MessageBrokerChannelListenerBindingState.Deactivating;
+    internal bool IsDisposed => _state >= MessageBrokerChannelListenerBindingState.Disposing;
 
     /// <summary>
     /// Returns a string representation of this <see cref="MessageBrokerChannelListenerBinding"/> instance.
@@ -253,8 +276,9 @@ public sealed class MessageBrokerChannelListenerBinding
     [Pure]
     public override string ToString()
     {
+        var queue = Queue;
         return
-            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{Queue.Id}] '{Queue.Name}' queue) ({State})";
+            $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{queue.Id}] '{queue.Name}' queue) ({State})";
     }
 
     /// <summary>
@@ -279,15 +303,14 @@ public sealed class MessageBrokerChannelListenerBinding
 
             using ( AcquireLock() )
             {
-                state = ( MessageBrokerChannelListenerBindingState )_state.Value;
+                state = _state;
                 if ( state == MessageBrokerChannelListenerBindingState.Created )
                     ExceptionThrower.Throw( Client.Exception( Resources.ListenerIsBeingBound ) );
 
                 if ( ! IsInactive )
                 {
-                    _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposing );
-                    _prefetchCounter.Write( DisposedCounterValue );
-                    _deadLetterCounter.Write( InactiveZeroCounterValue );
+                    _state = MessageBrokerChannelListenerBindingState.Disposing;
+                    QueueBindingCollection.DisposeAll();
                     _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
                     deactivated = _deactivated;
                     break;
@@ -305,15 +328,14 @@ public sealed class MessageBrokerChannelListenerBinding
 
             using ( AcquireLock() )
             {
-                state = ( MessageBrokerChannelListenerBindingState )_state.Value;
+                state = _state;
                 if ( state == MessageBrokerChannelListenerBindingState.Disposed )
                     return;
 
                 if ( state == MessageBrokerChannelListenerBindingState.Inactive )
                 {
-                    _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposing );
-                    _prefetchCounter.Write( DisposedCounterValue );
-                    _deadLetterCounter.Write( InactiveZeroCounterValue );
+                    _state = MessageBrokerChannelListenerBindingState.Disposing;
+                    QueueBindingCollection.DisposeAll();
                     _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
                     deactivated = _deactivated;
                     break;
@@ -346,8 +368,9 @@ public sealed class MessageBrokerChannelListenerBinding
         {
             using ( AcquireLock() )
             {
-                _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Disposed );
+                _state = MessageBrokerChannelListenerBindingState.Disposed;
                 _deactivated = null;
+                QueueBindingCollection.Clear();
             }
 
             deactivated.TrySetResult();
@@ -378,9 +401,9 @@ public sealed class MessageBrokerChannelListenerBinding
             header.MinDeadLetterRetention,
             filterExpression,
             filterExpressionDelegate,
-            counter: 0,
             isEphemeral,
-            MessageBrokerChannelListenerBindingState.Created );
+            MessageBrokerChannelListenerBindingState.Created,
+            MessageBrokerQueueListenerBindingState.Created );
     }
 
     [Pure]
@@ -406,9 +429,9 @@ public sealed class MessageBrokerChannelListenerBinding
             metadata.MinDeadLetterRetention,
             filterExpression,
             filterExpressionDelegate,
-            counter: InactiveZeroCounterValue,
             isEphemeral: false,
-            MessageBrokerChannelListenerBindingState.Inactive );
+            MessageBrokerChannelListenerBindingState.Inactive,
+            MessageBrokerQueueListenerBindingState.Inactive );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -423,9 +446,12 @@ public sealed class MessageBrokerChannelListenerBinding
         {
             // TODO
             // implement rebinding to a different queue
-            if ( State != MessageBrokerChannelListenerBindingState.Inactive
-                || ! Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
+            if ( _state != MessageBrokerChannelListenerBindingState.Inactive
+                || ! QueueBindingCollection.Primary.Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
                 return false;
+
+            _isEphemeral = isEphemeral;
+            _state = MessageBrokerChannelListenerBindingState.Created;
 
             SetProperties(
                 header.PrefetchHint,
@@ -435,16 +461,38 @@ public sealed class MessageBrokerChannelListenerBinding
                 header.MinAckTimeout,
                 header.DeadLetterCapacityHint,
                 header.MinDeadLetterRetention,
-                filterExpression,
-                filterExpressionDelegate );
+                filterExpression );
 
-            ActivatePrefetchCounter();
-            ActivateDeadLetterCounter();
-            _isEphemeral = isEphemeral;
-            _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Created );
+            QueueBindingCollection.Primary.Reactivate( in header, filterExpression, filterExpressionDelegate );
+            foreach ( var binding in QueueBindingCollection.Secondary )
+                binding.Reactivate( in header, filterExpression, filterExpressionDelegate );
         }
 
         return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal MessageBrokerQueueListenerBinding? AddSecondaryQueueBinding(MessageBrokerQueue queue)
+    {
+        using ( AcquireLock() )
+        {
+            if ( IsDisposed )
+                return null;
+
+            var result = QueueBindingCollection.Primary.CloneInactive( queue );
+            QueueBindingCollection.AddSecondaryUnsafe( result );
+            return result;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RemoveSecondaryQueueBinding(MessageBrokerQueueListenerBinding binding)
+    {
+        using ( AcquireLock() )
+        {
+            if ( ! IsDisposed )
+                QueueBindingCollection.RemoveSecondaryUnsafe( binding );
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -452,217 +500,33 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         using ( AcquireLock() )
         {
-            var state = ( MessageBrokerChannelListenerBindingState )_state.Value;
-            if ( state == MessageBrokerChannelListenerBindingState.Inactive )
+            if ( _state == MessageBrokerChannelListenerBindingState.Inactive )
                 _isEphemeral = true;
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void MarkAsRunning()
+    internal void MarkAsRunning(out MessageBrokerQueue[] additionalQueues)
     {
-        _state.Write( ( byte )MessageBrokerChannelListenerBindingState.Running, ( byte )MessageBrokerChannelListenerBindingState.Created );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool FilterMessage(in StreamMessage message, ulong queueTraceId)
-    {
-        MessageBrokerFilterExpressionContext[] args;
-        Func<MessageBrokerFilterExpressionContext[], bool> filterPredicate;
+        additionalQueues = Array.Empty<MessageBrokerQueue>();
         using ( AcquireLock() )
         {
-            if ( _filterExpression is null )
-                return true;
-
-            Assume.IsNotNull( _filterPredicate );
-            Assume.Equals( _filterPredicateArgs.Length, 1 );
-            Assume.Equals( _filterPredicateArgs[0], default );
-            args = _filterPredicateArgs;
-            filterPredicate = _filterPredicate;
-            args[0] = new MessageBrokerFilterExpressionContext( this, in message );
-        }
-
-        try
-        {
-            return filterPredicate( args );
-        }
-        catch ( Exception exc )
-        {
-            if ( Queue.Logger.Error is { } error )
-                error.Emit( MessageBrokerQueueErrorEvent.Create( Queue, queueTraceId, exc ) );
-
-            return true;
-        }
-        finally
-        {
-            using ( AcquireLock() )
-                args[0] = default;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryIncrementPrefetchCounter(out bool disposed)
-    {
-        int current;
-        do
-        {
-            current = _prefetchCounter.Value;
-            if ( current <= InactiveZeroCounterValue )
-            {
-                disposed = current == DisposedCounterValue;
-                return false;
-            }
-
-            if ( current >= PrefetchHint )
-            {
-                disposed = false;
-                return false;
-            }
-        }
-        while ( ! _prefetchCounter.Write( unchecked( current + 1 ), current ) );
-
-        disposed = false;
-        return true;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void IncrementInactivePrefetchCounter()
-    {
-        int current;
-        do
-        {
-            current = _prefetchCounter.Value;
-            Assume.IsLessThan( current, 0 );
-            if ( current == DisposedCounterValue )
+            if ( _state != MessageBrokerChannelListenerBindingState.Created )
                 return;
 
-            Ensure.IsGreaterThan( current, DisposedCounterValue + 1 );
-        }
-        while ( ! _prefetchCounter.Write( unchecked( current - 1 ), current ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool DecrementPrefetchCounter()
-    {
-        int current;
-        do
-        {
-            current = _prefetchCounter.Value;
-            if ( current <= 0 )
-                return true;
-        }
-        while ( ! _prefetchCounter.Write( unchecked( current - 1 ), current ) );
-
-        return current >= PrefetchHint;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanConsumeRetry()
-    {
-        var current = _prefetchCounter.Value;
-        return (current >= 0 && current < PrefetchHint) || current == DisposedCounterValue;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanConsumeUnackedOrExpiredDeadLetter()
-    {
-        // TODO
-        // for expired dead letter, either check if listener is active, or allow to discard expired dead letter from inactive listeners
-        // for now, the counter blocks it
-        var current = _prefetchCounter.Value;
-        return current >= 0 || current == DisposedCounterValue;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanSendRedelivery(out bool disposed)
-    {
-        var current = _prefetchCounter.Value;
-        if ( current >= 0 )
-        {
-            disposed = false;
-            return true;
-        }
-
-        disposed = current == DisposedCounterValue;
-        return false;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool IncrementDeadLetterCounter()
-    {
-        int current;
-        do
-        {
-            current = _deadLetterCounter.Value;
-            if ( current < 0 )
-                return IsDisposed;
-        }
-        while ( ! _deadLetterCounter.Write( checked( current + 1 ), current ) );
-
-        return current == DeadLetterCapacityHint;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void IncrementInactiveDeadLetterCounter()
-    {
-        int current;
-        do
-        {
-            current = _deadLetterCounter.Value;
-            Assume.IsLessThan( current, 0 );
-            if ( IsDisposed )
+            _state = MessageBrokerChannelListenerBindingState.Running;
+            QueueBindingCollection.Primary.MarkAsRunning();
+            if ( QueueBindingCollection.Secondary.Length == 0 )
                 return;
-        }
-        while ( ! _deadLetterCounter.Write( checked( current - 1 ), current ) );
-    }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool DecrementDeadLetterCounter(out bool disposed)
-    {
-        int current;
-        do
-        {
-            current = _deadLetterCounter.Value;
-            if ( current == 0 )
-                break;
-
-            if ( current < 0 )
+            additionalQueues = new MessageBrokerQueue[QueueBindingCollection.Secondary.Length];
+            for ( var i = 0; i < additionalQueues.Length; ++i )
             {
-                disposed = IsDisposed;
-                return false;
+                var binding = QueueBindingCollection.Secondary[i];
+                binding.MarkAsRunning();
+                additionalQueues[i] = binding.Queue;
             }
         }
-        while ( ! _deadLetterCounter.Write( unchecked( current - 1 ), current ) );
-
-        disposed = false;
-        return true;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryDecrementDeadLetterCounterIfExceeded(out bool disposed)
-    {
-        int current;
-        do
-        {
-            current = _deadLetterCounter.Value;
-            if ( current < 0 )
-            {
-                disposed = IsDisposed;
-                return false;
-            }
-
-            if ( current <= DeadLetterCapacityHint )
-            {
-                disposed = false;
-                return false;
-            }
-        }
-        while ( ! _deadLetterCounter.Write( unchecked( current - 1 ), current ) );
-
-        disposed = false;
-        return true;
     }
 
     internal bool OnServerDisposing()
@@ -672,9 +536,8 @@ public sealed class MessageBrokerChannelListenerBinding
             if ( IsDisposed )
                 return false;
 
-            _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
-            _prefetchCounter.Write( DisposedCounterValue );
-            _deadLetterCounter.Write( InactiveZeroCounterValue );
+            _state = MessageBrokerChannelListenerBindingState.Disposing;
+            QueueBindingCollection.DisposeAll();
             _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
             _autoDisposed = true;
         }
@@ -686,7 +549,7 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         using ( AcquireLock() )
         {
-            if ( State == MessageBrokerChannelListenerBindingState.Disposed )
+            if ( _state == MessageBrokerChannelListenerBindingState.Disposed )
                 return;
 
             if ( keepAlive && ! _isEphemeral )
@@ -694,15 +557,13 @@ public sealed class MessageBrokerChannelListenerBinding
                 if ( IsInactive )
                     return;
 
-                _state.Write( ( int )MessageBrokerChannelListenerBindingState.Deactivating );
-                DeactivateCounter( ref _prefetchCounter );
-                DeactivateCounter( ref _deadLetterCounter );
+                _state = MessageBrokerChannelListenerBindingState.Deactivating;
+                QueueBindingCollection.DeactivateAll();
             }
             else
             {
-                _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
-                _prefetchCounter.Write( DisposedCounterValue );
-                _deadLetterCounter.Write( InactiveZeroCounterValue );
+                _state = MessageBrokerChannelListenerBindingState.Disposing;
+                QueueBindingCollection.DisposeAll();
             }
 
             _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
@@ -723,7 +584,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
         using ( AcquireLock() )
         {
-            state = State;
+            state = _state;
             Assume.IsGreaterThanOrEqualTo( state, MessageBrokerChannelListenerBindingState.Disposing );
             autoDisposed = _autoDisposed;
             deactivated = _deactivated;
@@ -747,9 +608,7 @@ public sealed class MessageBrokerChannelListenerBinding
         {
             if ( isEphemeral )
             {
-                using ( Queue.AcquireLock() )
-                    Queue.ListenersByChannelId.Remove( Channel.Id );
-
+                QueueBindingCollection.RemoveAllFromQueues( Channel.Id );
                 using ( Channel.AcquireLock() )
                     Channel.ListenersByClientId.Remove( Client.Id );
             }
@@ -760,9 +619,10 @@ public sealed class MessageBrokerChannelListenerBinding
 
             using ( AcquireLock() )
             {
-                _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposed );
+                _state = MessageBrokerChannelListenerBindingState.Disposed;
                 _autoDisposed = false;
                 _deactivated = null;
+                QueueBindingCollection.Clear();
             }
         }
         finally
@@ -780,7 +640,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
         using ( AcquireLock() )
         {
-            state = State;
+            state = _state;
             Assume.IsGreaterThanOrEqualTo( state, MessageBrokerChannelListenerBindingState.Deactivating );
             if ( state == MessageBrokerChannelListenerBindingState.Inactive && keepAlive )
                 return;
@@ -810,8 +670,7 @@ public sealed class MessageBrokerChannelListenerBinding
                     using ( Client.AcquireLock() )
                         Client.ListenersByChannelId.Remove( Channel.Id );
 
-                    using ( Queue.AcquireLock() )
-                        Queue.ListenersByChannelId.Remove( Channel.Id );
+                    QueueBindingCollection.RemoveAllFromQueues( Channel.Id );
                 }
 
                 await Channel.OnListenerDisposingAsync( Client, clientTraceId ).ConfigureAwait( false );
@@ -819,16 +678,17 @@ public sealed class MessageBrokerChannelListenerBinding
 
                 using ( AcquireLock() )
                 {
-                    _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposed );
+                    _state = MessageBrokerChannelListenerBindingState.Disposed;
                     _autoDisposed = false;
                     _deactivated = null;
+                    QueueBindingCollection.Clear();
                 }
             }
             else
             {
                 using ( AcquireLock() )
                 {
-                    _state.Write( ( int )MessageBrokerChannelListenerBindingState.Inactive );
+                    _state = MessageBrokerChannelListenerBindingState.Inactive;
                     _autoDisposed = false;
                     _deactivated = null;
                 }
@@ -841,18 +701,25 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryBeginDisposingUnsafe()
+    internal bool TryBeginDisposingUnsafe(
+        [MaybeNullWhen( false )] out MessageBrokerQueueListenerBinding primaryBinding,
+        out ReadOnlyArray<MessageBrokerQueueListenerBinding> secondaryBindings)
     {
         if ( IsInactive )
         {
-            if ( State != MessageBrokerChannelListenerBindingState.Inactive )
+            if ( _state != MessageBrokerChannelListenerBindingState.Inactive )
+            {
+                primaryBinding = null;
+                secondaryBindings = ReadOnlyArray<MessageBrokerQueueListenerBinding>.Empty;
                 return false;
+            }
         }
 
-        _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposing );
-        _prefetchCounter.Write( DisposedCounterValue );
-        _deadLetterCounter.Write( InactiveZeroCounterValue );
+        _state = MessageBrokerChannelListenerBindingState.Disposing;
+        primaryBinding = QueueBindingCollection.Primary;
+        secondaryBindings = QueueBindingCollection.Secondary;
         _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
+
         return true;
     }
 
@@ -873,9 +740,10 @@ public sealed class MessageBrokerChannelListenerBinding
 
             using ( AcquireLock() )
             {
-                _state.Write( ( int )MessageBrokerChannelListenerBindingState.Disposed );
+                _state = MessageBrokerChannelListenerBindingState.Disposed;
                 deactivated = _deactivated;
                 _deactivated = null;
+                QueueBindingCollection.Clear();
             }
         }
         finally
@@ -891,45 +759,6 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void DeactivateCounter(ref InterlockedInt32 counter)
-    {
-        int current;
-        do
-        {
-            current = counter.Value;
-            if ( current <= InactiveZeroCounterValue )
-                return;
-        }
-        while ( ! counter.Write( unchecked( InactiveZeroCounterValue - current ), current ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ActivatePrefetchCounter()
-    {
-        int current;
-        do
-        {
-            current = _prefetchCounter.Value;
-            if ( current >= 0 || current == DisposedCounterValue )
-                return;
-        }
-        while ( ! _prefetchCounter.Write( unchecked( InactiveZeroCounterValue - current ), current ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ActivateDeadLetterCounter()
-    {
-        int current;
-        do
-        {
-            current = _deadLetterCounter.Value;
-            if ( current >= 0 || IsDisposed )
-                return;
-        }
-        while ( ! _deadLetterCounter.Write( unchecked( InactiveZeroCounterValue - current ), current ) );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void SetProperties(
         int prefetchHint,
         int maxRetries,
@@ -938,9 +767,16 @@ public sealed class MessageBrokerChannelListenerBinding
         Duration minAckTimeout,
         int deadLetterCapacityHint,
         Duration minDeadLetterRetention,
-        string? filterExpression,
-        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate)
+        string? filterExpression)
     {
+        Assume.IsGreaterThan( prefetchHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
+        Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
+        Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
+
         _prefetchHint = prefetchHint;
         _maxRetries = maxRetries;
         _retryDelay = retryDelay;
@@ -948,8 +784,6 @@ public sealed class MessageBrokerChannelListenerBinding
         _minAckTimeout = minAckTimeout;
         _deadLetterCapacityHint = deadLetterCapacityHint;
         _minDeadLetterRetention = minDeadLetterRetention;
-        _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
-        _filterPredicate = filterExpressionDelegate?.Delegate;
         _filterExpression = filterExpression;
     }
 
@@ -966,10 +800,10 @@ public sealed class MessageBrokerChannelListenerBinding
 
         try
         {
-            var channelTraceId = 0UL;
-            var queueTraceId = 0UL;
             var disposingChannel = false;
-            var disposingQueue = false;
+            var channelTraceId = 0UL;
+            QueueListenerUnbindingPayload primaryPayload = default;
+            var secondaryPayloads = Array.Empty<QueueListenerUnbindingPayload>();
             var clearBuffers = true;
             ServerStorage.Client clientStorage;
             Exception? exception = null;
@@ -989,21 +823,52 @@ public sealed class MessageBrokerChannelListenerBinding
                             exception = Channel.DisposedException();
                         else
                         {
-                            using ( Queue.AcquireLock() )
+                            MessageBrokerQueueListenerBinding? primary;
+                            ReadOnlyArray<MessageBrokerQueueListenerBinding> secondary;
+                            using ( AcquireLock() )
                             {
-                                if ( Queue.IsDisposed )
-                                    exception = Queue.DisposedException();
+                                Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Disposing );
+                                primary = QueueBindingCollection.Primary;
+                                secondary = QueueBindingCollection.Secondary;
+
+                                disposingChannel = Channel.TryDisposeByRemovingListenerUnsafe( Client.Id );
+                                channelTraceId = Channel.GetTraceId();
+                            }
+
+                            using ( primary.Queue.AcquireLock() )
+                            {
+                                if ( primary.Queue.IsDisposed )
+                                    exception = primary.Queue.DisposedException();
                                 else
                                 {
-                                    using ( AcquireLock() )
+                                    var disposingQueue = primary.Queue.TryDisposeByRemovingListenerUnsafe( Channel.Id );
+                                    var queueTraceId = primary.Queue.GetTraceId();
+                                    primaryPayload = new QueueListenerUnbindingPayload( primary, queueTraceId, disposingQueue );
+                                }
+                            }
+
+                            if ( secondary.Count > 0 )
+                            {
+                                var i = 0;
+                                secondaryPayloads = new QueueListenerUnbindingPayload[secondary.Count];
+                                foreach ( var binding in secondary )
+                                {
+                                    using ( binding.Queue.AcquireLock() )
                                     {
-                                        Assume.Equals( _state.Value, ( int )MessageBrokerChannelPublisherBindingState.Disposing );
-                                        disposingChannel = Channel.TryDisposeByRemovingListenerUnsafe( Client.Id );
-                                        disposingQueue = Queue.TryDisposeByRemovingListenerUnsafe( Channel.Id );
-                                        channelTraceId = Channel.GetTraceId();
-                                        queueTraceId = Queue.GetTraceId();
+                                        if ( ! binding.Queue.IsDisposed )
+                                        {
+                                            var disposingQueue = binding.Queue.TryDisposeByRemovingListenerUnsafe( Channel.Id );
+                                            var queueTraceId = binding.Queue.GetTraceId();
+                                            secondaryPayloads[i++] = new QueueListenerUnbindingPayload(
+                                                binding,
+                                                queueTraceId,
+                                                disposingQueue );
+                                        }
                                     }
                                 }
+
+                                if ( i < secondaryPayloads.Length )
+                                    Array.Resize( ref secondaryPayloads, i );
                             }
                         }
                     }
@@ -1019,21 +884,50 @@ public sealed class MessageBrokerChannelListenerBinding
                 return;
             }
 
-            using ( MessageBrokerQueueTraceEvent.CreateScope(
-                Queue,
-                queueTraceId,
-                MessageBrokerQueueTraceEventType.UnbindListener ) )
+            var disposingPrimaryQueue = false;
+            if ( primaryPayload.Binding is not null )
             {
-                if ( Queue.Logger.ClientTrace is { } clientTrace )
-                    clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( Queue, queueTraceId, clientTraceId ) );
+                var queue = primaryPayload.Binding.Queue;
+                disposingPrimaryQueue = primaryPayload.DisposingQueue;
+                using ( MessageBrokerQueueTraceEvent.CreateScope(
+                    queue,
+                    primaryPayload.QueueTraceId,
+                    MessageBrokerQueueTraceEventType.UnbindListener ) )
+                {
+                    if ( queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, primaryPayload.QueueTraceId, clientTraceId ) );
 
-                if ( Queue.Logger.ListenerUnbound is { } queueListenerUnbound )
-                    queueListenerUnbound.Emit( MessageBrokerQueueListenerUnboundEvent.Create( this, queueTraceId, disposingChannel ) );
+                    if ( queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                        queueListenerUnbound.Emit(
+                            MessageBrokerQueueListenerUnboundEvent.Create(
+                                primaryPayload.Binding,
+                                primaryPayload.QueueTraceId,
+                                disposingChannel ) );
 
-                if ( disposingQueue )
-                    await Queue.DisposeDueToLackOfReferencesAsync( queueTraceId ).ConfigureAwait( false );
-                else
-                    Queue.StartProcessor();
+                    if ( primaryPayload.DisposingQueue )
+                        await queue.DisposeDueToLackOfReferencesAsync( primaryPayload.QueueTraceId ).ConfigureAwait( false );
+                }
+            }
+
+            foreach ( var payload in secondaryPayloads )
+            {
+                Assume.IsNotNull( payload.Binding );
+                var queue = payload.Binding.Queue;
+                using ( MessageBrokerQueueTraceEvent.CreateScope(
+                    queue,
+                    payload.QueueTraceId,
+                    MessageBrokerQueueTraceEventType.UnbindListener ) )
+                {
+                    if ( queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, payload.QueueTraceId, clientTraceId ) );
+
+                    if ( queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                        queueListenerUnbound.Emit(
+                            MessageBrokerQueueListenerUnboundEvent.Create( payload.Binding, payload.QueueTraceId, disposingChannel ) );
+
+                    if ( payload.DisposingQueue )
+                        await queue.DisposeDueToLackOfReferencesAsync( payload.QueueTraceId ).ConfigureAwait( false );
+                }
             }
 
             using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -1045,7 +939,8 @@ public sealed class MessageBrokerChannelListenerBinding
                     clientTrace.Emit( MessageBrokerChannelClientTraceEvent.Create( Channel, channelTraceId, Client, clientTraceId ) );
 
                 if ( Channel.Logger.ListenerUnbound is { } channelListenerUnbound )
-                    channelListenerUnbound.Emit( MessageBrokerChannelListenerUnboundEvent.Create( this, channelTraceId, disposingQueue ) );
+                    channelListenerUnbound.Emit(
+                        MessageBrokerChannelListenerUnboundEvent.Create( this, channelTraceId, disposingPrimaryQueue ) );
 
                 if ( disposingChannel )
                     await Channel.DisposeDueToLackOfReferencesAsync( channelTraceId ).ConfigureAwait( false );
@@ -1057,11 +952,15 @@ public sealed class MessageBrokerChannelListenerBinding
                     Client.ListenersByChannelId.Remove( Channel.Id );
             }
 
-            _state.Write( ( byte )MessageBrokerChannelPublisherBindingState.Disposed );
+            using ( AcquireLock() )
+            {
+                _state = MessageBrokerChannelListenerBindingState.Disposed;
+                QueueBindingCollection.Clear();
+            }
 
             if ( Client.Logger.ListenerUnbound is { } listenerUnbound )
                 listenerUnbound.Emit(
-                    MessageBrokerRemoteClientListenerUnboundEvent.Create( this, clientTraceId, disposingChannel, disposingQueue ) );
+                    MessageBrokerRemoteClientListenerUnboundEvent.Create( this, clientTraceId, disposingChannel, disposingPrimaryQueue ) );
 
             var notification = new Protocol.ChannelBindingDeletedNotification(
                 MessageBrokerSystemNotificationType.ListenerDeleted,

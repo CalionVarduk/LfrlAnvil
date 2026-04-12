@@ -24,7 +24,7 @@ namespace LfrlAnvil.MessageBroker.Server.Events;
 public readonly struct MessageBrokerQueueMessageProcessedEvent
 {
     private MessageBrokerQueueMessageProcessedEvent(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         ulong messageId,
@@ -47,9 +47,9 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
     public MessageBrokerQueueEventSource Source { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerChannelPublisherBinding"/> that received the message.
+    /// <see cref="MessageBrokerQueueListenerBinding"/> that received the message.
     /// </summary>
-    public MessageBrokerChannelListenerBinding Listener { get; }
+    public MessageBrokerQueueListenerBinding Listener { get; }
 
     /// <summary>
     /// <see cref="IMessageBrokerMessagePublisher"/> that pushed the message.
@@ -98,13 +98,13 @@ public readonly struct MessageBrokerQueueMessageProcessedEvent
 
         var messageRemoved = AckId <= 0 ? $", MessageRemoved = {MessageRemoved}" : string.Empty;
         return
-            $"[MessageProcessed] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageRemoved}";
+            $"[MessageProcessed] {Source}, Sender = [{Publisher.ClientId}] '{Publisher.ClientName}', Channel = [{Listener.Owner.Channel.Id}] '{Listener.Owner.Channel.Name}', Stream = [{Publisher.Stream.Id}] '{Publisher.Stream.Name}', MessageId = {MessageId}{ack}{messageRemoved}";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static MessageBrokerQueueMessageProcessedEvent Create(
-        MessageBrokerChannelListenerBinding listener,
+        MessageBrokerQueueListenerBinding listener,
         ulong traceId,
         IMessageBrokerMessagePublisher publisher,
         ulong messageId,
