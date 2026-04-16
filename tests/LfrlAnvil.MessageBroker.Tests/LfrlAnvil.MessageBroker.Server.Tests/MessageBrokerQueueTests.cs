@@ -2561,10 +2561,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
-                            $"[MessageProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpiresAt[0].Value})",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 0, Ack = (Id = 1, ExpiresAt = {ackExpiresAt[0].Value})",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] )
                     ] ),
                 queueLogs[1]
@@ -2574,10 +2574,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 1, Retry = 0, Redelivery = 1 (active), IsFromDeadLetter = False",
-                            $"[MessageProcessed] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 1, Ack = (Id = 2, ExpiresAt = {ackExpiresAt[1].Value})",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 1, Retry = 0, Redelivery = 1 (active), IsFromDeadLetter = False",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 1, Ack = (Id = 2, ExpiresAt = {ackExpiresAt[1].Value})",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (end)"
                         ] )
                     ] ),
                 queueLogs[2]
@@ -2587,10 +2587,10 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 2, Retry = 0 (active), Redelivery = 0, IsFromDeadLetter = False",
-                            $"[MessageProcessed] Client = [1] 'test', Queue = [4] 'c', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 2, Ack = (Id = 1, ExpiresAt = {ackExpiresAt[2].Value})",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 2, Retry = 0 (active), Redelivery = 0, IsFromDeadLetter = False",
+                            $"[MessageProcessed] Client = [1] 'test', Queue = [4] 'c', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 2, Ack = (Id = 1, ExpiresAt = {ackExpiresAt[2].Value})",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [4] 'c', TraceId = 3 (end)"
                         ] )
                     ] ),
                 queueLogs[3]
@@ -2600,11 +2600,11 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 3, Retry = 0, Redelivery = 0, IsFromDeadLetter = True",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [5] 'd', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageProcessed] Client = [1] 'test', Queue = [5] 'd', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 3, Ack = <dead-letter>, MessageRemoved = True",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 3, Retry = 0, Redelivery = 0, IsFromDeadLetter = True",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [5] 'd', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageProcessed] Client = [1] 'test', Queue = [5] 'd', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 3, Ack = <dead-letter>, MessageRemoved = True",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [5] 'd', TraceId = 3 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -2742,18 +2742,18 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 1, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 1, MessageRemoved = True",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 1, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 1, MessageRemoved = True",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                         ] )
                     ] ),
                 queueLogs[2]
@@ -2763,18 +2763,18 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 2, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageProcessed] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 2, MessageRemoved = True",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 2, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageProcessed] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', MessageId = 2, MessageRemoved = True",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (start)",
-                            "[Deactivating] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, IsAlive = False",
-                            "[Deactivated] Client = [1] 'test', Queue = [3] 'b', TraceId = 3, IsAlive = False",
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [3] 'b', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [3] 'b', TraceId = 4 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [3] 'b', TraceId = 4, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [3] 'b', TraceId = 4, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [3] 'b', TraceId = 4 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -2880,9 +2880,9 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 3, MessageRemoved = False, MovedToDeadLetter = True",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 3, MessageRemoved = False, MovedToDeadLetter = True",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -2988,9 +2988,9 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRetriesReached, StoreKey = 0, Retry = 3, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRetriesReached, StoreKey = 0, Retry = 3, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -3089,17 +3089,17 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 3, MessageRemoved = True, MovedToDeadLetter = False",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRedeliveriesReached, StoreKey = 0, Retry = 0, Redelivery = 3, MessageRemoved = True, MovedToDeadLetter = False",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -3198,17 +3198,17 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRetriesReached, StoreKey = 0, Retry = 3, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = MaxRetriesReached, StoreKey = 0, Retry = 3, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                         ] )
                     ] ) )
             .Go();
@@ -3406,18 +3406,18 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                     [
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
-                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
-                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo'",
-                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = FilteredOut, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
-                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
+                            "[ProcessingMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', StoreKey = 0, Retry = 0, Redelivery = 0, IsFromDeadLetter = False",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
+                            "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = FilteredOut, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
+                            "[Trace:ProcessMessage] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
                         ] ),
                         (t, _) => t.Logs.TestSequence(
                         [
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                            "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                            "[Trace:Deactivate] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                         ] )
                     ] ) )
             .Go();

@@ -116,22 +116,6 @@ Might do:
 
 ### MessageBroker: Refinements
 
-- Add possibility to change publisher's stream and listener's queue during rebinding
-  - include client-defined flag which states if this is desired or not
-  - publishers are straightforward
-  - listeners will need a collection of queue-binding objects
-    - in order to not lose any messages
-    - queues and their messages will be linked to queue-bindings
-    - queue-bindings will store a copy of listener settings
-      - may either be static or be updated on every listener rebind
-      - NOTE: listeners may be refactored to no longer use interlocked counters
-        - and just use a lock for simplicity
-        - also, currently, expired dead letter for inactive listeners
-        - will cause the queue processor to essentially spin-wait, so fix that too
-    - queue-bindings will need to track how many messages reference them
-    - and get disposed automatically when the counter reaches 0
-    - message notifications will need an additional queue-id in their header
-      - important for ack/nack
 - Replace server-side public getters using lock with a single
   - property/method which returns all values using a single lock
   - this might further be converted into stats fetcher/maintenance public surface

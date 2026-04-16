@@ -83,6 +83,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string DisposedQueueBinding(MessageBrokerQueueListenerBinding binding)
+    {
+        return
+            $"Operation has been cancelled because listener binding between channel [{binding.Owner.Channel.Id}] '{binding.Owner.Channel.Name}' and queue [{binding.Queue.Id}] '{binding.Queue.Name}' is disposed.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string PublisherDeactivated(MessageBrokerRemoteClient client, MessageBrokerChannel channel, bool disposed)
     {
         return

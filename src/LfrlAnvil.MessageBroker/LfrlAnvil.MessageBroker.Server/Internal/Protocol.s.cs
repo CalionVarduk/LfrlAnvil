@@ -410,6 +410,9 @@ internal static class Protocol
 
     internal readonly struct BindPublisherFailureResponse
     {
+        private const byte AlreadyBound = 1;
+        private const byte Cancelled = 2;
+
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
@@ -418,7 +421,7 @@ internal static class Protocol
         {
             Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.ParentDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindPublisherFailureResponse, Payload );
-            Flags = result == BindResult.ParentDisposed ? ( byte )BindResult.ChannelDisposed : ( byte )result;
+            Flags = result == BindResult.AlreadyBound ? AlreadyBound : Cancelled;
         }
 
         [Pure]
@@ -695,20 +698,27 @@ internal static class Protocol
 
     internal readonly struct BindListenerFailureResponse
     {
+        private const byte AlreadyBound = 1;
+        private const byte Cancelled = 2;
+        private const byte ChannelDoesNotExist = 4;
+        private const byte UnexpectedFilterExpression = 8;
+        private const byte InvalidFilterExpression = 16;
+
         internal const int Payload = sizeof( byte );
         internal readonly PacketHeader Header;
         internal readonly byte Flags;
 
         internal BindListenerFailureResponse(BindResult result)
         {
-            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.InvalidFilterExpression );
+            Assume.IsInRange( result, BindResult.AlreadyBound, BindResult.QueueBindingDisposed );
             Header = PacketHeader.Create( MessageBrokerClientEndpoint.BindListenerFailureResponse, Payload );
             Flags = result switch
             {
-                BindResult.ParentDisposed => ( byte )BindResult.ChannelDisposed,
-                BindResult.UnexpectedFilterExpression => 8,
-                BindResult.InvalidFilterExpression => 16,
-                _ => ( byte )result
+                BindResult.AlreadyBound => AlreadyBound,
+                BindResult.ChannelDoesNotExist => ChannelDoesNotExist,
+                BindResult.UnexpectedFilterExpression => UnexpectedFilterExpression,
+                BindResult.InvalidFilterExpression => InvalidFilterExpression,
+                _ => Cancelled
             };
         }
 

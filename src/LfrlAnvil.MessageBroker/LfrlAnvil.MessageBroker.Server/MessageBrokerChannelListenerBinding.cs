@@ -435,25 +435,131 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool TryReactivate(
+    internal ReactivationResult TryReactivate(
         string queueName,
         in Protocol.BindListenerRequestHeader header,
         string? filterExpression,
         IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
-        bool isEphemeral)
+        bool isEphemeral,
+        [NotNull] ref MessageBrokerQueueListenerBinding? existingPrimaryBinding,
+        [NotNull] ref MessageBrokerQueueListenerBinding? primaryBinding,
+        ref MessageBrokerQueueListenerBinding[] secondaryBindings,
+        ref bool disposingExistingPrimaryBinding)
     {
         using ( AcquireLock() )
         {
-            // TODO
-            // implement rebinding to a different queue
-            if ( _state != MessageBrokerChannelListenerBindingState.Inactive
-                || ! QueueBindingCollection.Primary.Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
-                return false;
+            var primary = QueueBindingCollection.Primary;
+            existingPrimaryBinding = primary;
+            primaryBinding = primary;
 
-            _isEphemeral = isEphemeral;
+            if ( _state != MessageBrokerChannelListenerBindingState.Inactive )
+                return ReactivationResult.AlreadyBound;
+
+            if ( primary.Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
+            {
+                if ( primary.TryReactivate( in header, filterExpression, filterExpressionDelegate, isPrimary: true ) != true )
+                {
+                    disposingExistingPrimaryBinding = true;
+                    return ReactivationResult.AlreadyBound;
+                }
+
+                _isEphemeral = isEphemeral;
+                _state = MessageBrokerChannelListenerBindingState.Created;
+
+                SetProperties(
+                    header.PrefetchHint,
+                    header.MaxRetries,
+                    header.RetryDelay,
+                    header.MaxRedeliveries,
+                    header.MinAckTimeout,
+                    header.DeadLetterCapacityHint,
+                    header.MinDeadLetterRetention,
+                    filterExpression );
+
+                if ( QueueBindingCollection.Secondary.Length > 0 )
+                {
+                    var i = 0;
+                    secondaryBindings = new MessageBrokerQueueListenerBinding[QueueBindingCollection.Secondary.Length];
+                    foreach ( var binding in QueueBindingCollection.Secondary )
+                    {
+                        if ( binding.TryReactivate( in header, filterExpression, filterExpressionDelegate, isPrimary: false ) == true )
+                            secondaryBindings[i++] = binding;
+                    }
+
+                    if ( i < secondaryBindings.Length )
+                        Array.Resize( ref secondaryBindings, i );
+                }
+
+                return ReactivationResult.Reactivated;
+            }
+
+            for ( var i = 0; i < QueueBindingCollection.Secondary.Length; ++i )
+            {
+                var binding = QueueBindingCollection.Secondary[i];
+                if ( ! binding.Queue.Name.Equals( queueName, StringComparison.OrdinalIgnoreCase ) )
+                    continue;
+
+                primaryBinding = binding;
+                if ( binding.TryReactivate( in header, filterExpression, filterExpressionDelegate, isPrimary: true ) != true )
+                {
+                    disposingExistingPrimaryBinding = true;
+                    return ReactivationResult.AlreadyBound;
+                }
+
+                _isEphemeral = isEphemeral;
+                _state = MessageBrokerChannelListenerBindingState.Created;
+                QueueBindingCollection.Primary = binding;
+                QueueBindingCollection.Secondary[i] = primary;
+
+                var j = 0;
+                secondaryBindings = new MessageBrokerQueueListenerBinding[QueueBindingCollection.Secondary.Length];
+                foreach ( var b in QueueBindingCollection.Secondary )
+                {
+                    var reactivated = b.TryReactivate(
+                        in header,
+                        filterExpression,
+                        filterExpressionDelegate,
+                        isPrimary: false,
+                        disposeIfUnreferenced: ReferenceEquals( b, primary ) );
+
+                    if ( reactivated is null )
+                        disposingExistingPrimaryBinding = true;
+                    else if ( reactivated == true )
+                        secondaryBindings[j++] = b;
+                }
+
+                if ( j < secondaryBindings.Length )
+                    Array.Resize( ref secondaryBindings, j );
+
+                return ReactivationResult.Reactivated;
+            }
+
             _state = MessageBrokerChannelListenerBindingState.Created;
+        }
 
-            SetProperties(
+        return ReactivationResult.Rebinding;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryReactivateWithNewPrimaryQueue(
+        MessageBrokerQueue queue,
+        in Protocol.BindListenerRequestHeader header,
+        string? filterExpression,
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
+        bool isEphemeral,
+        [NotNull] ref MessageBrokerQueueListenerBinding? existingPrimaryBinding,
+        [NotNull] ref MessageBrokerQueueListenerBinding? primaryBinding,
+        ref MessageBrokerQueueListenerBinding[] secondaryBindings,
+        ref bool disposingExistingPrimaryBinding)
+    {
+        using ( AcquireLock() )
+        {
+            var primary = QueueBindingCollection.Primary;
+            existingPrimaryBinding = primary;
+            primaryBinding = new MessageBrokerQueueListenerBinding(
+                Client,
+                this,
+                queue,
                 header.PrefetchHint,
                 header.MaxRetries,
                 header.RetryDelay,
@@ -461,11 +567,40 @@ public sealed class MessageBrokerChannelListenerBinding
                 header.MinAckTimeout,
                 header.DeadLetterCapacityHint,
                 header.MinDeadLetterRetention,
-                filterExpression );
+                filterExpression,
+                filterExpressionDelegate?.Delegate,
+                MessageBrokerQueueListenerBindingState.Created,
+                isPrimary: true );
 
-            QueueBindingCollection.Primary.Reactivate( in header, filterExpression, filterExpressionDelegate );
-            foreach ( var binding in QueueBindingCollection.Secondary )
-                binding.Reactivate( in header, filterExpression, filterExpressionDelegate );
+            if ( _state != MessageBrokerChannelListenerBindingState.Created )
+            {
+                primaryBinding.TryMarkAsDisposed();
+                return false;
+            }
+
+            _isEphemeral = isEphemeral;
+            QueueBindingCollection.Primary = primaryBinding;
+            QueueBindingCollection.AddSecondaryUnsafe( primary );
+
+            var i = 0;
+            secondaryBindings = new MessageBrokerQueueListenerBinding[QueueBindingCollection.Secondary.Length];
+            foreach ( var b in QueueBindingCollection.Secondary )
+            {
+                var reactivated = b.TryReactivate(
+                    in header,
+                    filterExpression,
+                    filterExpressionDelegate,
+                    isPrimary: false,
+                    disposeIfUnreferenced: ReferenceEquals( b, primary ) );
+
+                if ( reactivated is null )
+                    disposingExistingPrimaryBinding = true;
+                else if ( reactivated == true )
+                    secondaryBindings[i++] = b;
+            }
+
+            if ( i < secondaryBindings.Length )
+                Array.Resize( ref secondaryBindings, i );
         }
 
         return true;
@@ -496,6 +631,16 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RevertRebinding()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerChannelListenerBindingState.Created )
+                _state = MessageBrokerChannelListenerBindingState.Inactive;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void MarkAsEphemeral()
     {
         using ( AcquireLock() )
@@ -506,9 +651,8 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void MarkAsRunning(out MessageBrokerQueue[] additionalQueues)
+    internal void MarkAsRunning()
     {
-        additionalQueues = Array.Empty<MessageBrokerQueue>();
         using ( AcquireLock() )
         {
             if ( _state != MessageBrokerChannelListenerBindingState.Created )
@@ -516,16 +660,8 @@ public sealed class MessageBrokerChannelListenerBinding
 
             _state = MessageBrokerChannelListenerBindingState.Running;
             QueueBindingCollection.Primary.MarkAsRunning();
-            if ( QueueBindingCollection.Secondary.Length == 0 )
-                return;
-
-            additionalQueues = new MessageBrokerQueue[QueueBindingCollection.Secondary.Length];
-            for ( var i = 0; i < additionalQueues.Length; ++i )
-            {
-                var binding = QueueBindingCollection.Secondary[i];
-                binding.MarkAsRunning();
-                additionalQueues[i] = binding.Queue;
-            }
+            foreach ( var b in QueueBindingCollection.Secondary )
+                b.MarkAsRunning();
         }
     }
 

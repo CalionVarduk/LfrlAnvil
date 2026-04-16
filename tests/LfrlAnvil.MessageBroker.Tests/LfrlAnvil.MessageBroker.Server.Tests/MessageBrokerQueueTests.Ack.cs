@@ -2887,11 +2887,11 @@ public partial class MessageBrokerQueueTests
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
-                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
-                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, MessageRemoved = False",
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, ClientTraceId = 5",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = False, MovedToDeadLetter = True",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, AckId = 1, MessageRemoved = False",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                             ] )
                         ] ) )
                 .Go();
@@ -3000,10 +3000,10 @@ public partial class MessageBrokerQueueTests
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
-                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, Delay = 60 second(s)",
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, ClientTraceId = 5",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, AckId = 1, Delay = 60 second(s)",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                             ] )
                         ] ) )
                 .Go();
@@ -3104,14 +3104,14 @@ public partial class MessageBrokerQueueTests
                         [
                             (t, _) => t.Logs.TestSequence(
                             [
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (start)",
-                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, ClientTraceId = 5",
-                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
-                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, AckId = 1, MessageRemoved = True",
-                                "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, Channel = [1] 'foo'",
-                                "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                                "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 3, IsAlive = False",
-                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 3 (end)"
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (start)",
+                                "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, ClientTraceId = 5",
+                                "[MessageDiscarded] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, Sender = [1] 'test', Channel = [1] 'foo', Stream = [1] 'foo', Reason = ExplicitNoRetry, StoreKey = 0, Retry = 0, Redelivery = 0, MessageRemoved = True, MovedToDeadLetter = False",
+                                "[NegativeAckProcessed] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, AckId = 1, MessageRemoved = True",
+                                "[ListenerUnbound] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, Channel = [1] 'foo'",
+                                "[Deactivating] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                                "[Deactivated] Client = [1] 'test', Queue = [2] 'a', TraceId = 4, IsAlive = False",
+                                "[Trace:NegativeAck] Client = [1] 'test', Queue = [2] 'a', TraceId = 4 (end)"
                             ] )
                         ] ) )
                 .Go();

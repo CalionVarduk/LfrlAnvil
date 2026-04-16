@@ -894,14 +894,19 @@ internal struct RequestHandler
             var bindResult = BindResult.Success;
             IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate = null;
             var channelCreated = false;
-            var queueCreated = false;
             ulong channelTraceId = 0;
-            ulong queueTraceId = 0;
+            var primaryQueueCreated = false;
+            ulong primaryQueueTraceId = 0;
+            var existingPrimaryQueueDisposed = false;
+            var existingPrimaryBindingDisposed = false;
+            ulong existingPrimaryQueueTraceId = 0;
             MessageBrokerChannel? channel = null;
-            MessageBrokerQueue? queue = null;
-            MessageBrokerChannelListenerBinding? existingListener = null;
+            MessageBrokerQueue? primaryQueue = null;
             MessageBrokerChannelListenerBinding? listener = null;
-            MessageBrokerQueueListenerBinding? queueBinding = null;
+            MessageBrokerQueueListenerBinding? primaryBinding = null;
+            MessageBrokerQueueListenerBinding? existingPrimaryBinding = null;
+            var secondaryBindings = Array.Empty<MessageBrokerQueueListenerBinding>();
+            var secondaryQueueTraceIds = Array.Empty<ulong>();
             WriterQueue.TaskSource writerSource;
             Result<string> channelName;
             Result<string> queueName;
@@ -1066,13 +1071,18 @@ internal struct RequestHandler
                                     isEphemeral,
                                     filterExpressionDelegate,
                                     in parsedRequestHeader,
-                                    ref existingListener,
+                                    ref primaryQueue,
                                     ref listener,
-                                    ref queueBinding,
+                                    ref existingPrimaryBinding,
+                                    ref primaryBinding,
+                                    ref secondaryBindings,
                                     ref channelTraceId,
-                                    ref queue,
-                                    ref queueTraceId,
-                                    ref queueCreated );
+                                    ref existingPrimaryQueueTraceId,
+                                    ref primaryQueueTraceId,
+                                    ref secondaryQueueTraceIds,
+                                    ref primaryQueueCreated,
+                                    ref existingPrimaryQueueDisposed,
+                                    ref existingPrimaryBindingDisposed );
                             }
                             catch
                             {
@@ -1099,13 +1109,14 @@ internal struct RequestHandler
                     {
                         BindResult.AlreadyBound => client.ListenerException( listener, Resources.ListenerAlreadyBound( listener! ) ),
                         BindResult.ChannelDisposed => channel!.DisposedException(),
-                        BindResult.ParentDisposed => queue!.DisposedException(),
+                        BindResult.ParentDisposed => primaryQueue!.DisposedException(),
                         BindResult.ChannelDoesNotExist => client.ListenerException(
                             null,
                             Resources.CannotBindAsListenerToNonExistingChannel( client, channelName.Value ) ),
                         BindResult.UnexpectedFilterExpression => client.Exception(
                             Resources.UnexpectedFilterExpression( rawFilterExpression! ) ),
-                        _ => client.Exception( Resources.InvalidFilterExpression( rawFilterExpression! ) )
+                        BindResult.InvalidFilterExpression => client.Exception( Resources.InvalidFilterExpression( rawFilterExpression! ) ),
+                        _ => client.Exception( Resources.DisposedQueueBinding( primaryBinding! ) )
                     };
 
                     error.Emit( MessageBrokerRemoteClientErrorEvent.Create( client, traceId, exc ) );
@@ -1120,9 +1131,8 @@ internal struct RequestHandler
             else
             {
                 Assume.IsNotNull( channel );
-                Assume.IsNotNull( queue );
                 Assume.IsNotNull( listener );
-                Assume.IsNotNull( queueBinding );
+                Assume.IsNotNull( primaryBinding );
                 readPacket?.Emit( MessageBrokerRemoteClientReadPacketEvent.CreateAccepted( client, traceId, request.Header ) );
 
                 using ( MessageBrokerChannelTraceEvent.CreateScope(
@@ -1145,40 +1155,88 @@ internal struct RequestHandler
                             MessageBrokerChannelListenerBoundEvent.Create(
                                 listener,
                                 channelTraceId,
-                                queueCreated,
-                                reactivated: existingListener is not null ) );
+                                primaryQueueCreated,
+                                reactivated: existingPrimaryBinding is not null ) );
                 }
 
-                // TODO
-                // this has to go through all queue bindings' queues
-                // implement when working on rebinding inactive listener to a different primary queue
-                using ( MessageBrokerQueueTraceEvent.CreateScope( queue, queueTraceId, MessageBrokerQueueTraceEventType.BindListener ) )
+                using ( MessageBrokerQueueTraceEvent.CreateScope(
+                    primaryBinding.Queue,
+                    primaryQueueTraceId,
+                    MessageBrokerQueueTraceEventType.BindListener ) )
                 {
-                    if ( queue.Logger.ClientTrace is { } clientTrace )
-                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
+                    if ( primaryBinding.Queue.Logger.ClientTrace is { } clientTrace )
+                        clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( primaryBinding.Queue, primaryQueueTraceId, traceId ) );
 
-                    if ( queueCreated )
+                    if ( primaryQueueCreated )
                     {
-                        await queue.Storage.SaveMetadataAsync( queue, clearBuffers, queueTraceId, skipDisposed: true )
+                        await primaryBinding.Queue.Storage.SaveMetadataAsync(
+                                primaryBinding.Queue,
+                                clearBuffers,
+                                primaryQueueTraceId,
+                                skipDisposed: true )
                             .ConfigureAwait( false );
 
-                        if ( queue.Logger.Created is { } created )
-                            created.Emit( MessageBrokerQueueCreatedEvent.Create( queue, queueTraceId ) );
+                        if ( primaryBinding.Queue.Logger.Created is { } created )
+                            created.Emit( MessageBrokerQueueCreatedEvent.Create( primaryBinding.Queue, primaryQueueTraceId ) );
                     }
 
-                    if ( queue.Logger.ListenerBound is { } queueListenerBound )
+                    if ( primaryBinding.Queue.Logger.ListenerBound is { } queueListenerBound )
                         queueListenerBound.Emit(
                             MessageBrokerQueueListenerBoundEvent.Create(
-                                queueBinding,
-                                queueTraceId,
+                                primaryBinding,
+                                primaryQueueTraceId,
                                 channelCreated,
-                                reactivated: existingListener is not null ) );
+                                reactivated: ReferenceEquals( existingPrimaryBinding, primaryBinding ) ) );
                 }
 
-                listener.MarkAsRunning( out var additionalQueues );
-                queue.StartProcessor();
-                foreach ( var q in additionalQueues )
-                    q.StartProcessor();
+                if ( existingPrimaryBindingDisposed )
+                {
+                    Assume.IsNotNull( existingPrimaryBinding );
+                    var queue = existingPrimaryBinding.Queue;
+                    using ( MessageBrokerQueueTraceEvent.CreateScope(
+                        queue,
+                        existingPrimaryQueueTraceId,
+                        MessageBrokerQueueTraceEventType.UnbindListener ) )
+                    {
+                        if ( queue.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, existingPrimaryQueueTraceId, traceId ) );
+
+                        if ( queue.Logger.ListenerUnbound is { } queueListenerUnbound )
+                            queueListenerUnbound.Emit(
+                                MessageBrokerQueueListenerUnboundEvent.Create(
+                                    existingPrimaryBinding,
+                                    existingPrimaryQueueTraceId,
+                                    channelRemoved: false ) );
+
+                        if ( existingPrimaryQueueDisposed )
+                            await queue.DisposeDueToLackOfReferencesAsync( existingPrimaryQueueTraceId ).ConfigureAwait( false );
+                    }
+                }
+
+                for ( var i = 0; i < secondaryBindings.Length; ++i )
+                {
+                    var binding = secondaryBindings[i];
+                    var queueTraceId = secondaryQueueTraceIds[i];
+                    var queue = binding.Queue;
+                    using ( MessageBrokerQueueTraceEvent.CreateScope(
+                        queue,
+                        queueTraceId,
+                        MessageBrokerQueueTraceEventType.BindListener ) )
+                    {
+                        if ( queue.Logger.ClientTrace is { } clientTrace )
+                            clientTrace.Emit( MessageBrokerQueueClientTraceEvent.Create( queue, queueTraceId, traceId ) );
+
+                        if ( queue.Logger.ListenerBound is { } queueListenerBound )
+                            queueListenerBound.Emit(
+                                MessageBrokerQueueListenerBoundEvent.Create( binding, queueTraceId, channelCreated, reactivated: true ) );
+                    }
+                }
+
+                listener.MarkAsRunning();
+
+                primaryBinding.Queue.StartProcessor();
+                foreach ( var b in secondaryBindings )
+                    b.Queue.StartProcessor();
 
                 if ( isEphemeral )
                     await storage.DeleteAsync( listener ).ConfigureAwait( false );
@@ -1191,11 +1249,16 @@ internal struct RequestHandler
                             listener,
                             traceId,
                             channelCreated,
-                            queueCreated,
-                            reactivated: existingListener is not null ) );
+                            primaryQueueCreated,
+                            reactivated: existingPrimaryBinding is not null ) );
 
                 var responseLength = Protocol.PacketHeader.Length + Protocol.ListenerBoundResponse.Payload;
-                var response = new Protocol.ListenerBoundResponse( channelCreated, queueCreated, channel.Id, queue.Id );
+                var response = new Protocol.ListenerBoundResponse(
+                    channelCreated,
+                    primaryQueueCreated,
+                    channel.Id,
+                    primaryBinding.Queue.Id );
+
                 responsePoolToken = client.MemoryPool.Rent( responseLength, clearBuffers, out responseData );
                 responseHeader = response.Header;
                 response.Serialize( responseData );

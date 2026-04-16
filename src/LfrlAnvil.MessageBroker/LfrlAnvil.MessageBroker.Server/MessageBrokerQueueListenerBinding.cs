@@ -341,15 +341,17 @@ public sealed class MessageBrokerQueueListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void Reactivate(
+    internal bool? TryReactivate(
         in Protocol.BindListenerRequestHeader header,
         string? filterExpression,
-        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate)
+        IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
+        bool isPrimary,
+        bool disposeIfUnreferenced = false)
     {
         using ( AcquireLock() )
         {
             if ( _state != MessageBrokerQueueListenerBindingState.Inactive )
-                return;
+                return false;
 
             SetProperties(
                 header.PrefetchHint,
@@ -362,8 +364,20 @@ public sealed class MessageBrokerQueueListenerBinding
                 filterExpression,
                 filterExpressionDelegate?.Delegate );
 
+            _isPrimary = isPrimary;
             _state = MessageBrokerQueueListenerBindingState.Created;
+
+            if ( disposeIfUnreferenced && _refCounter == 0 )
+            {
+                Assume.False( _isPrimary );
+                _state = MessageBrokerQueueListenerBindingState.Disposed;
+                _deadLetterMessages = 0;
+                _prefetchHint = 0;
+                return null;
+            }
         }
+
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -371,7 +385,7 @@ public sealed class MessageBrokerQueueListenerBinding
     {
         using ( AcquireLock() )
         {
-            if ( _state >= MessageBrokerQueueListenerBindingState.Inactive )
+            if ( _state != MessageBrokerQueueListenerBindingState.Running )
             {
                 disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
                 return false;
@@ -391,7 +405,7 @@ public sealed class MessageBrokerQueueListenerBinding
     {
         using ( AcquireLock() )
         {
-            if ( _state >= MessageBrokerQueueListenerBindingState.Inactive )
+            if ( _state != MessageBrokerQueueListenerBindingState.Running )
             {
                 disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
                 return false;
@@ -431,7 +445,7 @@ public sealed class MessageBrokerQueueListenerBinding
     internal bool CanScheduleRetry()
     {
         using ( AcquireLock() )
-            return _state != MessageBrokerQueueListenerBindingState.Inactive && _sentMessages < PrefetchHint;
+            return (( int )_state & 1) == 1 && _sentMessages < PrefetchHint;
     }
 
     [Pure]
@@ -439,7 +453,7 @@ public sealed class MessageBrokerQueueListenerBinding
     internal bool CanScheduleRedelivery()
     {
         using ( AcquireLock() )
-            return _state != MessageBrokerQueueListenerBindingState.Inactive;
+            return (( int )_state & 1) == 1;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -490,7 +504,7 @@ public sealed class MessageBrokerQueueListenerBinding
     {
         using ( AcquireLock() )
         {
-            if ( _state >= MessageBrokerQueueListenerBindingState.Inactive )
+            if ( _state != MessageBrokerQueueListenerBindingState.Running )
             {
                 disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
                 return false;

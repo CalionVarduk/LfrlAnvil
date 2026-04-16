@@ -224,7 +224,7 @@ public sealed class MessageBrokerQueue
                         storeKey,
                         message.Data.Length ) );
 
-            using ( AcquireAliveLock( traceId, out var exc ) )
+            using ( AcquireActiveLock( traceId, out var exc ) )
             {
                 if ( exc is not null )
                     return false;
@@ -860,7 +860,7 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireAliveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
+    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsDisposed )

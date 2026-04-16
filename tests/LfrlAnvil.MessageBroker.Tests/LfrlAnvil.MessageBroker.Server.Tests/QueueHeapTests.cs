@@ -405,6 +405,7 @@ public class QueueHeapTests : TestsBase
             null,
             true );
 
+        listener.MarkAsRunning();
         return listener.QueueBindings.Primary;
     }
 

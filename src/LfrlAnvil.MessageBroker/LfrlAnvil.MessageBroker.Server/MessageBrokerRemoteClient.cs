@@ -727,6 +727,7 @@ public sealed partial class MessageBrokerRemoteClient
                         return BindResult.AlreadyBound;
                 }
 
+                var failed = true;
                 try
                 {
                     stream = StreamCollection.RegisterUnsafe( Server, streamName, out streamCreated );
@@ -752,16 +753,17 @@ public sealed partial class MessageBrokerRemoteClient
                             throw;
                         }
 
+                        failed = false;
                         PublishersByChannelId.Set( channel.Id, publisher );
                         stream.PublishersByClientChannelIdPair.Add( Pair.Create( Id, channel.Id ), publisher );
                         channelTraceId = channel.GetTraceId();
                         streamTraceId = stream.GetTraceId();
                     }
                 }
-                catch
+                finally
                 {
-                    existingPublisher.RevertRebinding();
-                    throw;
+                    if ( failed )
+                        existingPublisher.RevertRebinding();
                 }
 
                 using ( existingStream.AcquireLock() )
@@ -874,13 +876,18 @@ public sealed partial class MessageBrokerRemoteClient
         bool isEphemeral,
         IParsedExpressionDelegate<MessageBrokerFilterExpressionContext, bool>? filterExpressionDelegate,
         in Protocol.BindListenerRequestHeader header,
-        ref MessageBrokerChannelListenerBinding? existingListener,
+        ref MessageBrokerQueue? primaryQueue,
         ref MessageBrokerChannelListenerBinding? listener,
-        ref MessageBrokerQueueListenerBinding? queueBinding,
+        ref MessageBrokerQueueListenerBinding? existingPrimaryBinding,
+        ref MessageBrokerQueueListenerBinding? primaryBinding,
+        ref MessageBrokerQueueListenerBinding[] secondaryBindings,
         ref ulong channelTraceId,
-        ref MessageBrokerQueue? queue,
-        ref ulong queueTraceId,
-        ref bool queueCreated)
+        ref ulong existingPrimaryQueueTraceId,
+        ref ulong primaryQueueTraceId,
+        ref ulong[] secondaryQueueTraceIds,
+        ref bool primaryQueueCreated,
+        ref bool disposingExistingPrimaryQueue,
+        ref bool disposingExistingPrimaryBinding)
     {
         using ( channel.AcquireLock() )
         {
@@ -891,35 +898,142 @@ public sealed partial class MessageBrokerRemoteClient
             if ( token.Exists )
             {
                 listener = token.GetObject();
-                existingListener = listener;
+                var reactivationResult = listener.TryReactivate(
+                    queueName,
+                    in header,
+                    filterExpression,
+                    filterExpressionDelegate,
+                    isEphemeral,
+                    ref existingPrimaryBinding,
+                    ref primaryBinding,
+                    ref secondaryBindings,
+                    ref disposingExistingPrimaryBinding );
 
-                using ( listener.AcquireLock() )
-                    queueBinding = listener.QueueBindingCollection.Primary;
+                primaryQueue = primaryBinding.Queue;
 
-                queue = queueBinding.Queue;
-
-                using ( queue.AcquireLock() )
+                if ( reactivationResult == ReactivationResult.Reactivated )
                 {
-                    if ( queue.IsInactive )
+                    using ( primaryBinding.Queue.AcquireLock() )
+                        primaryQueueTraceId = primaryBinding.Queue.GetTraceId();
+
+                    if ( disposingExistingPrimaryBinding )
                     {
-                        Assume.False( channelCreated );
-                        return BindResult.ParentDisposed;
+                        using ( existingPrimaryBinding.Queue.AcquireLock() )
+                        {
+                            existingPrimaryQueueTraceId = existingPrimaryBinding.Queue.GetTraceId();
+                            if ( ! existingPrimaryBinding.Queue.IsInactive )
+                                disposingExistingPrimaryQueue
+                                    = existingPrimaryBinding.Queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
+                        }
+
+                        listener.RemoveSecondaryQueueBinding( existingPrimaryBinding );
                     }
 
-                    if ( ! listener.TryReactivate( queueName, in header, filterExpression, filterExpressionDelegate, isEphemeral ) )
-                        return BindResult.AlreadyBound;
+                    if ( secondaryBindings.Length > 0 )
+                    {
+                        secondaryQueueTraceIds = new ulong[secondaryBindings.Length];
+                        for ( var i = 0; i < secondaryBindings.Length; ++i )
+                        {
+                            var binding = secondaryBindings[i];
+                            using ( binding.Queue.AcquireLock() )
+                                secondaryQueueTraceIds[i] = binding.Queue.GetTraceId();
+                        }
+                    }
 
-                    queueTraceId = queue.GetTraceId();
+                    channelTraceId = channel.GetTraceId();
                     return BindResult.Success;
                 }
+
+                if ( reactivationResult == ReactivationResult.AlreadyBound )
+                    return disposingExistingPrimaryBinding ? BindResult.QueueBindingDisposed : BindResult.AlreadyBound;
+
+                var failed = true;
+                try
+                {
+                    primaryQueue = RegisterQueue( queueName, out primaryQueueCreated );
+                    using ( primaryQueue.AcquireLock() )
+                    {
+                        if ( primaryQueue.IsInactive )
+                        {
+                            Assume.False( channelCreated );
+                            return BindResult.ParentDisposed;
+                        }
+
+                        try
+                        {
+                            if ( ! listener.TryReactivateWithNewPrimaryQueue(
+                                primaryQueue,
+                                in header,
+                                filterExpression,
+                                filterExpressionDelegate,
+                                isEphemeral,
+                                ref existingPrimaryBinding,
+                                ref primaryBinding,
+                                ref secondaryBindings,
+                                ref disposingExistingPrimaryBinding ) )
+                            {
+                                if ( primaryQueueCreated )
+                                    QueueStore.Remove( primaryQueue.Id, primaryQueue.Name );
+
+                                return BindResult.QueueBindingDisposed;
+                            }
+                        }
+                        catch
+                        {
+                            if ( primaryQueueCreated )
+                                QueueStore.Remove( primaryQueue.Id, primaryQueue.Name );
+
+                            throw;
+                        }
+
+                        failed = false;
+                        primaryQueue.ListenersByChannelId.Add( channel.Id, primaryBinding );
+                        primaryQueueTraceId = primaryQueue.GetTraceId();
+
+                        if ( primaryQueueCreated )
+                            EventScheduler.AddQueue( primaryQueue );
+                    }
+                }
+                finally
+                {
+                    if ( failed )
+                        listener.RevertRebinding();
+                }
+
+                if ( disposingExistingPrimaryBinding )
+                {
+                    using ( existingPrimaryBinding.Queue.AcquireLock() )
+                    {
+                        existingPrimaryQueueTraceId = existingPrimaryBinding.Queue.GetTraceId();
+                        if ( ! existingPrimaryBinding.Queue.IsInactive )
+                            disposingExistingPrimaryQueue
+                                = existingPrimaryBinding.Queue.TryDisposeByRemovingListenerUnsafe( channel.Id );
+                    }
+
+                    listener.RemoveSecondaryQueueBinding( existingPrimaryBinding );
+                }
+
+                if ( secondaryBindings.Length > 0 )
+                {
+                    secondaryQueueTraceIds = new ulong[secondaryBindings.Length];
+                    for ( var i = 0; i < secondaryBindings.Length; ++i )
+                    {
+                        var binding = secondaryBindings[i];
+                        using ( binding.Queue.AcquireLock() )
+                            secondaryQueueTraceIds[i] = binding.Queue.GetTraceId();
+                    }
+                }
+
+                channelTraceId = channel.GetTraceId();
+                return BindResult.Success;
             }
 
             try
             {
-                queue = RegisterQueue( queueName, out queueCreated );
-                using ( queue.AcquireLock() )
+                primaryQueue = RegisterQueue( queueName, out primaryQueueCreated );
+                using ( primaryQueue.AcquireLock() )
                 {
-                    if ( queue.IsInactive )
+                    if ( primaryQueue.IsInactive )
                     {
                         token.Revert( ref channel.ListenersByClientId, Id );
                         if ( channelCreated )
@@ -935,30 +1049,30 @@ public sealed partial class MessageBrokerRemoteClient
                             MessageBrokerChannelListenerBinding.Create(
                                 this,
                                 channel,
-                                queue,
+                                primaryQueue,
                                 in header,
                                 filterExpression,
                                 filterExpressionDelegate,
                                 isEphemeral ) );
 
                         using ( listener.AcquireLock() )
-                            queueBinding = listener.QueueBindingCollection.Primary;
+                            primaryBinding = listener.QueueBindingCollection.Primary;
                     }
                     catch
                     {
-                        if ( queueCreated )
-                            QueueStore.Remove( queue.Id, queue.Name );
+                        if ( primaryQueueCreated )
+                            QueueStore.Remove( primaryQueue.Id, primaryQueue.Name );
 
                         throw;
                     }
 
                     ListenersByChannelId.Add( channel.Id, listener );
-                    queue.ListenersByChannelId.Add( channel.Id, queueBinding );
+                    primaryQueue.ListenersByChannelId.Add( channel.Id, primaryBinding );
                     channelTraceId = channel.GetTraceId();
-                    queueTraceId = queue.GetTraceId();
+                    primaryQueueTraceId = primaryQueue.GetTraceId();
 
-                    if ( queueCreated )
-                        EventScheduler.AddQueue( queue );
+                    if ( primaryQueueCreated )
+                        EventScheduler.AddQueue( primaryQueue );
                 }
             }
             catch

@@ -8,6 +8,7 @@ using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
+using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
@@ -2208,6 +2209,1467 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
                             "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
                         ] )
                     ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToDifferentNewQueue()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] ),
+                StorageScope.PrepareStreamMessage( id: 4, storeKey: 4, senderId: 1, channelId: 1, data: [ 11, 12, 13, 14, 15 ] ),
+                StorageScope.PrepareStreamMessage( id: 5, storeKey: 5, senderId: 1, channelId: 1, data: [ 16, 17, 18, 19, 20, 21 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 1,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 4 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 5 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "bar",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Queues.Count.TestEquals( 4 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 4 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 4 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.TryGetByQueueId( 1 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding1",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 3 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding3",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'bar', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [4] 'bar' (created) (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[3]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0, ClientTraceId = 3",
+                            "[Created] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0",
+                            "[ListenerBound] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToDifferentNewQueue_WithDisposedOldPrimaryBinding()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "bar",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Queues.Count.TestEquals( 3 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 3 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 4 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.TryGetByQueueId( 1 ).TestNull(),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 3 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding3",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'bar', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [4] 'bar' (created) (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo'",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[3]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0, ClientTraceId = 3",
+                            "[Created] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0",
+                            "[ListenerBound] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 0 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToDifferentExistingQueue()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteChannelMetadata( channelId: 2, channelName: "bar" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] ),
+                StorageScope.PrepareStreamMessage( id: 4, storeKey: 4, senderId: 1, channelId: 1, data: [ 11, 12, 13, 14, 15 ] ),
+                StorageScope.PrepareStreamMessage( id: 5, storeKey: 5, senderId: 1, channelId: 1, data: [ 16, 17, 18, 19, 20, 21 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 2, queueId: 4 );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 1,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 4 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 5 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 4, queueName: "bar" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 4, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "bar",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 2 ),
+                    c.Queues.Count.TestEquals( 4 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 4 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 4 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 2 ),
+                    p.QueueBindings.TryGetByQueueId( 1 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding1",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 3 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding3",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'bar', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [4] 'bar' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[3]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToDifferentExistingQueue_WithDisposedOldPrimaryBinding()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteChannelMetadata( channelId: 2, channelName: "bar" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata( clientId: 1, channelId: 2, queueId: 4 );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 4, queueName: "bar" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 4, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 4, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "bar",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 2 ),
+                    c.Queues.Count.TestEquals( 3 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 3 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 4 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 2 ),
+                    p.QueueBindings.TryGetByQueueId( 1 ).TestNull(),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 3 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding3",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'bar', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [4] 'bar' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo'",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[3]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [4] 'bar', TraceId = 3 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToSecondaryQueue()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] ),
+                StorageScope.PrepareStreamMessage( id: 3, storeKey: 3, senderId: 1, channelId: 1, data: [ 7, 8, 9, 10 ] ),
+                StorageScope.PrepareStreamMessage( id: 4, storeKey: 4, senderId: 1, channelId: 1, data: [ 11, 12, 13, 14, 15 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 1,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 3 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 4 ) ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "b",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Queues.Count.TestEquals( 3 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 3 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 3 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.TryGetByQueueId( 1 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding1",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 44)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'b', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 44)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [3] 'b' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_ToSecondaryQueue_WithDisposedOldPrimaryBinding()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 3, queueName: "b" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 3,
+            messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 ) ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 3, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 3, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource();
+        var clientLogs = new ClientEventLogger();
+        var queueLogs = new[] { new QueueEventLogger(), new QueueEventLogger(), new QueueEventLogger() };
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => queueLogs[q.Id - 1].GetLogger() )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type == MessageBrokerRemoteClientTraceEventType.BindListener )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindListenerRequest(
+                "foo",
+                true,
+                queueName: "b",
+                isEphemeral: false,
+                maxRedeliveries: 5,
+                minAckTimeout: Duration.FromMinutes( 1 ) );
+
+            c.ReadListenerBoundResponse();
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Queues.Count.TestEquals( 2 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestFalse(),
+                    p.QueueBindings.Count.TestEquals( 2 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 3 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.TryGetByQueueId( 1 ).TestNull(),
+                    p.QueueBindings.TryGetByQueueId( 2 )
+                        .TestNotNull( b => Assertion.All(
+                            "queueBinding2",
+                            b.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                            b.IsPrimary.TestFalse(),
+                            b.Queue.Listeners.Count.TestEquals( 1 ) ) ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 44)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'b', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 5, MinAckTimeout = 60 second(s), DeadLetter = <disabled>, IsEphemeral = False, CreateChannelIfNotExists = True",
+                            "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 44)",
+                            "[ListenerBound] Client = [1] 'test', TraceId = 3, Channel = [1] 'foo', Queue = [3] 'b' (reactivated)",
+                            "[SendPacket:Sending] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[SendPacket:Sent] Client = [1] 'test', TraceId = 3, Packet = (ListenerBoundResponse, Length = 14)",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[0]
+                    .GetAll()
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, ClientTraceId = 3",
+                            "[ListenerUnbound] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, Channel = [1] 'foo'",
+                            "[Deactivating] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Deactivated] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3, IsAlive = False",
+                            "[Trace:UnbindListener] Client = [1] 'test', Queue = [1] 'foo', TraceId = 3 (end)"
+                        ] )
+                    ] ),
+                queueLogs[1]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [2] 'a', TraceId = 2, Channel = [1] 'foo' (reactivated)",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [2] 'a', TraceId = 2 (end)"
+                        ] )
+                    ] ),
+                queueLogs[2]
+                    .GetAll()
+                    .Where( t => t.Logs.Any( e => e.StartsWith( "[Trace:BindListener]" ) ) )
+                    .TakeLast( 1 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (start)",
+                            "[ClientTrace] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, ClientTraceId = 3",
+                            "[ListenerBound] Client = [1] 'test', Queue = [3] 'b', TraceId = 2, Channel = [1] 'foo'",
+                            "[Trace:BindListener] Client = [1] 'test', Queue = [3] 'b', TraceId = 2 (end)"
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldFailAndDeactivateClient_WhenNewQueueLoggerFactoryThrows()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages: [ StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ) ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource( completionCount: 2 );
+        var clientLogs = new ClientEventLogger();
+
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( q => q.Id > 2 ? throw new Exception( "foo" ) : null )
+                .SetClientLoggerFactory( _ => clientLogs.GetLogger(
+                    MessageBrokerRemoteClientLogger.Create(
+                        traceEnd: e =>
+                        {
+                            if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
+                                or MessageBrokerRemoteClientTraceEventType.Unexpected )
+                                endSource.Complete();
+                        } ) ) ) );
+
+        await server.StartAsync();
+
+        var channel = server.Channels.TryGetById( 1 );
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c => c.SendBindListenerRequest( "foo", true, queueName: "bar", isEphemeral: true ) );
+        await endSource.Task;
+
+        Assertion.All(
+                server.Streams.Count.TestEquals( 1 ),
+                channel.TestNotNull( c => Assertion.All(
+                    "channel",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestContainsSequence( [ binding ] ) ) ),
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Listeners.GetAll().TestSequence( [ binding ] ),
+                    c.State.TestEquals( MessageBrokerRemoteClientState.Inactive ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Inactive ),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.Primary.Queue.State.TestEquals( MessageBrokerQueueState.Inactive ) ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
+                clientLogs.GetAll()
+                    .TakeLast( 2 )
+                    .TestSequence(
+                    [
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (start)",
+                            "[ReadPacket:Received] Client = [1] 'test', TraceId = 3, Packet = (BindListenerRequest, Length = 46)",
+                            "[BindingListener] Client = [1] 'test', TraceId = 3, ChannelName = 'foo', QueueName = 'bar', PrefetchHint = 1, MaxRetries = 0, RetryDelay = 0 second(s), MaxRedeliveries = 0, MinAckTimeout = <disabled>, DeadLetter = <disabled>, IsEphemeral = True, CreateChannelIfNotExists = True",
+                            "[Trace:BindListener] Client = [1] 'test', TraceId = 3 (end)"
+                        ] ),
+                        (t, _) => t.Logs.TestSequence(
+                        [
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 4 (start)" ),
+                            (e, _) => e.TestStartsWith(
+                                """
+                                [Error] Client = [1] 'test', TraceId = 4
+                                System.Exception: foo
+                                """ ),
+                            (e, _) => e.TestEquals( "[Deactivating] Client = [1] 'test', TraceId = 4, IsAlive = True" ),
+                            (e, _) => e.TestEquals( "[Deactivated] Client = [1] 'test', TraceId = 4, IsAlive = True" ),
+                            (e, _) => e.TestEquals( "[Trace:Unexpected] Client = [1] 'test', TraceId = 4 (end)" )
+                        ] )
+                    ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public async Task Rebind_ShouldReactivateInactiveListener_WithSettingsChanges()
+    {
+        using var storage = StorageScope.Create();
+        storage.WriteServerMetadata();
+        storage.WriteChannelMetadata( channelId: 1, channelName: "foo" );
+        storage.WriteStreamMetadata( streamId: 1, streamName: "foo" );
+        storage.WriteStreamMessages(
+            streamId: 1,
+            messages:
+            [
+                StorageScope.PrepareStreamMessage( id: 0, storeKey: 0, senderId: 1, channelId: 1, data: [ 1 ] ),
+                StorageScope.PrepareStreamMessage( id: 1, storeKey: 1, senderId: 1, channelId: 1, data: [ 2, 3 ] ),
+                StorageScope.PrepareStreamMessage( id: 2, storeKey: 2, senderId: 1, channelId: 1, data: [ 4, 5, 6 ] )
+            ] );
+
+        storage.WriteClientMetadata( clientId: 1, clientName: "test" );
+        storage.WriteListenerMetadata(
+            clientId: 1,
+            channelId: 1,
+            queueId: 1,
+            prefetchHint: 5,
+            maxRetries: 5,
+            retryDelay: Duration.FromMinutes( 1 ),
+            maxRedeliveries: 5,
+            minAckTimeout: Duration.FromMinutes( 10 ),
+            deadLetterCapacityHint: 5,
+            minDeadLetterRetention: Duration.FromHours( 1 ) );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 1, queueName: "foo" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 1,
+            messages: [ StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 0 ) ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 1, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 1, messages: [ ] );
+
+        storage.WriteQueueMetadata( clientId: 1, queueId: 2, queueName: "a" );
+        storage.WriteQueuePendingMessages(
+            clientId: 1,
+            queueId: 2,
+            messages:
+            [
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 1 ),
+                StorageScope.PrepareQueuePendingMessage( streamId: 1, storeKey: 2 )
+            ] );
+
+        storage.WriteQueueUnackedMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueRetryMessages( clientId: 1, queueId: 2, messages: [ ] );
+        storage.WriteQueueDeadLetterMessages( clientId: 1, queueId: 2, messages: [ ] );
+
+        var endSource = new SafeTaskCompletionSource( completionCount: 6 );
+        await using var server = new MessageBrokerServer(
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default
+                .SetHandshakeTimeout( Duration.FromSeconds( 1 ) )
+                .SetDelaySourceFactory( _ => _sharedDelaySource )
+                .SetRootStoragePath( storage.Path )
+                .SetQueueLoggerFactory( _ => MessageBrokerQueueLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type == MessageBrokerQueueTraceEventType.Deactivate )
+                            endSource.Complete();
+                    } ) )
+                .SetClientLoggerFactory( _ => MessageBrokerRemoteClientLogger.Create(
+                    traceEnd: e =>
+                    {
+                        if ( e.Type is MessageBrokerRemoteClientTraceEventType.BindListener
+                            or MessageBrokerRemoteClientTraceEventType.MessageNotification )
+                            endSource.Complete();
+                    } ) ) );
+
+        await server.StartAsync();
+
+        var remoteClient = server.Clients.TryGetById( 1 );
+        var binding = remoteClient?.Listeners.TryGetByChannelId( 1 );
+
+        using var client = new ClientMock();
+        await client.EstablishHandshake( server, isEphemeral: false );
+        await client.GetTask( c =>
+        {
+            c.SendBindPublisherRequest( "foo" );
+            c.ReadPublisherBoundResponse();
+            c.SendBindListenerRequest( "foo", true, isEphemeral: true );
+            c.ReadListenerBoundResponse();
+            c.Read( (Protocol.PacketHeader.Length + Protocol.MessageNotificationHeader.Payload) * 3 + 6 );
+            c.SendPushMessage( 1, [ 7, 8, 9, 10 ], confirm: false );
+            c.ReadMessageNotification( 4 );
+        } );
+
+        await endSource.Task;
+
+        Assertion.All(
+                remoteClient.TestNotNull( c => Assertion.All(
+                    "client",
+                    c.Listeners.Count.TestEquals( 1 ),
+                    c.Queues.Count.TestEquals( 1 ) ) ),
+                binding.TestNotNull( p => Assertion.All(
+                    "listener",
+                    p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
+                    p.IsEphemeral.TestTrue(),
+                    p.QueueBindings.Count.TestEquals( 1 ),
+                    p.QueueBindings.Primary.Queue.Id.TestEquals( 1 ),
+                    p.QueueBindings.Primary.State.TestEquals( MessageBrokerQueueListenerBindingState.Running ),
+                    p.QueueBindings.Primary.IsPrimary.TestTrue(),
+                    p.QueueBindings.Primary.Queue.Listeners.Count.TestEquals( 1 ),
+                    p.QueueBindings.Primary.PrefetchHint.TestEquals( 1 ),
+                    p.QueueBindings.Primary.MaxRetries.TestEquals( 0 ),
+                    p.QueueBindings.Primary.RetryDelay.TestEquals( Duration.Zero ),
+                    p.QueueBindings.Primary.MaxRedeliveries.TestEquals( 0 ),
+                    p.QueueBindings.Primary.MinAckTimeout.TestEquals( Duration.Zero ),
+                    p.QueueBindings.Primary.DeadLetterCapacityHint.TestEquals( 0 ),
+                    p.QueueBindings.Primary.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                    p.QueueBindings.Primary.FilterExpression.TestNull(),
+                    p.QueueBindings.Primary.AreAcksEnabled.TestFalse(),
+                    p.QueueBindings.TryGetByQueueId( 2 ).TestNull() ) ),
+                storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse() )
             .Go();
     }
 }
