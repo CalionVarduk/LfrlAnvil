@@ -149,7 +149,7 @@ internal struct NotificationHandler
                     if ( client.ShouldCancel )
                         return;
 
-                    if ( ! client.NotificationHandler._notifications.TryDequeue( out notification ) )
+                    if ( ! TryDequeueNextNotificationUnsafe( client, out notification ) )
                     {
                         client.NotificationHandler._continuation.Reset();
                         break;
@@ -362,6 +362,27 @@ internal struct NotificationHandler
                 }
             }
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static bool TryDequeueNextNotificationUnsafe(MessageBrokerClient client, out Notification notification)
+    {
+        if ( client.NotificationHandler._notifications.IsEmpty )
+        {
+            notification = default;
+            return false;
+        }
+
+        ref var next = ref client.NotificationHandler._notifications.First();
+        if ( client.PendingBindings.Listeners <= 0 || next.Header.GetClientEndpoint() != MessageBrokerClientEndpoint.MessageNotification )
+        {
+            notification = next;
+            client.NotificationHandler._notifications.Dequeue();
+            return true;
+        }
+
+        notification = default;
+        return false;
     }
 
     private static async ValueTask<bool> HandleSenderNameNotificationAsync(

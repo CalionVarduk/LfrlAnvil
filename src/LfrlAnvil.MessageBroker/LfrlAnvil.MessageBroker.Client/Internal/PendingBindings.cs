@@ -29,7 +29,10 @@ internal struct PendingBindings
     {
         _entries = entries;
         _nextVersion = 0;
+        Listeners = 0;
     }
+
+    internal int Listeners;
 
     [Pure]
     internal static PendingBindings Create()

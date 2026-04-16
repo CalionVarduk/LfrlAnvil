@@ -130,6 +130,7 @@ internal struct ListenerCollection
             if ( ! client.PendingBindings.TryAddListenerBind( channelName, out version, out var isBinding ) )
                 return new InvalidOperationException( Resources.ListenerChangeIsInProgress( channelName, isBinding ) );
 
+            ++client.PendingBindings.Listeners;
             reverseEndianness = BitConverter.IsLittleEndian != client.IsServerLittleEndian;
             traceId = client.GetTraceId();
         }
@@ -370,10 +371,16 @@ internal struct ListenerCollection
             }
             finally
             {
-                if ( failed )
+                using ( client.AcquireLock() )
                 {
-                    using ( client.AcquireLock() )
+                    if ( failed )
                         client.PendingBindings.TryRemoveListener( channelName, version );
+
+                    if ( client.PendingBindings.Listeners > 0 )
+                        --client.PendingBindings.Listeners;
+
+                    if ( ! client.ShouldCancel )
+                        client.NotificationHandler.SignalContinuation();
                 }
             }
         }

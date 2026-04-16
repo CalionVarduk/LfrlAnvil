@@ -3872,5 +3872,93 @@ public partial class MessageBrokerClientTests
                         ] ) )
                 .Go();
         }
+
+        [Fact]
+        public async Task ListenerBinding_ShouldBlockMessageNotificationProcessing_UntilBindingIsResolved()
+        {
+            var continuationSource = new SafeTaskCompletionSource();
+            var endSource = new SafeTaskCompletionSource();
+            var logs = new EventLogger();
+            using var server = new ServerMock();
+            var remoteEndPoint = server.Start();
+
+            await using var client = new MessageBrokerClient(
+                remoteEndPoint,
+                "test",
+                MessageBrokerClientOptions.Default
+                    .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                    .SetDelaySource( _sharedDelaySource )
+                    .SetLogger(
+                        logs.GetLogger(
+                            MessageBrokerClientLogger.Create(
+                                traceEnd: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientTraceEventType.MessageNotification )
+                                        endSource.Complete();
+                                },
+                                awaitPacket: e =>
+                                {
+                                    if ( e.Packet is not null
+                                        && e.Packet.Value.Endpoint == MessageBrokerClientEndpoint.MessageNotification )
+                                        Task.Run( async () =>
+                                        {
+                                            await Task.Delay( 15 );
+                                            continuationSource.Complete();
+                                        } );
+                                },
+                                readPacket: e =>
+                                {
+                                    if ( e.Type == MessageBrokerClientReadPacketEventType.Received
+                                        && e.Packet.Endpoint == MessageBrokerClientEndpoint.ListenerBoundResponse )
+                                        continuationSource.Task.Wait();
+                                } ) ) ) );
+
+            await server.EstablishHandshake( client );
+            var serverTask = server.GetTask( s =>
+            {
+                s.Read( GetBindListenerRequest( "foo" ) );
+                s.SendListenerBoundResponse( true, true, 1, 1 );
+                s.SendMessageNotification( 1, 0, 0, 2, 1, 1, [ 1, 2, 3 ] );
+            } );
+
+            await client.Listeners.BindAsync(
+                "foo",
+                (_, _) =>
+                {
+                    logs.Add( 2, "listener callback" );
+                    return ValueTask.CompletedTask;
+                },
+                MessageBrokerListenerOptions.Default.EnableAcks( false ) );
+
+            await serverTask;
+            await endSource.Task;
+
+            Assertion.All(
+                    logs.GetAll()
+                        .Skip( 2 )
+                        .TestSequence(
+                        [
+                            (t, _) => t.Logs.TestSequence(
+                            [
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (start)",
+                                "[ReadPacket:Received] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 52)",
+                                "[ProcessingMessage] Client = [1] 'test', TraceId = 2, QueueId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0, ChannelId = 1, SenderId = 2, Length = 3",
+                                "[ReadPacket:Accepted] Client = [1] 'test', TraceId = 2, Packet = (MessageNotification, Length = 52)",
+                                "listener callback",
+                                "[MessageProcessed] Client = [1] 'test', TraceId = 2, Channel = [1] 'foo', Queue = [1] 'foo', QueueId = 1, StreamId = 1, MessageId = 0, Retry = 0, Redelivery = 0",
+                                "[Trace:MessageNotification] Client = [1] 'test', TraceId = 2 (end)"
+                            ] )
+                        ] ),
+                    logs.GetAllAwaitPacket()
+                        .TestContainsContiguousSequence(
+                        [
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (ListenerBoundResponse, Length = 14)",
+                            "[AwaitPacket] Client = [1] 'test'",
+                            "[AwaitPacket] Client = [1] 'test', Packet = (MessageNotification, Length = 52)"
+                        ] ) )
+                .Go();
+        }
     }
 }
