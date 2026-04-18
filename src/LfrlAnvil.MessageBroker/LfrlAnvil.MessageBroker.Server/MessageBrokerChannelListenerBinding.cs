@@ -115,14 +115,7 @@ public sealed class MessageBrokerChannelListenerBinding
     /// <summary>
     /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this listener get enqueued into.
     /// </summary>
-    public MessageBrokerQueue Queue
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return QueueBindingCollection.Primary.Queue;
-        }
-    }
+    public MessageBrokerQueue Queue => QueueBindingCollection.Primary.Value.Queue;
 
     /// <summary>
     /// Specifies how many messages intended for this listener can be sent by the <see cref="Queue"/>
@@ -448,7 +441,7 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         using ( AcquireLock() )
         {
-            var primary = QueueBindingCollection.Primary;
+            var primary = QueueBindingCollection.Primary.Value;
             existingPrimaryBinding = primary;
             primaryBinding = primary;
 
@@ -508,7 +501,7 @@ public sealed class MessageBrokerChannelListenerBinding
 
                 _isEphemeral = isEphemeral;
                 _state = MessageBrokerChannelListenerBindingState.Created;
-                QueueBindingCollection.Primary = binding;
+                QueueBindingCollection.Primary.Write( binding );
                 QueueBindingCollection.Secondary[i] = primary;
 
                 var j = 0;
@@ -554,7 +547,7 @@ public sealed class MessageBrokerChannelListenerBinding
     {
         using ( AcquireLock() )
         {
-            var primary = QueueBindingCollection.Primary;
+            var primary = QueueBindingCollection.Primary.Value;
             existingPrimaryBinding = primary;
             primaryBinding = new MessageBrokerQueueListenerBinding(
                 Client,
@@ -579,7 +572,7 @@ public sealed class MessageBrokerChannelListenerBinding
             }
 
             _isEphemeral = isEphemeral;
-            QueueBindingCollection.Primary = primaryBinding;
+            QueueBindingCollection.Primary.Write( primaryBinding );
             QueueBindingCollection.AddSecondaryUnsafe( primary );
 
             var i = 0;
@@ -614,7 +607,7 @@ public sealed class MessageBrokerChannelListenerBinding
             if ( IsDisposed )
                 return null;
 
-            var result = QueueBindingCollection.Primary.CloneInactive( queue );
+            var result = QueueBindingCollection.Primary.Value.CloneInactive( queue );
             QueueBindingCollection.AddSecondaryUnsafe( result );
             return result;
         }
@@ -659,7 +652,7 @@ public sealed class MessageBrokerChannelListenerBinding
                 return;
 
             _state = MessageBrokerChannelListenerBindingState.Running;
-            QueueBindingCollection.Primary.MarkAsRunning();
+            QueueBindingCollection.Primary.Value.MarkAsRunning();
             foreach ( var b in QueueBindingCollection.Secondary )
                 b.MarkAsRunning();
         }
@@ -852,7 +845,7 @@ public sealed class MessageBrokerChannelListenerBinding
         }
 
         _state = MessageBrokerChannelListenerBindingState.Disposing;
-        primaryBinding = QueueBindingCollection.Primary;
+        primaryBinding = QueueBindingCollection.Primary.Value;
         secondaryBindings = QueueBindingCollection.Secondary;
         _deactivated = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
 
@@ -964,7 +957,7 @@ public sealed class MessageBrokerChannelListenerBinding
                             using ( AcquireLock() )
                             {
                                 Assume.Equals( _state, MessageBrokerChannelListenerBindingState.Disposing );
-                                primary = QueueBindingCollection.Primary;
+                                primary = QueueBindingCollection.Primary.Value;
                                 secondary = QueueBindingCollection.Secondary;
 
                                 disposingChannel = Channel.TryDisposeByRemovingListenerUnsafe( Client.Id );

@@ -18,7 +18,6 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
-using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 
 namespace LfrlAnvil.MessageBroker.Server;
@@ -29,7 +28,6 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerQueueListenerBinding
 {
     private readonly object _sync = new object();
-    private MessageBrokerFilterExpressionContext[] _filterPredicateArgs = Array.Empty<MessageBrokerFilterExpressionContext>();
     private Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
     private string? _filterExpression;
     private int _prefetchHint;
@@ -269,42 +267,6 @@ public sealed class MessageBrokerQueueListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool FilterMessage(in StreamMessage message, ulong queueTraceId)
-    {
-        MessageBrokerFilterExpressionContext[] args;
-        Func<MessageBrokerFilterExpressionContext[], bool> filterPredicate;
-        using ( AcquireLock() )
-        {
-            if ( _filterExpression is null )
-                return true;
-
-            Assume.IsNotNull( _filterPredicate );
-            Assume.Equals( _filterPredicateArgs.Length, 1 );
-            Assume.Equals( _filterPredicateArgs[0], default );
-            args = _filterPredicateArgs;
-            filterPredicate = _filterPredicate;
-            args[0] = new MessageBrokerFilterExpressionContext( this, in message );
-        }
-
-        try
-        {
-            return filterPredicate( args );
-        }
-        catch ( Exception exc )
-        {
-            if ( Queue.Logger.Error is { } error )
-                error.Emit( MessageBrokerQueueErrorEvent.Create( Queue, queueTraceId, exc ) );
-
-            return true;
-        }
-        finally
-        {
-            using ( AcquireLock() )
-                args[0] = default;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void MarkAsRunning()
     {
         using ( AcquireLock() )
@@ -372,7 +334,7 @@ public sealed class MessageBrokerQueueListenerBinding
                 Assume.False( _isPrimary );
                 _state = MessageBrokerQueueListenerBindingState.Disposed;
                 _deadLetterMessages = 0;
-                _prefetchHint = 0;
+                _sentMessages = 0;
                 return null;
             }
         }
@@ -381,63 +343,99 @@ public sealed class MessageBrokerQueueListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanSendMessage(out bool disposed)
+    internal bool TrySendRedeliveryUnsafe(out bool disposed)
     {
-        using ( AcquireLock() )
+        if ( _state != MessageBrokerQueueListenerBindingState.Running )
         {
-            if ( _state != MessageBrokerQueueListenerBindingState.Running )
-            {
-                disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
-                return false;
-            }
+            disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
+            return false;
+        }
 
-            disposed = false;
-            if ( _sentMessages >= PrefetchHint )
-                return false;
+        disposed = false;
+        return true;
+    }
 
-            _sentMessages = unchecked( _sentMessages + 1 );
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryHandleRetryUnsafe(int retry, out bool disposed, out QueueMessageStore.MessageType type)
+    {
+        if ( _state != MessageBrokerQueueListenerBindingState.Running )
+        {
+            disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
+            type = default;
+            return false;
+        }
+
+        disposed = false;
+        if ( retry > _maxRetries )
+        {
+            type = QueueMessageStore.MessageType.MaxRetriesReached;
             return true;
         }
+
+        type = QueueMessageStore.MessageType.Retry;
+        if ( _sentMessages >= _prefetchHint )
+            return false;
+
+        _sentMessages = unchecked( _sentMessages + 1 );
+        return true;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool CanSendRedelivery(out bool disposed)
+    internal bool TrySendPendingUnsafe(out bool disposed, out Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate)
     {
-        using ( AcquireLock() )
+        if ( _state != MessageBrokerQueueListenerBindingState.Running )
         {
-            if ( _state != MessageBrokerQueueListenerBindingState.Running )
+            disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
+            filterPredicate = null;
+            return false;
+        }
+
+        disposed = false;
+        filterPredicate = _filterPredicate;
+        if ( _sentMessages >= _prefetchHint )
+            return false;
+
+        _sentMessages = unchecked( _sentMessages + 1 );
+        return true;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryHandleDeadLetterUnsafe(bool queried, bool expired, out bool disposed, out QueueMessageStore.MessageType type)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            disposed = true;
+            type = default;
+            return false;
+        }
+
+        disposed = false;
+        if ( queried )
+        {
+            if ( _state == MessageBrokerQueueListenerBindingState.Running && _sentMessages < _prefetchHint )
             {
-                disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
-                return false;
-            }
-
-            disposed = false;
-            return true;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddInactiveSentMessage()
-    {
-        using ( AcquireLock() )
-        {
-            if ( _state == MessageBrokerQueueListenerBindingState.Inactive )
-                _sentMessages = checked( _sentMessages + 1 );
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool RemoveSentMessage()
-    {
-        using ( AcquireLock() )
-        {
-            var old = _sentMessages;
-            if ( old <= 0 )
+                type = QueueMessageStore.MessageType.DeadLetter;
+                _sentMessages = unchecked( _sentMessages + 1 );
                 return true;
-
-            _sentMessages = unchecked( _sentMessages - 1 );
-            return old >= PrefetchHint;
+            }
         }
+
+        if ( expired )
+        {
+            type = QueueMessageStore.MessageType.DeadLetterExpiration;
+            if ( _deadLetterMessages > 0 )
+                _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
+
+            return true;
+        }
+
+        type = QueueMessageStore.MessageType.DeadLetterCapacityExceeded;
+        if ( _state != MessageBrokerQueueListenerBindingState.Running || _deadLetterMessages <= _deadLetterCapacityHint )
+            return false;
+
+        Assume.IsGreaterThan( _deadLetterMessages, 0 );
+        _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
+        return true;
     }
 
     [Pure]
@@ -445,7 +443,7 @@ public sealed class MessageBrokerQueueListenerBinding
     internal bool CanScheduleRetry()
     {
         using ( AcquireLock() )
-            return (( int )_state & 1) == 1 && _sentMessages < PrefetchHint;
+            return (( int )_state & 1) == 1 && _sentMessages < _prefetchHint;
     }
 
     [Pure]
@@ -457,16 +455,25 @@ public sealed class MessageBrokerQueueListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool AddDeadLetterMessage()
+    internal void AddInactiveMessage()
     {
         using ( AcquireLock() )
         {
-            if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
-                return true;
+            if ( _state == MessageBrokerQueueListenerBindingState.Inactive )
+                _refCounter = unchecked( _refCounter + 1 );
+        }
+    }
 
-            var old = _deadLetterMessages;
-            _deadLetterMessages = checked( _deadLetterMessages + 1 );
-            return old >= DeadLetterCapacityHint;
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddInactiveUnackedMessage()
+    {
+        using ( AcquireLock() )
+        {
+            if ( _state == MessageBrokerQueueListenerBindingState.Inactive )
+            {
+                _sentMessages = checked( _sentMessages + 1 );
+                _refCounter = unchecked( _refCounter + 1 );
+            }
         }
     }
 
@@ -476,83 +483,324 @@ public sealed class MessageBrokerQueueListenerBinding
         using ( AcquireLock() )
         {
             if ( _state == MessageBrokerQueueListenerBindingState.Inactive )
+            {
                 _deadLetterMessages = checked( _deadLetterMessages + 1 );
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool RemoveDeadLetterMessage(out bool disposed)
-    {
-        using ( AcquireLock() )
-        {
-            if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
-            {
-                disposed = true;
-                return false;
-            }
-
-            disposed = false;
-            if ( _deadLetterMessages > 0 )
-                _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
-
-            return true;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool RemoveDeadLetterMessageIfCapacityExceeded(out bool disposed)
-    {
-        using ( AcquireLock() )
-        {
-            if ( _state != MessageBrokerQueueListenerBindingState.Running )
-            {
-                disposed = _state == MessageBrokerQueueListenerBindingState.Disposed;
-                return false;
-            }
-
-            disposed = false;
-            if ( _deadLetterMessages <= DeadLetterCapacityHint )
-                return false;
-
-            _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
-            return true;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddReferencingMessage()
-    {
-        using ( AcquireLock() )
-        {
-            if ( _state != MessageBrokerQueueListenerBindingState.Disposed )
                 _refCounter = unchecked( _refCounter + 1 );
+            }
         }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool RemoveReferencingMessage()
+    internal void MoveExceededRedeliveryToDeadLetterUnsafe()
     {
-        using ( AcquireLock() )
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
         {
-            if ( _refCounter <= 0 )
-                return false;
+            Assume.Equals( _sentMessages, 0 );
+            return;
+        }
 
-            Assume.NotEquals( _state, MessageBrokerQueueListenerBindingState.Disposed );
+        _deadLetterMessages = checked( _deadLetterMessages + 1 );
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MoveExceededRetryToDeadLetterUnsafe()
+    {
+        if ( _state != MessageBrokerQueueListenerBindingState.Disposed )
+            _deadLetterMessages = checked( _deadLetterMessages + 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MoveAcknowledgedMessageToRetriesUnsafe()
+    {
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddReferencingMessageUnsafe()
+    {
+        if ( _state != MessageBrokerQueueListenerBindingState.Disposed )
+            _refCounter = unchecked( _refCounter + 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RemoveSentMessageUnsafe(out bool signalQueue)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _sentMessages, 0 );
+            signalQueue = true;
+            return;
+        }
+
+        signalQueue = _sentMessages >= _prefetchHint;
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void MoveAcknowledgedMessageToDeadLetterUnsafe(out bool signalQueue)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _sentMessages, 0 );
+            signalQueue = true;
+            return;
+        }
+
+        signalQueue = _sentMessages >= _prefetchHint || _deadLetterMessages >= _deadLetterCapacityHint;
+        _deadLetterMessages = checked( _deadLetterMessages + 1 );
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingAcknowledgedMessageUnsafe(out bool signalQueue)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _sentMessages, 0 );
+            signalQueue = true;
+            return false;
+        }
+
+        if ( _refCounter > 0 )
             _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            signalQueue = true;
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        signalQueue = _sentMessages >= _prefetchHint;
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingExceededRedeliveryUnsafe()
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _sentMessages, 0 );
+            return false;
+        }
+
+        if ( _refCounter > 0 )
+            _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingExceededRetryUnsafe()
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            return false;
+        }
+
+        if ( _refCounter > 0 )
+            _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingNonExistingMessageUnsafe(bool isFromDeadLetter)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _sentMessages, 0 );
+            Assume.Equals( _deadLetterMessages, 0 );
+            return false;
+        }
+
+        if ( _refCounter > 0 )
+            _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+
+        if ( isFromDeadLetter && _deadLetterMessages > 0 )
+            _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingUnprocessedMessageUnsafe(bool isAck, bool isRedelivery)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _sentMessages, 0 );
+            return false;
+        }
+
+        if ( isAck )
+        {
+            if ( _refCounter > 0 )
+                _refCounter = unchecked( _refCounter - 1 );
+
             if ( _refCounter == 0 && ! _isPrimary )
             {
                 _state = MessageBrokerQueueListenerBindingState.Disposed;
                 _deadLetterMessages = 0;
-                _prefetchHint = 0;
+                _sentMessages = 0;
                 return true;
             }
-
-            return false;
         }
+
+        if ( ! isRedelivery && _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+
+        return false;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void SetProperties(
+    internal bool TryDisposeByRemovingProcessedMessageUnsafe(bool isFromDeadLetter)
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _deadLetterMessages, 0 );
+            return false;
+        }
+
+        if ( _refCounter > 0 )
+            _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        if ( isFromDeadLetter && _deadLetterMessages > 0 )
+            _deadLetterMessages = unchecked( _deadLetterMessages - 1 );
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool TryDisposeByRemovingFilteredMessageUnsafe()
+    {
+        if ( _state == MessageBrokerQueueListenerBindingState.Disposed )
+        {
+            Assume.Equals( _refCounter, 0 );
+            Assume.Equals( _sentMessages, 0 );
+            return false;
+        }
+
+        if ( _refCounter > 0 )
+            _refCounter = unchecked( _refCounter - 1 );
+
+        if ( _refCounter == 0 && ! _isPrimary )
+        {
+            _state = MessageBrokerQueueListenerBindingState.Disposed;
+            _deadLetterMessages = 0;
+            _sentMessages = 0;
+            return true;
+        }
+
+        if ( _sentMessages > 0 )
+            _sentMessages = unchecked( _sentMessages - 1 );
+
+        return false;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.Enter( _sync );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool AreRetriesExceededUnsafe(int retry)
+    {
+        return retry >= _maxRetries;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool AreRedeliveriesExceededUnsafe(int redelivery)
+    {
+        return redelivery >= _maxRedeliveries;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool IsDeadLetterEnabledUnsafe()
+    {
+        return _deadLetterCapacityHint > 0;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Duration GetRetryDelayUnsafe(Duration? @explicit)
+    {
+        return @explicit ?? _retryDelay;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Duration GetMinDeadLetterRetentionUnsafe()
+    {
+        return _minDeadLetterRetention;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool AreAcksEnabledUnsafe(out Duration minAckTimeout)
+    {
+        minAckTimeout = _minAckTimeout;
+        return _minAckTimeout > Duration.Zero;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private void SetProperties(
         int prefetchHint,
         int maxRetries,
         Duration retryDelay,
@@ -570,14 +818,7 @@ public sealed class MessageBrokerQueueListenerBinding
         _minAckTimeout = minAckTimeout;
         _deadLetterCapacityHint = deadLetterCapacityHint;
         _minDeadLetterRetention = minDeadLetterRetention;
-        _filterPredicateArgs = filterExpression is not null ? [ default ] : Array.Empty<MessageBrokerFilterExpressionContext>();
         _filterPredicate = filterPredicate;
         _filterExpression = filterExpression;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
-    {
-        return ExclusiveLock.Enter( _sync );
     }
 }

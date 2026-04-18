@@ -2257,6 +2257,7 @@ internal struct RequestHandler
             QueueMessage message = default;
             var disposingQueue = false;
             var disposingListener = false;
+            var movedToDeadLetter = false;
             var delay = Duration.FromTicks( -1 );
             var queueTraceId = 0UL;
             AckResult ackResult;
@@ -2320,7 +2321,8 @@ internal struct RequestHandler
                         ref delay,
                         ref queueTraceId,
                         ref disposingQueue,
-                        ref disposingListener );
+                        ref disposingListener,
+                        ref movedToDeadLetter );
                 else
                     ackResult = AckResult.QueueNotFound;
             }
@@ -2363,8 +2365,6 @@ internal struct RequestHandler
                     var messageRemoved = false;
                     if ( delay < Duration.Zero )
                     {
-                        // TODO: DeadLetterCapacityHint could probably be read earlier under a lock?
-                        var movedToDeadLetter = ! parsedRequest.NoDeadLetter && message.Listener.DeadLetterCapacityHint > 0;
                         messageRemoved = ! movedToDeadLetter && queue.RemoveFromStreamMessageStore( message, queueTraceId );
                         if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
                             messageDiscarded.Emit(

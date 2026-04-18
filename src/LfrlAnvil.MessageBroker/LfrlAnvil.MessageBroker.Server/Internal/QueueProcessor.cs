@@ -134,6 +134,8 @@ internal struct QueueProcessor
     private static async ValueTask RunCore(MessageBrokerQueue queue)
     {
         var disposedBuffer = ListSlim<QueueMessageStore.DisposedMessage>.Create( minCapacity: 16 );
+        var filterArgs = new MessageBrokerFilterExpressionContext[1];
+
         while ( true )
         {
             var @continue = await queue.QueueProcessor._continuation.GetTask().ConfigureAwait( false );
@@ -148,6 +150,7 @@ internal struct QueueProcessor
                 var messageType = QueueMessageStore.MessageType.Pending;
                 var retryNo = 0;
                 var lastRedeliveryNo = 0;
+                Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate = null;
                 bool hasMessage;
                 using ( queue.AcquireLock() )
                 {
@@ -160,7 +163,8 @@ internal struct QueueProcessor
                         ref message,
                         ref messageType,
                         ref retryNo,
-                        ref lastRedeliveryNo );
+                        ref lastRedeliveryNo,
+                        ref filterPredicate );
 
                     if ( ! hasMessage && disposedBuffer.Count == 0 )
                     {
@@ -205,101 +209,110 @@ internal struct QueueProcessor
                             break;
                         case QueueMessageStore.MessageType.MaxRedeliveriesReached:
                         {
-                            var messageRemoved = false;
-                            message.Listener.RemoveSentMessage();
-                            var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
-                            if ( deadLetterCapacityHint > 0 )
+                            var movedToDeadLetter = false;
+                            var disposingListener = false;
+                            using ( queue.AcquireLock() )
+                            using ( message.Listener.AcquireLock() )
                             {
-                                using ( queue.AcquireLock() )
+                                if ( message.Listener.IsDeadLetterEnabledUnsafe() )
                                 {
-                                    queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
-                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
-                                    message.Listener.AddDeadLetterMessage();
-                                }
-                            }
-                            else
-                            {
-                                using ( queue.AcquireLock() )
-                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
-
-                                messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                                RemoveReferencingMessage( message.Listener, traceId );
-                            }
-
-                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
-                                messageDiscarded.Emit(
-                                    MessageBrokerQueueMessageDiscardedEvent.Create(
-                                        message.Listener,
-                                        traceId,
-                                        message.Publisher,
-                                        message.StoreKey,
+                                    movedToDeadLetter = true;
+                                    queue.MessageStore.AddToDeadLetter(
+                                        message,
                                         retryNo,
                                         lastRedeliveryNo,
-                                        messageRemoved,
-                                        deadLetterCapacityHint > 0,
-                                        MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached ) );
+                                        message.Listener.GetMinDeadLetterRetentionUnsafe() );
+
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+                                    message.Listener.MoveExceededRedeliveryToDeadLetterUnsafe();
+                                }
+                                else
+                                {
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Redelivery );
+                                    disposingListener = message.Listener.TryDisposeByRemovingExceededRedeliveryUnsafe();
+                                    if ( disposingListener )
+                                        queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                                }
+                            }
+
+                            DiscardNonDisposedMessage(
+                                queue,
+                                message,
+                                retryNo,
+                                lastRedeliveryNo,
+                                MessageBrokerQueueDiscardMessageReason.MaxRedeliveriesReached,
+                                disposingListener,
+                                movedToDeadLetter,
+                                traceId );
 
                             continue;
                         }
                         case QueueMessageStore.MessageType.MaxRetriesReached:
                         {
-                            var messageRemoved = false;
-                            var deadLetterCapacityHint = message.Listener.DeadLetterCapacityHint;
-                            if ( deadLetterCapacityHint > 0 )
+                            var movedToDeadLetter = false;
+                            var disposingListener = false;
+                            using ( queue.AcquireLock() )
+                            using ( message.Listener.AcquireLock() )
                             {
-                                using ( queue.AcquireLock() )
+                                if ( message.Listener.IsDeadLetterEnabledUnsafe() )
                                 {
-                                    queue.MessageStore.AddToDeadLetter( message, retryNo, lastRedeliveryNo );
-                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
-                                    message.Listener.AddDeadLetterMessage();
-                                }
-                            }
-                            else
-                            {
-                                using ( queue.AcquireLock() )
-                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
-
-                                messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                                RemoveReferencingMessage( message.Listener, traceId );
-                            }
-
-                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
-                                messageDiscarded.Emit(
-                                    MessageBrokerQueueMessageDiscardedEvent.Create(
-                                        message.Listener,
-                                        traceId,
-                                        message.Publisher,
-                                        message.StoreKey,
+                                    movedToDeadLetter = true;
+                                    queue.MessageStore.AddToDeadLetter(
+                                        message,
                                         retryNo,
                                         lastRedeliveryNo,
-                                        messageRemoved,
-                                        deadLetterCapacityHint > 0,
-                                        MessageBrokerQueueDiscardMessageReason.MaxRetriesReached ) );
+                                        message.Listener.GetMinDeadLetterRetentionUnsafe() );
+
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
+                                    message.Listener.MoveExceededRetryToDeadLetterUnsafe();
+                                }
+                                else
+                                {
+                                    queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Retry );
+                                    disposingListener = message.Listener.TryDisposeByRemovingExceededRetryUnsafe();
+                                    if ( disposingListener )
+                                        queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                                }
+                            }
+
+                            DiscardNonDisposedMessage(
+                                queue,
+                                message,
+                                retryNo,
+                                lastRedeliveryNo,
+                                MessageBrokerQueueDiscardMessageReason.MaxRetriesReached,
+                                disposingListener,
+                                movedToDeadLetter,
+                                traceId );
 
                             continue;
                         }
                         default:
                         {
+                            bool disposingListener;
                             using ( queue.AcquireLock() )
+                            {
                                 queue.MessageStore.Dequeue( QueueMessageStore.MessageType.DeadLetter );
 
-                            var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                            RemoveReferencingMessage( message.Listener, traceId );
+                                using ( message.Listener.AcquireLock() )
+                                    disposingListener = message.Listener.TryDisposeByRemovingProcessedMessageUnsafe(
+                                        isFromDeadLetter: true );
 
-                            if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
-                                messageDiscarded.Emit(
-                                    MessageBrokerQueueMessageDiscardedEvent.Create(
-                                        message.Listener,
-                                        traceId,
-                                        message.Publisher,
-                                        message.StoreKey,
-                                        retryNo,
-                                        lastRedeliveryNo,
-                                        messageRemoved,
-                                        movedToDeadLetter: false,
-                                        messageType == QueueMessageStore.MessageType.DeadLetterExpiration
-                                            ? MessageBrokerQueueDiscardMessageReason.DeadLetterExpiration
-                                            : MessageBrokerQueueDiscardMessageReason.DeadLetterCapacityExceeded ) );
+                                if ( disposingListener )
+                                    queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                            }
+
+                            DiscardNonDisposedMessage(
+                                queue,
+                                message,
+                                retryNo,
+                                lastRedeliveryNo,
+                                messageType == QueueMessageStore.MessageType.DeadLetterExpiration
+                                    ? MessageBrokerQueueDiscardMessageReason.DeadLetterExpiration
+                                    : MessageBrokerQueueDiscardMessageReason.DeadLetterCapacityExceeded,
+                                disposingListener,
+                                movedToDeadLetter: false,
+                                traceId );
 
                             continue;
                         }
@@ -323,11 +336,21 @@ internal struct QueueProcessor
 
                     if ( ! messageDataExists )
                     {
-                        message.Listener.RemoveSentMessage();
+                        bool disposingListener;
                         using ( queue.AcquireLock() )
+                        {
                             queue.MessageStore.Dequeue( messageType );
 
-                        RemoveReferencingMessage( message.Listener, traceId );
+                            using ( message.Listener.AcquireLock() )
+                                disposingListener = message.Listener.TryDisposeByRemovingNonExistingMessageUnsafe(
+                                    messageType == QueueMessageStore.MessageType.DeadLetter );
+
+                            if ( disposingListener )
+                                queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                        }
+
+                        if ( disposingListener )
+                            EndListenerDisposal( queue, message, traceId );
 
                         if ( queue.Logger.Error is { } error )
                         {
@@ -339,27 +362,29 @@ internal struct QueueProcessor
                     }
 
                     if ( messageType == QueueMessageStore.MessageType.Pending
-                        && ! message.Listener.FilterMessage( in streamMessage, traceId ) )
+                        && ! AcceptMessage( message.Listener, filterArgs, filterPredicate, in streamMessage, traceId ) )
                     {
-                        message.Listener.RemoveSentMessage();
+                        bool disposingListener;
                         using ( queue.AcquireLock() )
+                        {
                             queue.MessageStore.Dequeue( QueueMessageStore.MessageType.Pending );
 
-                        var messageRemoved = queue.RemoveFromStreamMessageStore( message, traceId );
-                        RemoveReferencingMessage( message.Listener, traceId );
+                            using ( message.Listener.AcquireLock() )
+                                disposingListener = message.Listener.TryDisposeByRemovingFilteredMessageUnsafe();
 
-                        if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
-                            messageDiscarded.Emit(
-                                MessageBrokerQueueMessageDiscardedEvent.Create(
-                                    message.Listener,
-                                    traceId,
-                                    message.Publisher,
-                                    message.StoreKey,
-                                    0,
-                                    0,
-                                    messageRemoved,
-                                    false,
-                                    MessageBrokerQueueDiscardMessageReason.FilteredOut ) );
+                            if ( disposingListener )
+                                queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                        }
+
+                        DiscardNonDisposedMessage(
+                            queue,
+                            message,
+                            retryNo,
+                            lastRedeliveryNo,
+                            MessageBrokerQueueDiscardMessageReason.FilteredOut,
+                            disposingListener,
+                            movedToDeadLetter: false,
+                            traceId );
 
                         continue;
                     }
@@ -369,16 +394,24 @@ internal struct QueueProcessor
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
-                        if ( ackId == 0 && message.Listener.AreAcksEnabled )
+                        if ( ackId == 0 )
                         {
-                            message.Listener.AddReferencingMessage();
                             using ( queue.AcquireLock() )
-                                ackId = queue.MessageStore.AddUnacked(
-                                    message,
-                                    streamMessage.Id,
-                                    retryNo,
-                                    redelivery.IntValue,
-                                    out ackExpiresAt );
+                            using ( message.Listener.AcquireLock() )
+                            {
+                                if ( message.Listener.AreAcksEnabledUnsafe( out var minAckTimeout ) )
+                                {
+                                    ackId = queue.MessageStore.AddUnacked(
+                                        message,
+                                        streamMessage.Id,
+                                        retryNo,
+                                        redelivery.IntValue,
+                                        minAckTimeout,
+                                        out ackExpiresAt );
+
+                                    message.Listener.AddReferencingMessageUnsafe();
+                                }
+                            }
                         }
 
                         var header = new Protocol.MessageNotificationHeader(
@@ -542,27 +575,48 @@ internal struct QueueProcessor
                     {
                         if ( failed )
                         {
-                            if ( messageType != QueueMessageStore.MessageType.Redelivery )
-                                message.Listener.RemoveSentMessage();
-
-                            if ( ackId > 0 )
+                            if ( ackId > 0 || messageType != QueueMessageStore.MessageType.Redelivery )
                             {
+                                bool disposingListener;
                                 using ( queue.AcquireLock() )
-                                    queue.MessageStore.RemoveUnacked( ackId );
+                                {
+                                    if ( ackId > 0 )
+                                        queue.MessageStore.RemoveUnacked( ackId );
 
-                                RemoveReferencingMessage( message.Listener, traceId );
+                                    using ( message.Listener.AcquireLock() )
+                                        disposingListener = message.Listener.TryDisposeByRemovingUnprocessedMessageUnsafe(
+                                            ackId > 0,
+                                            messageType == QueueMessageStore.MessageType.Redelivery );
+
+                                    if ( disposingListener )
+                                        queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                                }
+
+                                if ( disposingListener )
+                                    EndListenerDisposal( queue, message, traceId );
                             }
 
                             Return( queue, traceId, poolToken );
                         }
                         else
                         {
+                            bool disposingListener;
                             using ( queue.AcquireLock() )
+                            {
                                 queue.MessageStore.Dequeue( messageType );
 
-                            var messageRemoved = ackId <= 0 && queue.RemoveFromStreamMessageStore( message, traceId );
-                            RemoveReferencingMessage( message.Listener, traceId );
+                                using ( message.Listener.AcquireLock() )
+                                    disposingListener = message.Listener.TryDisposeByRemovingProcessedMessageUnsafe(
+                                        messageType == QueueMessageStore.MessageType.DeadLetter );
 
+                                if ( disposingListener )
+                                    queue.ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+                            }
+
+                            if ( disposingListener )
+                                EndListenerDisposal( queue, message, traceId );
+
+                            var messageRemoved = ackId <= 0 && queue.RemoveFromStreamMessageStore( message, traceId );
                             if ( queue.Logger.MessageProcessed is { } messageProcessed )
                                 messageProcessed.Emit(
                                     MessageBrokerQueueMessageProcessedEvent.Create(
@@ -600,17 +654,70 @@ internal struct QueueProcessor
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static void RemoveReferencingMessage(MessageBrokerQueueListenerBinding listener, ulong traceId)
+    private static bool AcceptMessage(
+        MessageBrokerQueueListenerBinding listener,
+        MessageBrokerFilterExpressionContext[] args,
+        Func<MessageBrokerFilterExpressionContext[], bool>? predicate,
+        in StreamMessage message,
+        ulong traceId)
     {
-        if ( ! listener.RemoveReferencingMessage() )
-            return;
+        if ( predicate is null )
+            return true;
 
-        using ( listener.Queue.AcquireLock() )
-            listener.Queue.ListenersByChannelId.Remove( listener.Owner.Channel.Id );
+        Assume.ContainsExactly( args, 1 );
+        try
+        {
+            args[0] = new MessageBrokerFilterExpressionContext( listener, in message );
+            return predicate( args );
+        }
+        catch ( Exception exc )
+        {
+            if ( listener.Queue.Logger.Error is { } error )
+                error.Emit( MessageBrokerQueueErrorEvent.Create( listener.Queue, traceId, exc ) );
 
-        listener.Owner.RemoveSecondaryQueueBinding( listener );
-        if ( listener.Queue.Logger.ListenerUnbound is { } listenerUnbound )
-            listenerUnbound.Emit( MessageBrokerQueueListenerUnboundEvent.Create( listener, traceId, channelRemoved: false ) );
+            return true;
+        }
+        finally
+        {
+            args[0] = default;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void EndListenerDisposal(MessageBrokerQueue queue, QueueMessage message, ulong traceId)
+    {
+        message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
+        if ( queue.Logger.ListenerUnbound is { } listenerUnbound )
+            listenerUnbound.Emit( MessageBrokerQueueListenerUnboundEvent.Create( message.Listener, traceId, channelRemoved: false ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void DiscardNonDisposedMessage(
+        MessageBrokerQueue queue,
+        QueueMessage message,
+        int retry,
+        int redelivery,
+        MessageBrokerQueueDiscardMessageReason reason,
+        bool disposingListener,
+        bool movedToDeadLetter,
+        ulong traceId)
+    {
+        if ( disposingListener )
+            EndListenerDisposal( queue, message, traceId );
+
+        var messageRemoved = ! movedToDeadLetter && queue.RemoveFromStreamMessageStore( message, traceId );
+        if ( queue.Logger.MessageDiscarded is { } messageDiscarded )
+            messageDiscarded.Emit(
+                MessageBrokerQueueMessageDiscardedEvent.Create(
+                    message.Listener,
+                    traceId,
+                    message.Publisher,
+                    message.StoreKey,
+                    retry,
+                    redelivery,
+                    messageRemoved,
+                    movedToDeadLetter,
+                    reason ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -52,7 +52,8 @@ internal struct QueueMessageStore
         ref QueueMessage message,
         ref MessageType messageType,
         ref int retry,
-        ref int lastRedelivery)
+        ref int lastRedelivery,
+        ref Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate)
     {
         Assume.True( discarded.IsEmpty );
         Assume.IsGreaterThan( discarded.Capacity, 0 );
@@ -64,16 +65,20 @@ internal struct QueueMessageStore
             if ( entry.ExpiresAt > now )
                 break;
 
-            if ( entry.Message.Listener.CanSendRedelivery( out var disposed ) )
+            bool disposed;
+            using ( entry.Message.Listener.AcquireLock() )
             {
-                message = entry.Message;
-                messageType = entry.Redelivery < entry.Message.Listener.MaxRedeliveries
-                    ? MessageType.Redelivery
-                    : MessageType.MaxRedeliveriesReached;
+                if ( entry.Message.Listener.TrySendRedeliveryUnsafe( out disposed ) )
+                {
+                    message = entry.Message;
+                    messageType = entry.Message.Listener.AreRedeliveriesExceededUnsafe( entry.Redelivery )
+                        ? MessageType.MaxRedeliveriesReached
+                        : MessageType.Redelivery;
 
-                retry = entry.Retry;
-                lastRedelivery = entry.Redelivery;
-                return true;
+                    retry = entry.Retry;
+                    lastRedelivery = entry.Redelivery;
+                    return true;
+                }
             }
 
             if ( ! disposed )
@@ -99,35 +104,20 @@ internal struct QueueMessageStore
             if ( entry.SendAt > now )
                 break;
 
-            if ( entry.Retry <= entry.Message.Listener.MaxRetries )
+            bool disposed;
+            using ( entry.Message.Listener.AcquireLock() )
             {
-                if ( entry.Message.Listener.CanSendMessage( out var disposed ) )
+                if ( entry.Message.Listener.TryHandleRetryUnsafe( entry.Retry, out disposed, out messageType ) )
                 {
                     message = entry.Message;
-                    messageType = MessageType.Retry;
-                    retry = entry.Retry;
-                    lastRedelivery = entry.Redelivery;
-                    return true;
-                }
-
-                if ( ! disposed )
-                    break;
-            }
-            else
-            {
-                var listenerState = entry.Message.Listener.State;
-                if ( listenerState == MessageBrokerQueueListenerBindingState.Inactive )
-                    break;
-
-                if ( listenerState != MessageBrokerQueueListenerBindingState.Disposed )
-                {
-                    message = entry.Message;
-                    messageType = MessageType.MaxRetriesReached;
                     retry = entry.Retry;
                     lastRedelivery = entry.Redelivery;
                     return true;
                 }
             }
+
+            if ( ! disposed )
+                break;
 
             discarded.Add(
                 new DisposedMessage( entry.Message, entry.Retry, entry.Redelivery, MessageBrokerQueueDiscardMessageReason.DisposedRetry ) );
@@ -140,13 +130,18 @@ internal struct QueueMessageStore
         while ( ! Pending.IsEmpty )
         {
             ref var next = ref Pending.First();
-            if ( next.Listener.CanSendMessage( out var disposed ) )
+
+            bool disposed;
+            using ( next.Listener.AcquireLock() )
             {
-                message = next;
-                messageType = MessageType.Pending;
-                retry = 0;
-                lastRedelivery = 0;
-                return true;
+                if ( next.Listener.TrySendPendingUnsafe( out disposed, out filterPredicate ) )
+                {
+                    message = next;
+                    messageType = MessageType.Pending;
+                    retry = 0;
+                    lastRedelivery = 0;
+                    return true;
+                }
             }
 
             if ( ! disposed )
@@ -161,42 +156,24 @@ internal struct QueueMessageStore
         while ( ! DeadLetter.IsEmpty )
         {
             ref var next = ref DeadLetter.First();
-            if ( next.ExpiresAt > now )
-            {
-                if ( next.Message.Listener.Queue.DeadLetterQueryCounter > 0 )
-                {
-                    if ( next.Message.Listener.CanSendMessage( out var disposed ) )
-                    {
-                        message = next.Message;
-                        messageType = MessageType.DeadLetter;
-                        retry = next.Retry;
-                        lastRedelivery = next.Redelivery;
-                        return true;
-                    }
 
-                    if ( ! disposed )
-                        break;
-                }
-                else if ( next.Message.Listener.RemoveDeadLetterMessageIfCapacityExceeded( out var disposed ) )
+            bool disposed;
+            using ( next.Message.Listener.AcquireLock() )
+            {
+                if ( next.Message.Listener.TryHandleDeadLetterUnsafe(
+                    next.Message.Listener.Queue.DeadLetterQueryCounter > 0,
+                    next.ExpiresAt <= now,
+                    out disposed,
+                    out messageType ) )
                 {
                     message = next.Message;
-                    messageType = MessageType.DeadLetterCapacityExceeded;
                     retry = next.Retry;
                     lastRedelivery = next.Redelivery;
                     return true;
                 }
-                else if ( ! disposed )
-                    break;
             }
-            else if ( next.Message.Listener.RemoveDeadLetterMessage( out var disposed ) )
-            {
-                message = next.Message;
-                messageType = MessageType.DeadLetterExpiration;
-                retry = next.Retry;
-                lastRedelivery = next.Redelivery;
-                return true;
-            }
-            else if ( ! disposed )
+
+            if ( ! disposed )
                 break;
 
             if ( next.Message.Listener.Queue.DeadLetterQueryCounter > 0 )
@@ -241,7 +218,6 @@ internal struct QueueMessageStore
                 {
                     ref var entry = ref DeadLetter.First();
                     var listener = entry.Message.Listener;
-                    listener.RemoveDeadLetterMessage( out _ ); // TODO: might have to be taken out of here to optimize lock acquisitions
 
                     if ( listener.Queue.DeadLetterQueryCounter > 0 )
                         listener.Queue.DeadLetterQueryCounter = unchecked( listener.Queue.DeadLetterQueryCounter - 1 );
@@ -292,13 +268,18 @@ internal struct QueueMessageStore
         return ref Unacked[ackId - 1];
     }
 
-    internal int AddUnacked(QueueMessage message, ulong messageId, int retry, int redelivery, out Timestamp expiresAt)
+    internal int AddUnacked(
+        QueueMessage message,
+        ulong messageId,
+        int retry,
+        int redelivery,
+        Duration minAckTimeout,
+        out Timestamp expiresAt)
     {
         Assume.IsGreaterThanOrEqualTo( retry, 0 );
         Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
 
-        // TODO: unnecessary listener lock?
-        expiresAt = message.Listener.Client.GetTimestamp() + message.Listener.MinAckTimeout;
+        expiresAt = message.Listener.Client.GetTimestamp() + minAckTimeout;
         var last = Unacked.Last;
         if ( last is not null )
         {
@@ -330,13 +311,12 @@ internal struct QueueMessageStore
         DeadLetter.Enqueue( new DeadLetterEntry( message, expiresAt, retry, redelivery ) );
     }
 
-    internal void AddToDeadLetter(QueueMessage message, int retry, int redelivery)
+    internal void AddToDeadLetter(QueueMessage message, int retry, int redelivery, Duration minDeadLetterRetention)
     {
         Assume.IsGreaterThanOrEqualTo( retry, 0 );
         Assume.IsGreaterThanOrEqualTo( redelivery, 0 );
 
-        // TODO: unnecessary listener lock?
-        var expiresAt = message.Listener.Client.GetTimestamp() + message.Listener.MinDeadLetterRetention;
+        var expiresAt = message.Listener.Client.GetTimestamp() + minDeadLetterRetention;
         if ( ! DeadLetter.IsEmpty )
         {
             ref var last = ref DeadLetter.Last();

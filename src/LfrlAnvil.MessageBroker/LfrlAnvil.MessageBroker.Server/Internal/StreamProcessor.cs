@@ -222,10 +222,7 @@ internal struct StreamProcessor
                         ++filtered;
                     else
                     {
-                        MessageBrokerQueueListenerBinding primaryBinding;
-                        using ( listener.AcquireLock() )
-                            primaryBinding = listener.QueueBindingCollection.Primary;
-
+                        var primaryBinding = listener.QueueBindingCollection.Primary.Value;
                         if ( ! primaryBinding.Queue.PushMessage( primaryBinding, storeKey, in message, stream, traceId ) )
                             ++failures;
                     }
@@ -244,10 +241,7 @@ internal struct StreamProcessor
             {
                 try
                 {
-                    MessageBrokerQueueListenerBinding primaryBinding;
-                    using ( listener.AcquireLock() )
-                        primaryBinding = listener.QueueBindingCollection.Primary;
-
+                    var primaryBinding = listener.QueueBindingCollection.Primary.Value;
                     if ( ! primaryBinding.Queue.PushMessage( primaryBinding, storeKey, in message, stream, traceId ) )
                         ++failures;
                 }

@@ -230,7 +230,9 @@ public sealed class MessageBrokerQueue
                     return false;
 
                 MessageStore.Enqueue( message.Publisher, listener, storeKey );
-                listener.AddReferencingMessage();
+                using ( listener.AcquireLock() )
+                    listener.AddReferencingMessageUnsafe();
+
                 if ( ! IsInactive )
                     QueueProcessor.SignalContinuation();
             }
@@ -269,19 +271,22 @@ public sealed class MessageBrokerQueue
 
             MessageStore.RemoveUnacked( ackId );
 
-            if ( message.Listener.RemoveReferencingMessage() )
-            {
-                disposingListener = true;
+            bool signalProcessor;
+            using ( message.Listener.AcquireLock() )
+                disposingListener = message.Listener.TryDisposeByRemovingAcknowledgedMessageUnsafe( out signalProcessor );
+
+            if ( disposingListener )
                 ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
-                message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
-            }
 
             disposingQueue = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
-            if ( message.Listener.RemoveSentMessage() && ! MessageStore.IsEmpty )
+            if ( signalProcessor && ! MessageStore.IsEmpty )
                 QueueProcessor.SignalContinuation();
 
             traceId = GetTraceId();
         }
+
+        if ( disposingListener )
+            message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
 
         return AckResult.Success;
     }
@@ -300,7 +305,8 @@ public sealed class MessageBrokerQueue
         ref Duration delay,
         ref ulong traceId,
         ref bool disposingQueue,
-        ref bool disposingListener)
+        ref bool disposingListener,
+        ref bool movedToDeadLetter)
     {
         using ( AcquireLock() )
         {
@@ -315,45 +321,48 @@ public sealed class MessageBrokerQueue
             if ( info.Retry != retry || info.Redelivery != redelivery )
                 return AckResult.MessageVersionNotFound;
 
-            // TODO: better listener locking
-            if ( noRetry || retry >= message.Listener.MaxRetries )
+            using ( message.Listener.AcquireLock() )
             {
-                var signalProcessor = message.Listener.RemoveSentMessage();
-                if ( ! noDeadLetter && message.Listener.DeadLetterCapacityHint > 0 )
+                if ( noRetry || message.Listener.AreRetriesExceededUnsafe( retry ) )
                 {
-                    MessageStore.AddToDeadLetter( message, retry, redelivery );
-                    MessageStore.RemoveUnacked( ackId );
-                    signalProcessor |= message.Listener.AddDeadLetterMessage();
+                    bool signalProcessor;
+                    if ( ! noDeadLetter && message.Listener.IsDeadLetterEnabledUnsafe() )
+                    {
+                        movedToDeadLetter = true;
+                        MessageStore.AddToDeadLetter( message, retry, redelivery, message.Listener.GetMinDeadLetterRetentionUnsafe() );
+                        MessageStore.RemoveUnacked( ackId );
+                        message.Listener.MoveAcknowledgedMessageToDeadLetterUnsafe( out signalProcessor );
+                    }
+                    else
+                    {
+                        MessageStore.RemoveUnacked( ackId );
+
+                        disposingListener = message.Listener.TryDisposeByRemovingAcknowledgedMessageUnsafe( out signalProcessor );
+                        if ( disposingListener )
+                            ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
+
+                        disposingQueue = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
+                        signalProcessor &= ! MessageStore.IsEmpty;
+                    }
+
+                    if ( signalProcessor )
+                        QueueProcessor.SignalContinuation();
                 }
                 else
                 {
+                    delay = message.Listener.GetRetryDelayUnsafe( explicitDelay );
+                    MessageStore.ScheduleRetry( message, retry, redelivery, delay );
                     MessageStore.RemoveUnacked( ackId );
-
-                    if ( message.Listener.RemoveReferencingMessage() )
-                    {
-                        disposingListener = true;
-                        ListenersByChannelId.Remove( message.Listener.Owner.Channel.Id );
-                        message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
-                    }
-
-                    disposingQueue = TryDisposeDueToPotentiallyEmptyStoreUnsafe();
-                    signalProcessor &= ! MessageStore.IsEmpty;
-                }
-
-                if ( signalProcessor )
+                    message.Listener.MoveAcknowledgedMessageToRetriesUnsafe();
                     QueueProcessor.SignalContinuation();
-            }
-            else
-            {
-                delay = explicitDelay ?? message.Listener.RetryDelay;
-                MessageStore.ScheduleRetry( message, retry, redelivery, delay );
-                MessageStore.RemoveUnacked( ackId );
-                message.Listener.RemoveSentMessage();
-                QueueProcessor.SignalContinuation();
+                }
             }
 
             traceId = GetTraceId();
         }
+
+        if ( disposingListener )
+            message.Listener.Owner.RemoveSecondaryQueueBinding( message.Listener );
 
         return AckResult.Success;
     }

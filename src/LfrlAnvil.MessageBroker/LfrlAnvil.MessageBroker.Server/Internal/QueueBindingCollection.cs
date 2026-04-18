@@ -15,19 +15,19 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.MessageBroker.Server.Internal;
 
 internal struct QueueBindingCollection
 {
-    // TODO: make Primary interlocked ref
-    internal MessageBrokerQueueListenerBinding Primary;
+    internal InterlockedRef<MessageBrokerQueueListenerBinding> Primary;
     internal MessageBrokerQueueListenerBinding[] Secondary;
     private MessageBrokerQueueListenerBinding[]? _cache;
 
     private QueueBindingCollection(MessageBrokerQueueListenerBinding primary)
     {
-        Primary = primary;
+        Primary = new InterlockedRef<MessageBrokerQueueListenerBinding>( primary );
         Secondary = Array.Empty<MessageBrokerQueueListenerBinding>();
         _cache = null;
     }
@@ -47,7 +47,7 @@ internal struct QueueBindingCollection
             return _cache;
 
         _cache = new MessageBrokerQueueListenerBinding[Count];
-        _cache[0] = Primary;
+        _cache[0] = Primary.Value;
         for ( var i = 0; i < Secondary.Length; ++i )
             _cache[i + 1] = Secondary[i];
 
@@ -56,8 +56,8 @@ internal struct QueueBindingCollection
 
     internal void AddSecondaryUnsafe(MessageBrokerQueueListenerBinding listener)
     {
-        Assume.Equals( listener.Client, Primary.Client );
-        Assume.NotEquals( listener.Queue, Primary.Queue );
+        Assume.Equals( listener.Client, Primary.Value.Client );
+        Assume.NotEquals( listener.Queue, Primary.Value.Queue );
         Assume.False( Secondary.Any( b => ReferenceEquals( b.Queue, listener.Queue ) ) );
 
         try
@@ -75,7 +75,7 @@ internal struct QueueBindingCollection
 
     internal void RemoveSecondaryUnsafe(MessageBrokerQueueListenerBinding listener)
     {
-        Assume.Equals( listener.Owner, Primary.Owner );
+        Assume.Equals( listener.Owner, Primary.Value.Owner );
         Assume.False( listener.IsPrimary );
 
         var index = Array.IndexOf( Secondary, listener );
@@ -103,8 +103,9 @@ internal struct QueueBindingCollection
 
     internal void RemoveAllFromQueues(int channelId)
     {
-        using ( Primary.Queue.AcquireLock() )
-            Primary.Queue.ListenersByChannelId.Remove( channelId );
+        var primary = Primary.Value;
+        using ( primary.Queue.AcquireLock() )
+            primary.Queue.ListenersByChannelId.Remove( channelId );
 
         foreach ( var binding in Secondary )
         {
@@ -115,14 +116,14 @@ internal struct QueueBindingCollection
 
     internal void DeactivateAll()
     {
-        Primary.MarkAsInactive();
+        Primary.Value.MarkAsInactive();
         foreach ( var binding in Secondary )
             binding.MarkAsInactive();
     }
 
     internal void DisposeAll()
     {
-        Primary.TryMarkAsDisposed();
+        Primary.Value.TryMarkAsDisposed();
         foreach ( var binding in Secondary )
             binding.TryMarkAsDisposed();
     }

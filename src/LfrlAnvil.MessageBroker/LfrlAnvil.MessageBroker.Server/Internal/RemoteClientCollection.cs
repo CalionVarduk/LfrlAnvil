@@ -442,9 +442,7 @@ internal struct RemoteClientCollection
                     filterExpression,
                     filterExpressionDelegate );
 
-                using ( listener.AcquireLock() )
-                    primaryBinding = listener.QueueBindingCollection.Primary;
-
+                primaryBinding = listener.QueueBindingCollection.Primary.Value;
                 client.ListenersByChannelId.Add( channel.Id, listener );
             }
 

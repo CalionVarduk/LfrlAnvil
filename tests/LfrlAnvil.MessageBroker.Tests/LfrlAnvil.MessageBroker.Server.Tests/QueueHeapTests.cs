@@ -100,12 +100,12 @@ public class QueueHeapTests : TestsBase
         sut.Add( queues[0] );
         queues[0]
             .MessageStore
-            .AddUnacked( new QueueMessage( publisher, listener, 0 ), 0, 0, 1, out _ );
+            .AddUnacked( new QueueMessage( publisher, listener, 0 ), 0, 0, 1, listener.MinAckTimeout, out _ );
 
         timestamps.Next -= Duration.FromSeconds( 0.5 );
         queues[0]
             .MessageStore
-            .AddUnacked( new QueueMessage( publisher, listener, 1 ), 0, 0, 2, out _ );
+            .AddUnacked( new QueueMessage( publisher, listener, 1 ), 0, 0, 2, listener.MinAckTimeout, out _ );
 
         timestamps.Next += Duration.FromSeconds( 0.5 );
         sut.Update( queues[0] );
@@ -121,7 +121,7 @@ public class QueueHeapTests : TestsBase
         timestamps.Next += Duration.FromSeconds( 1 );
         queues[2]
             .MessageStore
-            .AddUnacked( new QueueMessage( publisher, listener, 3 ), 3, 0, 1, out _ );
+            .AddUnacked( new QueueMessage( publisher, listener, 3 ), 3, 0, 1, listener.MinAckTimeout, out _ );
 
         timestamps.Next -= Duration.FromSeconds( 1 );
         queues[2]
@@ -158,12 +158,12 @@ public class QueueHeapTests : TestsBase
         sut.Add( queues[5] );
         queues[5]
             .MessageStore
-            .AddToDeadLetter( new QueueMessage( publisher, listener, 8 ), 0, 0 );
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 8 ), 0, 0, listener.MinDeadLetterRetention );
 
         timestamps.Next -= Duration.FromSeconds( 3 );
         queues[5]
             .MessageStore
-            .AddToDeadLetter( new QueueMessage( publisher, listener, 9 ), 0, 0 );
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 9 ), 0, 0, listener.MinDeadLetterRetention );
 
         sut.Update( queues[5] );
 
@@ -189,9 +189,13 @@ public class QueueHeapTests : TestsBase
             .MessageStore
             .ScheduleRetry( new QueueMessage( publisher, listener, 12 ), 0, 0, Duration.FromSeconds( 1 ) );
 
-        listener.CanSendMessage( out _ );
+        using ( listener.AcquireLock() )
+            listener.TrySendPendingUnsafe( out _, out _ );
+
         sut.Update( queues[9] );
-        listener.RemoveSentMessage();
+
+        using ( listener.AcquireLock() )
+            listener.RemoveSentMessageUnsafe( out _ );
 
         var indexes = new List<int[]>();
         indexes.Add( queues.Select( q => q.EventHeapIndex ).ToArray() );
@@ -268,7 +272,7 @@ public class QueueHeapTests : TestsBase
         sut.Add( queues[3] );
         queues[3]
             .MessageStore
-            .AddToDeadLetter( new QueueMessage( publisher, listener, 3 ), 0, 0 );
+            .AddToDeadLetter( new QueueMessage( publisher, listener, 3 ), 0, 0, listener.MinDeadLetterRetention );
 
         sut.Update( queues[3] );
 

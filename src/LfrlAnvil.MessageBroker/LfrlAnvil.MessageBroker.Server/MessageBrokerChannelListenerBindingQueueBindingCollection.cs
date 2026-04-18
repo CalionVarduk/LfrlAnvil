@@ -44,14 +44,7 @@ public readonly struct MessageBrokerChannelListenerBindingQueueBindingCollection
     /// <summary>
     /// Specifies the primary queue binding.
     /// </summary>
-    public MessageBrokerQueueListenerBinding Primary
-    {
-        get
-        {
-            using ( _listener.AcquireLock() )
-                return _listener.QueueBindingCollection.Primary;
-        }
-    }
+    public MessageBrokerQueueListenerBinding Primary => _listener.QueueBindingCollection.Primary.Value;
 
     /// <summary>
     /// Returns all queue bindings.
@@ -77,8 +70,9 @@ public readonly struct MessageBrokerChannelListenerBindingQueueBindingCollection
     {
         using ( _listener.AcquireLock() )
         {
-            if ( _listener.QueueBindingCollection.Primary.Queue.Id == queueId )
-                return _listener.QueueBindingCollection.Primary;
+            var primary = _listener.QueueBindingCollection.Primary.Value;
+            if ( primary.Queue.Id == queueId )
+                return primary;
 
             foreach ( var b in _listener.QueueBindingCollection.Secondary )
             {

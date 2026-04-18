@@ -1055,8 +1055,7 @@ public sealed partial class MessageBrokerRemoteClient
                                 filterExpressionDelegate,
                                 isEphemeral ) );
 
-                        using ( listener.AcquireLock() )
-                            primaryBinding = listener.QueueBindingCollection.Primary;
+                        primaryBinding = listener.QueueBindingCollection.Primary.Value;
                     }
                     catch
                     {

@@ -281,12 +281,20 @@ internal struct NotificationSender
                                 }
                             }
 
-                            if ( notification.AckId <= 0 && notification.Listener.RemoveSentMessage() )
+                            if ( notification.AckId <= 0 )
                             {
-                                using ( notification.Listener.Queue.AcquireLock() )
+                                bool signalQueue;
+                                using ( notification.Listener.AcquireLock() )
+                                    notification.Listener.RemoveSentMessageUnsafe( out signalQueue );
+
+                                if ( signalQueue )
                                 {
-                                    if ( ! notification.Listener.Queue.IsInactive && ! notification.Listener.Queue.MessageStore.IsEmpty )
-                                        notification.Listener.Queue.QueueProcessor.SignalContinuation();
+                                    var queue = notification.Listener.Queue;
+                                    using ( queue.AcquireLock() )
+                                    {
+                                        if ( ! queue.IsInactive && ! queue.MessageStore.IsEmpty )
+                                            queue.QueueProcessor.SignalContinuation();
+                                    }
                                 }
                             }
 

@@ -1318,7 +1318,7 @@ internal readonly struct ServerStorage
                 int storeKey)
             {
                 queue.MessageStore.Enqueue( streamMessage.Publisher, listener, storeKey );
-                listener.AddReferencingMessage();
+                listener.AddInactiveMessage();
             }
 
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1337,8 +1337,7 @@ internal readonly struct ServerStorage
                         message.Redelivery,
                         expiresAt ) );
 
-                listener.AddInactiveSentMessage();
-                listener.AddReferencingMessage();
+                listener.AddInactiveUnackedMessage();
             }
 
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1354,7 +1353,7 @@ internal readonly struct ServerStorage
                     message.Redelivery,
                     message.SendAt );
 
-                listener.AddReferencingMessage();
+                listener.AddInactiveMessage();
             }
 
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1371,7 +1370,6 @@ internal readonly struct ServerStorage
                     message.ExpiresAt );
 
                 listener.AddInactiveDeadLetterMessage();
-                listener.AddReferencingMessage();
             }
 
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
