@@ -104,7 +104,8 @@ public partial class MessageBrokerQueueTests
                             m.MessageId.TestEquals( 0UL ),
                             m.Retry.TestEquals( 0 ),
                             m.Redelivery.TestEquals( 0 ),
-                            m.ExpiresAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.MinAckTimeout ?? Timestamp.Zero ),
+                            m.ExpiresAt.TestGreaterThanOrEqualTo(
+                                minPushedAt + listener?.QueueBindings.Primary.MinAckTimeout ?? Timestamp.Zero ),
                             m.ToString()
                                 .TestEquals(
                                     $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' queue listener binding (using [1] 'c' queue) (Primary:Running)), StoreKey = 0, MessageId = 0, Retry = 0, Redelivery = 0, ExpiresAt = {m.ExpiresAt}" ) ) ),
@@ -749,7 +750,8 @@ public partial class MessageBrokerQueueTests
                                 r.StoreKey.TestEquals( 0 ),
                                 r.Retry.TestEquals( 1 ),
                                 r.Redelivery.TestEquals( 0 ),
-                                r.SendAt.TestGreaterThanOrEqualTo( minPushedAt + listener?.RetryDelay ?? Timestamp.Zero ),
+                                r.SendAt.TestGreaterThanOrEqualTo(
+                                    minPushedAt + listener?.QueueBindings.Primary.RetryDelay ?? Timestamp.Zero ),
                                 r.ToString()
                                     .TestEquals(
                                         $"Publisher = ([1] 'test' => [1] 'c' publisher binding (using [1] 'c' stream) (Running)), Listener = ([1] 'test' => [1] 'c' queue listener binding (using [1] 'c' queue) (Primary:Running)), StoreKey = 0, Retry = 1, Redelivery = 0, SendAt = {r.SendAt}" ),

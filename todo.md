@@ -1,22 +1,22 @@
 # TODO
 
-|        Project         |              Title               |                        Details                         |                  Requirements                  |
-|:----------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |                       -                        |
-|      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |                       -                        |
-|      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
-|     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
-| Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |                       -                        |
-|      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
-|           -            |             Terminal             |                   [link](#terminal)                    |                       -                        |
-|  Computable.Automata   |     Add Context-free grammar     |                           -                            |                       -                        |
-|         Sql.*          |           Refinements            |                [link](#sql-refinements)                |                       -                        |
-|       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |                       -                        |
-|         Sql.*          |    Add Microsoft SQL support     |                           -                            |                       -                        |
-|      Collections       |           Add SkipList           |                           -                            |                       -                        |
-|     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
-|         Sql.*          |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                       -                        |
-|        Sql.Core        |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                       -                        |
+|        Project         |              Title               |                        Details                         |
+|:----------------------:|:--------------------------------:|:------------------------------------------------------:|
+|      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |
+|      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |
+|     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |
+|    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |
+| Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |
+|      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |
+|           -            |             Terminal             |                   [link](#terminal)                    |
+|  Computable.Automata   |     Add Context-free grammar     |                           -                            |
+|         Sql.*          |           Refinements            |                [link](#sql-refinements)                |
+|       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |
+|         Sql.*          |    Add Microsoft SQL support     |                           -                            |
+|      Collections       |           Add SkipList           |                           -                            |
+|     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |
+|         Sql.*          |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |
+|        Sql.Core        |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |
 
 ### Scribbles:
 
@@ -116,14 +116,6 @@ Might do:
 
 ### MessageBroker: Refinements
 
-- Replace server-side public getters using lock with a single
-  - property/method which returns all values using a single lock
-  - this might further be converted into stats fetcher/maintenance public surface
-- Expose some public methods for fetching memory usage stats etc.
-  - should allow to trim unused memory
-- Expose better message querying for streams and queues
-  - could be useful for some sort of metrics/management app
-  - paging, maybe? or expect a buffer and starting position?
 - Allow server to send messages
   - stream class would have to expose a public method, with SenderId = 0
   - SenderId = 0 would have to be supported everywhere, including storage
@@ -134,6 +126,16 @@ Might do:
     - a special method with a single listener might be added for easier routing to a single client
 
 Low priority/probably won't do:
+- add delete to secondary queue binding
+  - fail for primary
+- Replace server-side public getters using lock with a single
+  - property/method which returns all values using a single lock
+  - this might further be converted into stats fetcher/maintenance public surface
+- Expose some public methods for fetching memory usage stats etc.
+  - should allow to trim unused memory
+- Expose better message querying for streams and queues
+  - could be useful for some sort of metrics/management app
+  - paging, maybe? or expect a buffer and starting position?
 - Storage could be more dynamic, not just invoked on server dispose
   - would improve resilience against unexpected errors, power outages etc.
 - in-memory queue messages could have an upper bound

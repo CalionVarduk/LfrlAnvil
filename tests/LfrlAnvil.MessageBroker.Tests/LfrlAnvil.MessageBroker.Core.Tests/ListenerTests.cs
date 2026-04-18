@@ -83,7 +83,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
                     "binding",
                     s.Channel.TestRefEquals( channel ),
                     s.Client.TestRefEquals( remoteClient ),
-                    s.Queue.TestRefEquals( queue ),
+                    s.QueueBindings.Primary.Queue.TestRefEquals( queue ),
                     s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ) )
             .Go();
     }
@@ -399,7 +399,7 @@ public class ListenerTests : TestsBase, IClassFixture<SharedResourceFixture>
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var binding = channel?.Listeners.TryGetByClientId( 1 );
-        var queue = binding?.Queue;
+        var queue = binding?.QueueBindings.Primary.Queue;
         var result = await client.Listeners.UnbindAsync( "foo" );
 
         Assertion.All(

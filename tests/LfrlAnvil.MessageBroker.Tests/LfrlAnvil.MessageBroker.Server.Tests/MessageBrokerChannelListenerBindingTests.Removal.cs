@@ -55,7 +55,7 @@ public partial class MessageBrokerChannelListenerBindingTests
             var remoteClient = server.Clients.TryGetById( 1 );
             var channel = server.Channels.TryGetByName( "c" );
             var binding = channel?.Listeners.TryGetByClientId( 1 );
-            var queue = binding?.Queue;
+            var queue = binding?.QueueBindings.Primary.Queue;
             await client.GetTask( c =>
             {
                 c.SendUnbindListenerRequest( 1 );
@@ -185,8 +185,8 @@ public partial class MessageBrokerChannelListenerBindingTests
             var channel = server.Channels.TryGetByName( "c" );
             var binding1 = channel?.Listeners.TryGetByClientId( 1 );
             var binding2 = channel?.Listeners.TryGetByClientId( 2 );
-            var queue1 = binding1?.Queue;
-            var queue2 = binding2?.Queue;
+            var queue1 = binding1?.QueueBindings.Primary.Queue;
+            var queue2 = binding2?.QueueBindings.Primary.Queue;
 
             await client2.GetTask( c =>
             {
@@ -315,8 +315,8 @@ public partial class MessageBrokerChannelListenerBindingTests
             var remoteClient = server.Clients.TryGetById( 1 );
             var binding1 = remoteClient?.Listeners.TryGetByChannelId( 1 );
             var binding2 = remoteClient?.Listeners.TryGetByChannelId( 2 );
-            var queue1 = binding1?.Queue;
-            var queue2 = binding2?.Queue;
+            var queue1 = binding1?.QueueBindings.Primary.Queue;
+            var queue2 = binding2?.QueueBindings.Primary.Queue;
             await client.GetTask( c =>
             {
                 c.SendUnbindListenerRequest( 1 );
@@ -430,7 +430,7 @@ public partial class MessageBrokerChannelListenerBindingTests
             var channel = server.Channels.TryGetByName( "c" );
             var publisherBinding = channel?.Publishers.TryGetByClientId( 1 );
             var listenerBinding = channel?.Listeners.TryGetByClientId( 1 );
-            var queue = listenerBinding?.Queue;
+            var queue = listenerBinding?.QueueBindings.Primary.Queue;
             await client.GetTask( c =>
             {
                 c.SendUnbindListenerRequest( 1 );
@@ -1150,7 +1150,7 @@ public partial class MessageBrokerChannelListenerBindingTests
             var remoteClient = server.Clients.TryGetById( 1 );
             var channel = server.Channels.TryGetByName( "c" );
             var binding = channel?.Listeners.TryGetByClientId( 1 );
-            var queue = binding?.Queue;
+            var queue = binding?.QueueBindings.Primary.Queue;
             await client.GetTask( c =>
             {
                 c.SendUnbindListenerByNameRequest( "c" );
@@ -1859,7 +1859,7 @@ public partial class MessageBrokerChannelListenerBindingTests
                         "listener",
                         p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
                         p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                        p.QueueBindings.Primary.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
                     storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
                     channelLogs.GetAll()
                         .TakeLast( 1 )
@@ -1963,7 +1963,7 @@ public partial class MessageBrokerChannelListenerBindingTests
                         "listener",
                         p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
                         p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                        p.QueueBindings.Primary.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
                     storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
                     channelLogs.GetAll()
                         .TakeLast( 1 )
@@ -2061,7 +2061,7 @@ public partial class MessageBrokerChannelListenerBindingTests
                         "listener",
                         p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
                         p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                        p.QueueBindings.Primary.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
                     storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
                     channelLogs.GetAll()
                         .TakeLast( 1 )
@@ -2176,7 +2176,7 @@ public partial class MessageBrokerChannelListenerBindingTests
                         "listener",
                         p.State.TestEquals( MessageBrokerChannelListenerBindingState.Disposed ),
                         p.Channel.State.TestEquals( MessageBrokerChannelState.Disposed ),
-                        p.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
+                        p.QueueBindings.Primary.Queue.State.TestEquals( MessageBrokerQueueState.Disposed ) ) ),
                     storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestFalse(),
                     channelLogs.GetAll()
                         .TakeLast( 1 )

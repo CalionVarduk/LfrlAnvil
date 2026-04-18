@@ -39,15 +39,6 @@ public sealed class MessageBrokerChannelListenerBinding
     private readonly object _sync = new object();
 
     private TaskCompletionSource? _deactivated;
-
-    private string? _filterExpression;
-    private int _prefetchHint;
-    private int _maxRetries;
-    private int _maxRedeliveries;
-    private int _deadLetterCapacityHint;
-    private Duration _retryDelay;
-    private Duration _minAckTimeout;
-    private Duration _minDeadLetterRetention;
     private MessageBrokerChannelListenerBindingState _state;
     private bool _isEphemeral;
     private bool _autoDisposed;
@@ -73,16 +64,6 @@ public sealed class MessageBrokerChannelListenerBinding
         Channel = channel;
         _state = state;
         _isEphemeral = isEphemeral;
-
-        SetProperties(
-            prefetchHint,
-            maxRetries,
-            retryDelay,
-            maxRedeliveries,
-            minAckTimeout,
-            deadLetterCapacityHint,
-            minDeadLetterRetention,
-            filterExpression );
 
         QueueBindingCollection = QueueBindingCollection.Create(
             new MessageBrokerQueueListenerBinding(
@@ -113,116 +94,6 @@ public sealed class MessageBrokerChannelListenerBinding
     public MessageBrokerChannel Channel { get; }
 
     /// <summary>
-    /// <see cref="MessageBrokerQueue"/> instance to which messages intended for this listener get enqueued into.
-    /// </summary>
-    public MessageBrokerQueue Queue => QueueBindingCollection.Primary.Value.Queue;
-
-    /// <summary>
-    /// Specifies how many messages intended for this listener can be sent by the <see cref="Queue"/>
-    /// to the <see cref="Client"/> at the same time.
-    /// </summary>
-    public int PrefetchHint
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _prefetchHint;
-        }
-    }
-
-    /// <summary>
-    /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification retry
-    /// when the <see cref="Client"/> responds with a negative ACK, before giving up.
-    /// </summary>
-    public int MaxRetries
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _maxRetries;
-        }
-    }
-
-    /// <summary>
-    /// Specifies the delay between the <see cref="Queue"/> successfully processing negative ACK sent by the <see cref="Client"/>
-    /// and the <see cref="Queue"/> sending a message notification retry.
-    /// </summary>
-    public Duration RetryDelay
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _retryDelay;
-        }
-    }
-
-    /// <summary>
-    /// Specifies how many times the <see cref="Queue"/> will attempt to automatically send a message notification redelivery
-    /// when the <see cref="Client"/> fails to respond with either an ACK or a negative ACK in time (see <see cref="MinAckTimeout"/>),
-    /// before giving up.
-    /// </summary>
-    public int MaxRedeliveries
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _maxRedeliveries;
-        }
-    }
-
-    /// <summary>
-    /// Specifies the minimum amount of time that the <see cref="Queue"/> will wait for the <see cref="Client"/>
-    /// to send either an ACK or a negative ACK before attempting a message notification redelivery.
-    /// Actual ACK timeout may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
-    /// </summary>
-    public Duration MinAckTimeout
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _minAckTimeout;
-        }
-    }
-
-    /// <summary>
-    /// Specifies how many messages intended for this listener can be stored at most by the <see cref="Queue"/>'s dead letter.
-    /// Actual capacity may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
-    /// </summary>
-    public int DeadLetterCapacityHint
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _deadLetterCapacityHint;
-        }
-    }
-
-    /// <summary>
-    /// Specifies the minimum retention period for messages intended for this listener stored in the <see cref="Queue"/>'s dead letter.
-    /// Actual retention period may be different due to the state of the <see cref="Queue"/> and other listeners bound to it.
-    /// </summary>
-    public Duration MinDeadLetterRetention
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _minDeadLetterRetention;
-        }
-    }
-
-    /// <summary>
-    /// Specifies message filter expression.
-    /// </summary>
-    public string? FilterExpression
-    {
-        get
-        {
-            using ( AcquireLock() )
-                return _filterExpression;
-        }
-    }
-
-    /// <summary>
     /// Specifies whether the listener is ephemeral.
     /// </summary>
     public bool IsEphemeral
@@ -233,12 +104,6 @@ public sealed class MessageBrokerChannelListenerBinding
                 return _isEphemeral;
         }
     }
-
-    /// <summary>
-    /// Specifies whether the <see cref="Client"/> is expected to send ACK or negative ACK to the <see cref="Queue"/>
-    /// in order to confirm message notification.
-    /// </summary>
-    public bool AreAcksEnabled => MinAckTimeout > Duration.Zero;
 
     /// <summary>
     /// Current listener's state.
@@ -269,7 +134,10 @@ public sealed class MessageBrokerChannelListenerBinding
     [Pure]
     public override string ToString()
     {
-        var queue = Queue;
+        MessageBrokerQueue queue;
+        using ( AcquireLock() )
+            queue = QueueBindingCollection.Primary.Value.Queue;
+
         return
             $"[{Client.Id}] '{Client.Name}' => [{Channel.Id}] '{Channel.Name}' listener binding (using [{queue.Id}] '{queue.Name}' queue) ({State})";
     }
@@ -458,16 +326,6 @@ public sealed class MessageBrokerChannelListenerBinding
 
                 _isEphemeral = isEphemeral;
                 _state = MessageBrokerChannelListenerBindingState.Created;
-
-                SetProperties(
-                    header.PrefetchHint,
-                    header.MaxRetries,
-                    header.RetryDelay,
-                    header.MaxRedeliveries,
-                    header.MinAckTimeout,
-                    header.DeadLetterCapacityHint,
-                    header.MinDeadLetterRetention,
-                    filterExpression );
 
                 if ( QueueBindingCollection.Secondary.Length > 0 )
                 {
@@ -885,35 +743,6 @@ public sealed class MessageBrokerChannelListenerBinding
     internal ExclusiveLock AcquireLock()
     {
         return ExclusiveLock.Enter( _sync );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void SetProperties(
-        int prefetchHint,
-        int maxRetries,
-        Duration retryDelay,
-        int maxRedeliveries,
-        Duration minAckTimeout,
-        int deadLetterCapacityHint,
-        Duration minDeadLetterRetention,
-        string? filterExpression)
-    {
-        Assume.IsGreaterThan( prefetchHint, 0 );
-        Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
-        Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
-        Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
-        Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
-        Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
-        Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
-
-        _prefetchHint = prefetchHint;
-        _maxRetries = maxRetries;
-        _retryDelay = retryDelay;
-        _maxRedeliveries = maxRedeliveries;
-        _minAckTimeout = minAckTimeout;
-        _deadLetterCapacityHint = deadLetterCapacityHint;
-        _minDeadLetterRetention = minDeadLetterRetention;
-        _filterExpression = filterExpression;
     }
 
     private async ValueTask DeleteAsyncCore(ulong clientTraceId)

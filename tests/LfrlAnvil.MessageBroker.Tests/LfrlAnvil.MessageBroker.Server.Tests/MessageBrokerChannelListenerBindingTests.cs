@@ -106,15 +106,15 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
                     "binding",
                     s.Channel.TestRefEquals( channel ),
                     s.Client.TestRefEquals( remoteClient ),
-                    s.Queue.TestRefEquals( queue ),
-                    s.PrefetchHint.TestEquals( 1 ),
-                    s.MaxRetries.TestEquals( 0 ),
-                    s.RetryDelay.TestEquals( Duration.Zero ),
-                    s.MaxRedeliveries.TestEquals( 0 ),
-                    s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
-                    s.DeadLetterCapacityHint.TestEquals( 0 ),
-                    s.MinDeadLetterRetention.TestEquals( Duration.Zero ),
-                    s.FilterExpression.TestNull(),
+                    s.QueueBindings.Primary.Queue.TestRefEquals( queue ),
+                    s.QueueBindings.Primary.PrefetchHint.TestEquals( 1 ),
+                    s.QueueBindings.Primary.MaxRetries.TestEquals( 0 ),
+                    s.QueueBindings.Primary.RetryDelay.TestEquals( Duration.Zero ),
+                    s.QueueBindings.Primary.MaxRedeliveries.TestEquals( 0 ),
+                    s.QueueBindings.Primary.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
+                    s.QueueBindings.Primary.DeadLetterCapacityHint.TestEquals( 0 ),
+                    s.QueueBindings.Primary.MinDeadLetterRetention.TestEquals( Duration.Zero ),
+                    s.QueueBindings.Primary.FilterExpression.TestNull(),
                     s.IsEphemeral.TestTrue(),
                     s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                     s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ),
@@ -269,15 +269,15 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
                     "binding",
                     s.Channel.TestRefEquals( channel ),
                     s.Client.TestRefEquals( remoteClient ),
-                    s.Queue.TestRefEquals( queue ),
-                    s.PrefetchHint.TestEquals( 10 ),
-                    s.MaxRetries.TestEquals( 2 ),
-                    s.RetryDelay.TestEquals( Duration.FromSeconds( 10 ) ),
-                    s.MaxRedeliveries.TestEquals( 3 ),
-                    s.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
-                    s.DeadLetterCapacityHint.TestEquals( 100 ),
-                    s.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
-                    s.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
+                    s.QueueBindings.Primary.Queue.TestRefEquals( queue ),
+                    s.QueueBindings.Primary.PrefetchHint.TestEquals( 10 ),
+                    s.QueueBindings.Primary.MaxRetries.TestEquals( 2 ),
+                    s.QueueBindings.Primary.RetryDelay.TestEquals( Duration.FromSeconds( 10 ) ),
+                    s.QueueBindings.Primary.MaxRedeliveries.TestEquals( 3 ),
+                    s.QueueBindings.Primary.MinAckTimeout.TestEquals( Duration.FromMinutes( 10 ) ),
+                    s.QueueBindings.Primary.DeadLetterCapacityHint.TestEquals( 100 ),
+                    s.QueueBindings.Primary.MinDeadLetterRetention.TestEquals( Duration.FromHours( 1 ) ),
+                    s.QueueBindings.Primary.FilterExpression.TestEquals( "c.Data.Length > 10i" ),
                     s.IsEphemeral.TestTrue(),
                     s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ) ) ),
                 server.Channels.Count.TestEquals( 1 ),
@@ -424,14 +424,14 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
                     "binding1",
                     s.Channel.TestRefEquals( channel1 ),
                     s.Client.TestRefEquals( remoteClient ),
-                    s.Queue.TestRefEquals( queue ),
+                    s.QueueBindings.Primary.Queue.TestRefEquals( queue ),
                     s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                     s.ToString().TestEquals( "[1] 'test' => [1] 'c' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 binding2.TestNotNull( s => Assertion.All(
                     "binding2",
                     s.Channel.TestRefEquals( channel2 ),
                     s.Client.TestRefEquals( remoteClient ),
-                    s.Queue.TestRefEquals( queue ),
+                    s.QueueBindings.Primary.Queue.TestRefEquals( queue ),
                     s.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                     s.ToString().TestEquals( "[1] 'test' => [2] 'd' listener binding (using [1] 'c' queue) (Running)" ) ) ),
                 server.Channels.Count.TestEquals( 2 ),
@@ -1479,7 +1479,7 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var binding = channel?.Listeners.TryGetByClientId( 1 );
-        var queue = binding?.Queue;
+        var queue = binding?.QueueBindings.Primary.Queue;
         await server.DisposeAsync();
 
         Assertion.All(
@@ -1573,7 +1573,7 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var listenerBinding = channel?.Listeners.TryGetByClientId( 1 );
-        var queue = listenerBinding?.Queue;
+        var queue = listenerBinding?.QueueBindings.Primary.Queue;
         var publisherBinding = channel?.Publishers.TryGetByClientId( 1 );
         if ( remoteClient is not null )
             await remoteClient.DisconnectAsync();
@@ -1690,7 +1690,7 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
         var channel = server.Channels.TryGetById( 1 );
         var publisherBinding = channel?.Publishers.TryGetByClientId( 1 );
         var listenerBinding = channel?.Listeners.TryGetByClientId( 2 );
-        var queue = listenerBinding?.Queue;
+        var queue = listenerBinding?.QueueBindings.Primary.Queue;
         if ( remoteClient2 is not null )
             await remoteClient2.DisconnectAsync();
 
@@ -1788,7 +1788,7 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
         var remoteClient = server.Clients.TryGetById( 1 );
         var channel = server.Channels.TryGetById( 1 );
         var binding = channel?.Listeners.TryGetByClientId( 1 );
-        var queue = binding?.Queue;
+        var queue = binding?.QueueBindings.Primary.Queue;
         if ( remoteClient is not null )
             await remoteClient.DisconnectAsync();
 
@@ -1895,8 +1895,8 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
         var channel = server.Channels.TryGetById( 1 );
         var binding1 = channel?.Listeners.TryGetByClientId( 1 );
         var binding2 = channel?.Listeners.TryGetByClientId( 2 );
-        var queue1 = binding1?.Queue;
-        var queue2 = binding2?.Queue;
+        var queue1 = binding1?.QueueBindings.Primary.Queue;
+        var queue2 = binding2?.QueueBindings.Primary.Queue;
         if ( remoteClient2 is not null )
             await remoteClient2.DisconnectAsync();
 
@@ -2037,13 +2037,13 @@ public partial class MessageBrokerChannelListenerBindingTests : TestsBase, IClas
                     "listener",
                     p.State.TestEquals( MessageBrokerChannelListenerBindingState.Running ),
                     p.IsEphemeral.TestFalse(),
-                    p.PrefetchHint.TestEquals( 1 ),
-                    p.MaxRetries.TestEquals( 0 ),
-                    p.RetryDelay.TestEquals( Duration.Zero ),
-                    p.MaxRedeliveries.TestEquals( 20 ),
-                    p.MinAckTimeout.TestEquals( Duration.FromHours( 5 ) ),
-                    p.DeadLetterCapacityHint.TestEquals( 0 ),
-                    p.MinDeadLetterRetention.TestEquals( Duration.Zero ) ) ),
+                    p.QueueBindings.Primary.PrefetchHint.TestEquals( 1 ),
+                    p.QueueBindings.Primary.MaxRetries.TestEquals( 0 ),
+                    p.QueueBindings.Primary.RetryDelay.TestEquals( Duration.Zero ),
+                    p.QueueBindings.Primary.MaxRedeliveries.TestEquals( 20 ),
+                    p.QueueBindings.Primary.MinAckTimeout.TestEquals( Duration.FromHours( 5 ) ),
+                    p.QueueBindings.Primary.DeadLetterCapacityHint.TestEquals( 0 ),
+                    p.QueueBindings.Primary.MinDeadLetterRetention.TestEquals( Duration.Zero ) ) ),
                 storage.FileExists( StorageScope.GetListenerMetadataSubpath( clientId: 1, channelId: 1 ) ).TestTrue(),
                 clientLogs.GetAll()
                     .TakeLast( 1 )

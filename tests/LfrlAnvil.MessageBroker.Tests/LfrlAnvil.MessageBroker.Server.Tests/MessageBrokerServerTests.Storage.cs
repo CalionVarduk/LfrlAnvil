@@ -253,7 +253,7 @@ public partial class MessageBrokerServerTests
                                     if ( e.Listener.Channel.Name == "ch2" )
                                         ch2ClientOrder.Add(
                                             ($"[{e.Listener.Client.Id}] '{e.Listener.Client.Name}'",
-                                                $"[{e.Listener.Queue.Id}] '{e.Listener.Queue.Name}'") );
+                                                $"[{e.Listener.QueueBindings.Primary.Queue.Id}] '{e.Listener.QueueBindings.Primary.Queue.Name}'") );
                                 } ) ) )
                     .SetStreamLoggerFactory( _ => streamLogger.GetLogger(
                         MessageBrokerStreamLogger.Create(
@@ -377,7 +377,7 @@ public partial class MessageBrokerServerTests
                                 .Select( q => (q.Id, q.Name, q.State) )
                                 .TestSetEqual( [ (Id: 1, Name: "q1", State: MessageBrokerQueueState.Inactive) ] ),
                             c.Listeners.GetAll()
-                                .Select( l => (ChannelId: l.Channel.Id, QueueId: l.Queue.Id, l.State) )
+                                .Select( l => (ChannelId: l.Channel.Id, QueueId: l.QueueBindings.Primary.Queue.Id, l.State) )
                                 .TestSetEqual(
                                 [
                                     (ChannelId: 1, QueueId: 1, State: MessageBrokerChannelListenerBindingState.Inactive),
@@ -459,7 +459,7 @@ public partial class MessageBrokerServerTests
                                 .Select( q => (q.Id, q.Name, q.State) )
                                 .TestSetEqual( [ (Id: 2, Name: "q2", State: MessageBrokerQueueState.Inactive) ] ),
                             c.Listeners.GetAll()
-                                .Select( l => (ChannelId: l.Channel.Id, QueueId: l.Queue.Id, l.State) )
+                                .Select( l => (ChannelId: l.Channel.Id, QueueId: l.QueueBindings.Primary.Queue.Id, l.State) )
                                 .TestSetEqual( [ (ChannelId: 2, QueueId: 2, State: MessageBrokerChannelListenerBindingState.Inactive) ] ),
                             c.Publishers.GetAll()
                                 .Select( l => (ChannelId: l.Channel.Id, StreamId: l.Stream.Id, l.State) )
@@ -3288,7 +3288,8 @@ public partial class MessageBrokerServerTests
             Assertion.All(
                     server.State.TestEquals( MessageBrokerServerState.Running ),
                     server.Clients.TryGetById( 1 )
-                        .TestNotNull( c => c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.FilterExpression.TestNull() ) ),
+                        .TestNotNull( c =>
+                            c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.QueueBindings.Primary.FilterExpression.TestNull() ) ),
                     clientLogs.GetAll()
                         .TestSequence(
                         [
@@ -3338,7 +3339,8 @@ public partial class MessageBrokerServerTests
             Assertion.All(
                     server.State.TestEquals( MessageBrokerServerState.Running ),
                     server.Clients.TryGetById( 1 )
-                        .TestNotNull( c => c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.FilterExpression.TestNull() ) ),
+                        .TestNotNull( c =>
+                            c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.QueueBindings.Primary.FilterExpression.TestNull() ) ),
                     clientLogs.GetAll()
                         .TestSequence(
                         [
@@ -3393,7 +3395,8 @@ public partial class MessageBrokerServerTests
             Assertion.All(
                     server.State.TestEquals( MessageBrokerServerState.Running ),
                     server.Clients.TryGetById( 1 )
-                        .TestNotNull( c => c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.FilterExpression.TestNull() ) ),
+                        .TestNotNull( c =>
+                            c.Listeners.TryGetByChannelId( 1 ).TestNotNull( l => l.QueueBindings.Primary.FilterExpression.TestNull() ) ),
                     clientLogs.GetAll()
                         .TestSequence(
                         [
@@ -3443,7 +3446,7 @@ public partial class MessageBrokerServerTests
                     server.Clients.TryGetById( 1 )
                         .TestNotNull( c =>
                             c.Listeners.TryGetByChannelId( 1 )
-                                .TestNotNull( l => l.FilterExpression.TestEquals( "a.Data.Length < 10i" ) ) ) )
+                                .TestNotNull( l => l.QueueBindings.Primary.FilterExpression.TestEquals( "a.Data.Length < 10i" ) ) ) )
                 .Go();
         }
     }

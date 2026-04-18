@@ -61,10 +61,11 @@ public readonly struct MessageBrokerChannelListenerBoundEvent
     [Pure]
     public override string ToString()
     {
+        var queue = Listener.QueueBindings.Primary.Queue;
         var queueCreated = QueueCreated ? " (created)" : string.Empty;
         var reactivated = Reactivated ? " (reactivated)" : string.Empty;
         return
-            $"[ListenerBound] {Source}, Client = [{Listener.Client.Id}] '{Listener.Client.Name}', Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueCreated}{reactivated}";
+            $"[ListenerBound] {Source}, Client = [{Listener.Client.Id}] '{Listener.Client.Name}', Queue = [{queue.Id}] '{queue.Name}'{queueCreated}{reactivated}";
     }
 
     [Pure]

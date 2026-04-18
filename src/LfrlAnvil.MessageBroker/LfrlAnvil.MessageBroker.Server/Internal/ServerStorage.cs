@@ -571,22 +571,10 @@ internal readonly struct ServerStorage
                 if ( listener.State >= MessageBrokerChannelListenerBindingState.Disposing )
                     return;
 
-                var filter = TextEncoding.Prepare( listener.FilterExpression ?? string.Empty ).GetValueOrThrow();
                 var poolToken = MemoryPoolToken<byte>.Empty;
                 try
                 {
-                    // TODO: this could be extracted under a single listener lock
-                    var metadata = new Storage.ListenerMetadata(
-                        listener.Queue.Id,
-                        unchecked( ( short )listener.PrefetchHint ),
-                        listener.MaxRetries,
-                        listener.RetryDelay,
-                        listener.MaxRedeliveries,
-                        listener.MinAckTimeout,
-                        listener.DeadLetterCapacityHint,
-                        listener.MinDeadLetterRetention,
-                        filter );
-
+                    var metadata = listener.QueueBindings.Primary.GetStorageMetadata();
                     poolToken = client.MemoryPool.Rent( metadata.Length, clearBuffers, out var data );
                     metadata.Serialize( data );
                     await using var file = OpenWrite( filePath );

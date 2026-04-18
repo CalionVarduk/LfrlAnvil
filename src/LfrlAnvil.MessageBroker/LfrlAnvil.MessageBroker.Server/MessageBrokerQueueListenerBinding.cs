@@ -799,6 +799,26 @@ public sealed class MessageBrokerQueueListenerBinding
         return _minAckTimeout > Duration.Zero;
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Storage.ListenerMetadata GetStorageMetadata()
+    {
+        using ( AcquireLock() )
+        {
+            var filter = TextEncoding.Prepare( _filterExpression ?? string.Empty ).GetValueOrThrow();
+            return new Storage.ListenerMetadata(
+                Queue.Id,
+                unchecked( ( short )_prefetchHint ),
+                _maxRetries,
+                _retryDelay,
+                _maxRedeliveries,
+                _minAckTimeout,
+                _deadLetterCapacityHint,
+                _minDeadLetterRetention,
+                filter );
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void SetProperties(
         int prefetchHint,
@@ -811,6 +831,14 @@ public sealed class MessageBrokerQueueListenerBinding
         string? filterExpression,
         Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate)
     {
+        Assume.IsGreaterThan( prefetchHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( maxRetries, 0 );
+        Assume.IsGreaterThanOrEqualTo( retryDelay, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( maxRedeliveries, 0 );
+        Assume.IsGreaterThanOrEqualTo( minAckTimeout, Duration.Zero );
+        Assume.IsGreaterThanOrEqualTo( deadLetterCapacityHint, 0 );
+        Assume.IsGreaterThanOrEqualTo( minDeadLetterRetention, Duration.Zero );
+
         _prefetchHint = prefetchHint;
         _maxRetries = maxRetries;
         _retryDelay = retryDelay;

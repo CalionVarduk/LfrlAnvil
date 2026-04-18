@@ -1,4 +1,4 @@
-﻿// Copyright 2025 Łukasz Furlepa
+﻿// Copyright 2025-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,10 +61,11 @@ public readonly struct MessageBrokerRemoteClientListenerUnboundEvent
     [Pure]
     public override string ToString()
     {
+        var queue = Listener.QueueBindings.Primary.Queue;
         var channelRemoved = ChannelRemoved ? " (removed)" : string.Empty;
         var queueRemoved = QueueRemoved ? " (removed)" : string.Empty;
         return
-            $"[ListenerUnbound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelRemoved}, Queue = [{Listener.Queue.Id}] '{Listener.Queue.Name}'{queueRemoved}";
+            $"[ListenerUnbound] {Source}, Channel = [{Listener.Channel.Id}] '{Listener.Channel.Name}'{channelRemoved}, Queue = [{queue.Id}] '{queue.Name}'{queueRemoved}";
     }
 
     [Pure]

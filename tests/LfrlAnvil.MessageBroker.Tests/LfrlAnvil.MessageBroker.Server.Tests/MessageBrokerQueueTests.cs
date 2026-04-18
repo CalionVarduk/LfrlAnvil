@@ -879,7 +879,7 @@ public partial class MessageBrokerQueueTests : TestsBase, IClassFixture<SharedRe
                 .SetDelaySourceFactory( _ => _sharedDelaySource )
                 .SetClientLoggerFactory( _ =>
                     MessageBrokerRemoteClientLogger.Create(
-                        listenerUnbound: e => listenerDisposedSource.Complete( e.Listener.Queue.State ) ) )
+                        listenerUnbound: e => listenerDisposedSource.Complete( e.Listener.QueueBindings.Primary.Queue.State ) ) )
                 .SetQueueLoggerFactory( _ => queueLogs.GetLogger(
                     MessageBrokerQueueLogger.Create(
                         traceEnd: e =>
