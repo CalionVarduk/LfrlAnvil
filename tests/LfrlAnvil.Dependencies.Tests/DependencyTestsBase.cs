@@ -22,6 +22,7 @@ public abstract class DependencyTestsBase : TestsBase
     {
         IDependencyContainer Container { get; }
         IDependencyScope Scope { get; }
+        IDependencyScopeFactory ScopeFactory { get; }
     }
 
     public class DisposableDependency : IDisposableDependency
@@ -280,23 +281,27 @@ public abstract class DependencyTestsBase : TestsBase
 
     public class BuiltInCtorParamImplementor : IBuiltIn
     {
-        public BuiltInCtorParamImplementor(IDependencyContainer container, IDependencyScope scope)
+        public BuiltInCtorParamImplementor(IDependencyContainer container, IDependencyScope scope, IDependencyScopeFactory scopeFactory)
         {
             Container = container;
             Scope = scope;
+            ScopeFactory = scopeFactory;
         }
 
         public IDependencyContainer Container { get; }
         public IDependencyScope Scope { get; }
+        public IDependencyScopeFactory ScopeFactory { get; }
     }
 
     public class BuiltInCtorMemberImplementor : IBuiltIn
     {
         private readonly Injected<IDependencyContainer> _container = default;
         private readonly Injected<IDependencyScope> _scope = default;
+        private readonly Injected<IDependencyScopeFactory> _scopeFactory = default;
 
         public IDependencyContainer Container => _container.Instance;
         public IDependencyScope Scope => _scope.Instance;
+        public IDependencyScopeFactory ScopeFactory => _scopeFactory.Instance;
     }
 
     public class MultiCtorImplementor : IFoo

@@ -16,14 +16,13 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Threading;
-using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies;
 
 /// <summary>
 ///  Represents a dependency scope.
 /// </summary>
-public interface IDependencyScope
+public interface IDependencyScope : IDependencyScopeFactory
 {
     /// <summary>
     /// Specifies whether this scope is a root scope.
@@ -78,15 +77,6 @@ public interface IDependencyScope
     [Pure]
     IDependencyLocator<TKey> GetKeyedLocator<TKey>(TKey key)
         where TKey : notnull;
-
-    /// <summary>
-    /// Creates a new <see cref="IChildDependencyScope"/> from this scope.
-    /// </summary>
-    /// <param name="name">Optional child scope's name.</param>
-    /// <returns>New <see cref="IChildDependencyScope"/> instance.</returns>
-    /// <exception cref="NamedDependencyScopeCreationException">When the scope is named and that name already exists.</exception>
-    [Pure]
-    IChildDependencyScope BeginScope(string? name = null);
 
     /// <summary>
     /// Retrieves all child scopes created by this scope.

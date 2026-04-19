@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ internal class DependencyScope : IDependencyScope, IDisposable
         return GetKeyedLocator( key );
     }
 
-    IChildDependencyScope IDependencyScope.BeginScope(string? name)
+    IChildDependencyScope IDependencyScopeFactory.BeginScope(string? name)
     {
         return BeginScope( name );
     }

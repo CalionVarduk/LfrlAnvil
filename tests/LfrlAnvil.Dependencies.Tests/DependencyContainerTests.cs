@@ -64,6 +64,30 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependencyScopeFactory_ThroughRootScope_ShouldReturnRootScope()
+    {
+        var builder = new DependencyContainerBuilder();
+        var sut = builder.Build();
+        var scope = sut.RootScope;
+
+        var result = scope.Locator.Resolve<IDependencyScopeFactory>();
+
+        result.TestRefEquals( scope ).Go();
+    }
+
+    [Fact]
+    public void ResolvingDependencyScopeFactory_ThroughChildScope_ShouldReturnChildScope()
+    {
+        var builder = new DependencyContainerBuilder();
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+
+        var result = scope.Locator.Resolve<IDependencyScopeFactory>();
+
+        result.TestRefEquals( scope ).Go();
+    }
+
+    [Fact]
     public void ResolvingDependencyContainer_ThroughUnregisteredKeyedLocator_ShouldReturnContainerItself()
     {
         var builder = new DependencyContainerBuilder();
@@ -82,6 +106,18 @@ public class DependencyContainerTests : DependencyTestsBase
         var scope = sut.RootScope.BeginScope();
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
+
+        result.TestRefEquals( scope ).Go();
+    }
+
+    [Fact]
+    public void ResolvingDependencyScopeFactory_ThroughUnregisteredKeyedLocator_ShouldReturnScopeItself()
+    {
+        var builder = new DependencyContainerBuilder();
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+
+        var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScopeFactory>();
 
         result.TestRefEquals( scope ).Go();
     }
@@ -107,6 +143,19 @@ public class DependencyContainerTests : DependencyTestsBase
         var scope = sut.RootScope.BeginScope();
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
+
+        result.TestRefEquals( scope ).Go();
+    }
+
+    [Fact]
+    public void ResolvingDependencyScopeFactory_ThroughRegisteredKeyedLocator_ShouldReturnScopeItself()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromFactory( _ => new Implementor() );
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+
+        var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScopeFactory>();
 
         result.TestRefEquals( scope ).Go();
     }
@@ -1180,7 +1229,8 @@ public class DependencyContainerTests : DependencyTestsBase
         Assertion.All(
                 result.GetType().TestEquals( typeof( BuiltInCtorParamImplementor ) ),
                 result.Container.TestRefEquals( sut ),
-                result.Scope.TestRefEquals( sut.RootScope ) )
+                result.Scope.TestRefEquals( sut.RootScope ),
+                result.ScopeFactory.TestRefEquals( sut.RootScope ) )
             .Go();
     }
 
@@ -1468,7 +1518,8 @@ public class DependencyContainerTests : DependencyTestsBase
         Assertion.All(
                 result.GetType().TestEquals( typeof( BuiltInCtorMemberImplementor ) ),
                 result.Container.TestRefEquals( sut ),
-                result.Scope.TestRefEquals( sut.RootScope ) )
+                result.Scope.TestRefEquals( sut.RootScope ),
+                result.ScopeFactory.TestRefEquals( sut.RootScope ) )
             .Go();
     }
 
@@ -2234,6 +2285,7 @@ public class DependencyContainerTests : DependencyTestsBase
                 typeof( IQux ),
                 typeof( IDependencyContainer ),
                 typeof( IDependencyScope ),
+                typeof( IDependencyScopeFactory ),
                 typeof( IEnumerable<IFoo> ),
                 typeof( IEnumerable<IBar> ),
                 typeof( IEnumerable<IQux> )
@@ -2261,6 +2313,7 @@ public class DependencyContainerTests : DependencyTestsBase
     [Theory]
     [InlineData( typeof( IDependencyContainer ), DependencyLifetime.Singleton )]
     [InlineData( typeof( IDependencyScope ), DependencyLifetime.ScopedSingleton )]
+    [InlineData( typeof( IDependencyScopeFactory ), DependencyLifetime.ScopedSingleton )]
     [InlineData( typeof( IFoo ), DependencyLifetime.Transient )]
     [InlineData( typeof( IBar ), DependencyLifetime.Scoped )]
     [InlineData( typeof( IQux ), DependencyLifetime.ScopedSingleton )]

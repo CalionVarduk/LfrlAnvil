@@ -99,7 +99,7 @@ Might do:
 ### Dependencies: Refinements
 
 - consider adding some sort of Decorate method/extension
-- add scope factory
+  - or some extension method?
 - async scope disposal/support for IAsyncDisposable
   - scope will implement both IDisposable and IAsyncDisposable
   - default should be async usage

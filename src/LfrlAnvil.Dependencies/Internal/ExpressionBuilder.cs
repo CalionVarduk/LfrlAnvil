@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ internal sealed class ExpressionBuilder
     private static readonly MethodInfo ArrayEmptyGenericMethod = typeof( Array ).GetMethod( nameof( Array.Empty ) )!;
 
     private static readonly Dictionary<Type, MethodInfo> CreateMethodsByResolverType
-        = new Dictionary<Type, MethodInfo>( capacity: 10 )
+        = new Dictionary<Type, MethodInfo>( capacity: 11 )
         {
             { typeof( DependencyContainerResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyContainerResolver ) ) },
             { typeof( DependencyScopeResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyScopeResolver ) ) },
+            { typeof( DependencyScopeFactoryResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyScopeFactoryResolver ) ) },
             { typeof( TransientDependencyResolver ), Helpers.FindResolverCreateMethod( typeof( TransientDependencyResolver ) ) },
             { typeof( ScopedDependencyResolver ), Helpers.FindResolverCreateMethod( typeof( ScopedDependencyResolver ) ) },
             {
