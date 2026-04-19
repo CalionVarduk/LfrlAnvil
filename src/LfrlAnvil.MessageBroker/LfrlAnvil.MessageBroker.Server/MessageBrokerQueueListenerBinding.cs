@@ -792,11 +792,11 @@ public sealed class MessageBrokerQueueListenerBinding
         return _minDeadLetterRetention;
     }
 
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal bool AreAcksEnabledUnsafe(out Duration minAckTimeout)
+    internal Duration GetMinAckTimeoutUnsafe()
     {
-        minAckTimeout = _minAckTimeout;
-        return _minAckTimeout > Duration.Zero;
+        return _minAckTimeout;
     }
 
     [Pure]

@@ -53,6 +53,7 @@ internal struct QueueMessageStore
         ref MessageType messageType,
         ref int retry,
         ref int lastRedelivery,
+        ref Duration minAckTimeout,
         ref Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate)
     {
         Assume.True( discarded.IsEmpty );
@@ -77,6 +78,7 @@ internal struct QueueMessageStore
 
                     retry = entry.Retry;
                     lastRedelivery = entry.Redelivery;
+                    minAckTimeout = entry.Message.Listener.GetMinAckTimeoutUnsafe();
                     return true;
                 }
             }
@@ -112,6 +114,7 @@ internal struct QueueMessageStore
                     message = entry.Message;
                     retry = entry.Retry;
                     lastRedelivery = entry.Redelivery;
+                    minAckTimeout = entry.Message.Listener.GetMinAckTimeoutUnsafe();
                     return true;
                 }
             }
@@ -140,6 +143,7 @@ internal struct QueueMessageStore
                     messageType = MessageType.Pending;
                     retry = 0;
                     lastRedelivery = 0;
+                    minAckTimeout = next.Listener.GetMinAckTimeoutUnsafe();
                     return true;
                 }
             }
@@ -169,6 +173,7 @@ internal struct QueueMessageStore
                     message = next.Message;
                     retry = next.Retry;
                     lastRedelivery = next.Redelivery;
+                    minAckTimeout = next.Message.Listener.GetMinAckTimeoutUnsafe();
                     return true;
                 }
             }

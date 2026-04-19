@@ -150,8 +150,10 @@ internal struct QueueProcessor
                 var messageType = QueueMessageStore.MessageType.Pending;
                 var retryNo = 0;
                 var lastRedeliveryNo = 0;
+                var minAckTimeout = Duration.Zero;
                 Func<MessageBrokerFilterExpressionContext[], bool>? filterPredicate = null;
                 bool hasMessage;
+
                 using ( queue.AcquireLock() )
                 {
                     if ( queue.IsInactive )
@@ -164,6 +166,7 @@ internal struct QueueProcessor
                         ref messageType,
                         ref retryNo,
                         ref lastRedeliveryNo,
+                        ref minAckTimeout,
                         ref filterPredicate );
 
                     if ( ! hasMessage && disposedBuffer.Count == 0 )
@@ -394,23 +397,20 @@ internal struct QueueProcessor
                     var poolToken = MemoryPoolToken<byte>.Empty;
                     try
                     {
-                        if ( ackId == 0 )
+                        if ( ackId == 0 && minAckTimeout > Duration.Zero )
                         {
                             using ( queue.AcquireLock() )
                             using ( message.Listener.AcquireLock() )
                             {
-                                if ( message.Listener.AreAcksEnabledUnsafe( out var minAckTimeout ) )
-                                {
-                                    ackId = queue.MessageStore.AddUnacked(
-                                        message,
-                                        streamMessage.Id,
-                                        retryNo,
-                                        redelivery.IntValue,
-                                        minAckTimeout,
-                                        out ackExpiresAt );
+                                ackId = queue.MessageStore.AddUnacked(
+                                    message,
+                                    streamMessage.Id,
+                                    retryNo,
+                                    redelivery.IntValue,
+                                    minAckTimeout,
+                                    out ackExpiresAt );
 
-                                    message.Listener.AddReferencingMessageUnsafe();
-                                }
+                                message.Listener.AddReferencingMessageUnsafe();
                             }
                         }
 
