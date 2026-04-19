@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
@@ -54,8 +55,14 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     /// <remarks>Disposes the <see cref="RootScope"/>.</remarks>
     public void Dispose()
     {
-        if ( ! InternalRootScope.IsDisposed )
-            DisposeRootScope();
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Disposes the <see cref="RootScope"/>.</remarks>
+    public ValueTask DisposeAsync()
+    {
+        return DisposeRootScopeAsync();
     }
 
     /// <inheritdoc />
@@ -82,7 +89,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         DependencyResolver? resolver;
         using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
         {
-            if ( ! entered || locator.InternalAttachedScope.IsDisposed )
+            if ( ! entered || locator.InternalAttachedScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
             resolver = locator.Resolvers.TryGetResolver( dependencyType );
@@ -97,7 +104,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     {
         using ( WriteLockSlim.TryEnter( parentScope.Lock, out var entered ) )
         {
-            if ( ! entered || parentScope.IsDisposed )
+            if ( ! entered || parentScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( parentScope ) ) );
 
             var result = name is null ? new ChildDependencyScope( this, parentScope ) : _namedScopes.CreateScope( parentScope, name );
@@ -107,25 +114,41 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void DisposeScope(DependencyScope scope)
+    internal ValueTask DisposeScopeAsync(DependencyScope scope)
     {
-        if ( ReferenceEquals( scope, InternalRootScope ) )
-            DisposeRootScope();
-        else
-            DisposeChildScope( ReinterpretCast.To<ChildDependencyScope>( scope ) );
+        return ReferenceEquals( scope, InternalRootScope )
+            ? DisposeRootScopeAsync()
+            : DisposeChildScopeAsync( ReinterpretCast.To<ChildDependencyScope>( scope ) );
     }
 
-    private void DisposeRootScope()
+    private async ValueTask DisposeRootScopeAsync()
     {
-        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        var children = ListSlim<ChildDependencyScope>.Create();
         using ( WriteLockSlim.TryEnter( InternalRootScope.Lock, out var entered ) )
         {
-            if ( ! entered || InternalRootScope.IsDisposed )
+            if ( ! entered || InternalRootScope.IsDisposedInternal )
                 return;
 
-            exceptions = DisposeChildScopeRange( InternalRootScope, exceptions );
-            var rootExceptions = InternalRootScope.FinalizeDisposal();
-            exceptions = exceptions.Extend( rootExceptions );
+            MarkChildScopeRangeAsDisposed( ref children, InternalRootScope );
+            InternalRootScope.MarkAsDisposed();
+        }
+
+        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        for ( var i = 0; i < children.Count; ++i )
+        {
+            var child = children[i];
+            exceptions = exceptions.Extend( await child.FinalizeDisposalAsync().ConfigureAwait( false ) );
+
+            if ( child.Name is not null )
+                _namedScopes.RemoveScope( child.Name );
+
+            child.Lock.DisposeGracefully();
+        }
+
+        exceptions = exceptions.Extend( await InternalRootScope.FinalizeDisposalAsync().ConfigureAwait( false ) );
+
+        using ( WriteLockSlim.Enter( InternalRootScope.Lock ) )
+        {
             GlobalResolvers.Dispose();
             KeyedResolversStore.Dispose();
             _namedScopes.Dispose();
@@ -137,51 +160,60 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( InternalRootScope, exceptions ) );
     }
 
-    private void DisposeChildScope(ChildDependencyScope scope)
+    private async ValueTask DisposeChildScopeAsync(ChildDependencyScope scope)
     {
         Assume.IsNotNull( scope.InternalParentScope );
-        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
 
-        using ( WriteLockSlim.TryEnter( scope.InternalParentScope.Lock, out var entered ) )
+        var children = ListSlim<ChildDependencyScope>.Create();
+        WriteLockSlim parentLock = default;
+        try
         {
-            if ( ! entered || scope.InternalParentScope.IsDisposed )
+            parentLock = WriteLockSlim.TryEnter( scope.InternalParentScope.Lock, out var entered );
+            if ( ! entered || scope.InternalParentScope.IsDisposedInternal )
                 return;
 
             using ( WriteLockSlim.TryEnter( scope.Lock, out entered ) )
             {
-                if ( ! entered || scope.IsDisposed )
+                if ( ! entered || scope.IsDisposedInternal )
                     return;
 
-                exceptions = DisposeChildScopeCore( scope, exceptions );
                 scope.InternalParentScope.RemoveChild( scope );
-            }
+                parentLock.Dispose();
+                parentLock = default;
 
-            scope.Lock.DisposeGracefully();
+                MarkChildScopeRangeAsDisposed( ref children, scope );
+                scope.MarkAsDisposed();
+            }
         }
+        finally
+        {
+            parentLock.Dispose();
+        }
+
+        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        for ( var i = 0; i < children.Count; ++i )
+        {
+            var child = children[i];
+            exceptions = exceptions.Extend( await child.FinalizeDisposalAsync().ConfigureAwait( false ) );
+
+            if ( child.Name is not null )
+                _namedScopes.RemoveScope( child.Name );
+
+            child.Lock.DisposeGracefully();
+        }
+
+        exceptions = exceptions.Extend( await scope.FinalizeDisposalAsync().ConfigureAwait( false ) );
+
+        if ( scope.Name is not null )
+            _namedScopes.RemoveScope( scope.Name );
+
+        scope.Lock.DisposeGracefully();
 
         if ( exceptions.Count > 0 )
             ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( scope, exceptions ) );
     }
 
-    private Chain<OwnedDependencyDisposalException> DisposeChildScopeCore(
-        ChildDependencyScope scope,
-        Chain<OwnedDependencyDisposalException> exceptions)
-    {
-        Assume.True( scope.Lock.IsWriteLockHeld );
-
-        exceptions = DisposeChildScopeRange( scope, exceptions );
-        var scopeExceptions = scope.FinalizeDisposal();
-        exceptions = exceptions.Extend( scopeExceptions );
-
-        if ( scope.Name is not null )
-            _namedScopes.RemoveScope( scope.Name );
-
-        return exceptions;
-    }
-
-    private Chain<OwnedDependencyDisposalException> DisposeChildScopeRange(
-        DependencyScope parent,
-        Chain<OwnedDependencyDisposalException> exceptions)
+    private static void MarkChildScopeRangeAsDisposed(ref ListSlim<ChildDependencyScope> descendants, DependencyScope parent)
     {
         Assume.True( parent.Lock.IsWriteLockHeld );
 
@@ -191,18 +223,17 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             ChildDependencyScope? next;
             using ( WriteLockSlim.Enter( child.Lock ) )
             {
-                Assume.False( child.IsDisposed );
-                exceptions = DisposeChildScopeCore( child, exceptions );
+                Assume.False( child.IsDisposedInternal );
+                MarkChildScopeRangeAsDisposed( ref descendants, child );
+                child.MarkAsDisposed();
                 next = child.NextSibling;
                 child.PrevSibling = null;
                 child.NextSibling = null;
             }
 
-            child.Lock.DisposeGracefully();
+            descendants.Add( child );
             child = next;
         }
-
-        return exceptions;
     }
 
     private object? TryResolveDynamicDependency(DependencyLocator locator, Type dependencyType)
@@ -211,7 +242,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             return null;
 
         using var @lock = UpgradeableReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered );
-        if ( ! entered || locator.InternalAttachedScope.IsDisposed )
+        if ( ! entered || locator.InternalAttachedScope.IsDisposedInternal )
             ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
         var resolver = locator.Resolvers.TryGetResolver( dependencyType );

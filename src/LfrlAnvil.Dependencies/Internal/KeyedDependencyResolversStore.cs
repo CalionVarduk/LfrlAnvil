@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
         Cache<TKey>? cache = null;
         using ( ReadLockSlim.TryEnter( container.InternalRootScope.Lock, out var entered ) )
         {
-            if ( ! entered || container.InternalRootScope.IsDisposed )
+            if ( ! entered || container.InternalRootScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
 
             if ( _cachesByKeyType.TryGetValue( typeof( TKey ), out var outCache ) )
@@ -86,7 +86,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
 
         using ( WriteLockSlim.TryEnter( container.InternalRootScope.Lock, out var entered ) )
         {
-            if ( ! entered || container.InternalRootScope.IsDisposed )
+            if ( ! entered || container.InternalRootScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
 
             if ( cache is null )

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using LfrlAnvil.Dependencies.Internal;
 
 namespace LfrlAnvil.Dependencies;
@@ -24,7 +25,7 @@ namespace LfrlAnvil.Dependencies;
 /// </summary>
 public readonly struct DependencyImplementorDisposalStrategy
 {
-    private DependencyImplementorDisposalStrategy(DependencyImplementorDisposalStrategyType type, Action<object>? callback)
+    private DependencyImplementorDisposalStrategy(DependencyImplementorDisposalStrategyType type, Delegate? callback)
     {
         Type = type;
         Callback = callback;
@@ -38,7 +39,7 @@ public readonly struct DependencyImplementorDisposalStrategy
     /// <summary>
     /// Specifies the optional disposal callback for <see cref="DependencyImplementorDisposalStrategyType.UseCallback"/> <see cref="Type"/>.
     /// </summary>
-    public Action<object>? Callback { get; }
+    public Delegate? Callback { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="DependencyImplementorDisposalStrategy"/> instance.
@@ -53,8 +54,9 @@ public readonly struct DependencyImplementorDisposalStrategy
     /// <summary>
     /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
     /// with <see cref="DependencyImplementorDisposalStrategyType.UseDisposableInterface"/> type.
-    /// This is the default automatic disposal strategy that invokes the <see cref="IDisposable.Dispose()"/> method if an object
-    /// implements the <see cref="IDisposable"/> interface.
+    /// This is the default automatic disposal strategy that invokes the <see cref="IAsyncDisposable.DisposeAsync()"/> method
+    /// if an object implements the <see cref="IAsyncDisposable"/> interface,
+    /// or invokes the <see cref="IDisposable.Dispose()"/> method if an object implements the <see cref="IDisposable"/> interface.
     /// </summary>
     /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
     [Pure]
@@ -81,6 +83,19 @@ public readonly struct DependencyImplementorDisposalStrategy
 
     /// <summary>
     /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
+    /// with <see cref="DependencyImplementorDisposalStrategyType.UseCallback"/> and custom asynchronous <paramref name="callback"/>.
+    /// </summary>
+    /// <param name="callback">Custom disposal callback.</param>
+    /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static DependencyImplementorDisposalStrategy UseAsyncCallback(Func<object, ValueTask> callback)
+    {
+        return new DependencyImplementorDisposalStrategy( DependencyImplementorDisposalStrategyType.UseCallback, callback );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
     /// with <see cref="DependencyImplementorDisposalStrategyType.RenounceOwnership"/>.
     /// This strategy disables the automatic disposal.
     /// </summary>
@@ -99,14 +114,17 @@ public readonly struct DependencyImplementorDisposalStrategy
         switch ( Type )
         {
             case DependencyImplementorDisposalStrategyType.UseDisposableInterface:
+                if ( instance is IAsyncDisposable asyncDisposable )
+                    return new DependencyDisposer( asyncDisposable, callback: null, isAsync: true );
+
                 if ( instance is IDisposable disposable )
-                    return new DependencyDisposer( disposable, callback: null );
+                    return new DependencyDisposer( disposable, callback: null, isAsync: false );
 
                 break;
 
             case DependencyImplementorDisposalStrategyType.UseCallback:
                 Assume.IsNotNull( Callback );
-                return new DependencyDisposer( instance, Callback );
+                return new DependencyDisposer( instance, Callback, isAsync: Callback is Func<object, ValueTask> );
         }
 
         return null;

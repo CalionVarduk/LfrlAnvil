@@ -100,17 +100,6 @@ Might do:
 
 - consider adding some sort of Decorate method/extension
   - or some extension method?
-- async scope disposal/support for IAsyncDisposable
-  - scope will implement both IDisposable and IAsyncDisposable
-  - default should be async usage
-  - when registering dependency, async disposal delegate may be provided
-- better disposable scope instances tracking
-  - may have to track disposables in a hashset as well, for by-ref comparison
-  - disposal should still happen in reverse order, based on first resolution
-  - e.g. register Foo as disposable implementor, IBar as dependency using Foo
-    - and IQux as dependency using factory method which resolves IBar
-  - this might not be necessary, due to explicit shared implementors
-    - should dependencies resolved via factory delegates renounce ownership by default?
 - hosted services registration?
 - options registration?
 

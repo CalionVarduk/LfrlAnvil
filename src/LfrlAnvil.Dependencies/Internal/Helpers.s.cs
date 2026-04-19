@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,7 +84,8 @@ internal static class Helpers
     {
         Assume.True( scope.Lock.IsWriteLockHeld );
 
-        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( scope.ScopedInstancesByResolverId, resolver.Id, out var exists )!;
+        var scopedInstancesByResolverId = scope.GetScopedInstancesByResolverId();
+        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( scopedInstancesByResolverId, resolver.Id, out var exists )!;
         if ( exists )
             return result;
 
@@ -94,13 +95,13 @@ internal static class Helpers
         }
         catch
         {
-            scope.ScopedInstancesByResolverId.Remove( resolver.Id );
+            scopedInstancesByResolverId.Remove( resolver.Id );
             throw;
         }
 
         var disposer = resolver.DisposalStrategy.TryCreateDisposer( result );
         if ( disposer is not null )
-            scope.InternalDisposers.Push( disposer.Value );
+            scope.AddDisposer( disposer.Value );
 
         return result;
     }
@@ -114,13 +115,17 @@ internal static class Helpers
 
         using ( WriteLockSlim.TryEnter( scope.Lock, out var entered ) )
         {
-            if ( ! entered || scope.IsDisposed )
+            if ( ! entered || scope.IsDisposedInternal )
             {
-                disposer.Value.TryDispose();
+                if ( disposer.Value.IsAsync )
+                    disposer.Value.TryDisposeAsync().AsTask().GetAwaiter().GetResult();
+                else
+                    disposer.Value.TryDispose();
+
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
             }
 
-            scope.InternalDisposers.Push( disposer.Value );
+            scope.AddDisposer( disposer.Value );
         }
     }
 
@@ -132,10 +137,11 @@ internal static class Helpers
         {
             using ( ReadLockSlim.TryEnter( scope.Lock, out var entered ) )
             {
-                if ( ! entered || scope.IsDisposed )
+                if ( ! entered || scope.IsDisposedInternal )
                     ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
-                if ( scope.ScopedInstancesByResolverId.TryGetValue( resolver.Id, out var result ) )
+                if ( scope.ScopedInstancesByResolverId is not null
+                    && scope.ScopedInstancesByResolverId.TryGetValue( resolver.Id, out var result ) )
                     return result;
             }
 

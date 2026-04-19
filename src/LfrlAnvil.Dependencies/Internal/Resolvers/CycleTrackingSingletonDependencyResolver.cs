@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2025 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
         object? cached = null;
         using ( ReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
         {
-            if ( ! entered || rootScope.IsDisposed )
+            if ( ! entered || rootScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
@@ -80,7 +80,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
             TryInvokeOnResolvingCallback( dependencyType, scope );
 
             using var @lock = UpgradeableReadLockSlim.TryEnter( rootScope.Lock, out var entered );
-            if ( ! entered || rootScope.IsDisposed )
+            if ( ! entered || rootScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
@@ -94,7 +94,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
 
                 var disposer = DisposalStrategy.TryCreateDisposer( _instance );
                 if ( disposer is not null )
-                    rootScope.InternalDisposers.Push( disposer.Value );
+                    rootScope.AddDisposer( disposer.Value );
 
                 return _instance;
             }

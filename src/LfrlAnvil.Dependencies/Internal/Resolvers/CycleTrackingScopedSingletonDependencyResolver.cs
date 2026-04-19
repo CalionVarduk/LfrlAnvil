@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,10 +53,10 @@ internal sealed class CycleTrackingScopedSingletonDependencyResolver : CycleTrac
         object? cached = null;
         using ( ReadLockSlim.TryEnter( scope.Lock, out var entered ) )
         {
-            if ( ! entered || scope.IsDisposed )
+            if ( ! entered || scope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
-            if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
+            if ( scope.ScopedInstancesByResolverId is not null && scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
                 cached = result;
         }
 
@@ -71,10 +71,11 @@ internal sealed class CycleTrackingScopedSingletonDependencyResolver : CycleTrac
         {
             using ( WriteLockSlim.TryEnter( scope.Lock, out var entered ) )
             {
-                if ( ! entered || scope.IsDisposed )
+                if ( ! entered || scope.IsDisposedInternal )
                     ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
-                ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( scope.ScopedInstancesByResolverId, Id, out var exists )!;
+                var scopedInstancesByResolverId = scope.GetScopedInstancesByResolverId();
+                ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( scopedInstancesByResolverId, Id, out var exists )!;
                 if ( ! exists )
                     result = cached;
                 else
@@ -91,7 +92,7 @@ internal sealed class CycleTrackingScopedSingletonDependencyResolver : CycleTrac
 
             using ( WriteLockSlim.TryEnter( scope.Lock, out var entered ) )
             {
-                if ( ! entered || scope.IsDisposed )
+                if ( ! entered || scope.IsDisposedInternal )
                     ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
                 return this.CreateScopedInstance( Factory, scope, dependencyType );

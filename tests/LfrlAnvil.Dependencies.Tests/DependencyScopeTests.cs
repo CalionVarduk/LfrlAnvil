@@ -634,6 +634,23 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
+    public void Dispose_ShouldDisposeOwnedScopedDisposableDependencies_WithAsync()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IAsyncDisposable>>();
+        factory.WithAnyArgs( _ => Substitute.For<IAsyncDisposable>() );
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IAsyncDisposable>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( factory );
+        var container = builder.Build();
+        var sut = container.RootScope.BeginScope();
+
+        var resolved = sut.Locator.Resolve<IAsyncDisposable>();
+
+        sut.Dispose();
+
+        resolved.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ).Go();
+    }
+
+    [Fact]
     public void Dispose_ThroughChildScope_ShouldNotDisposeOwnedScopedDisposableDependenciesFromParentScope()
     {
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
@@ -707,6 +724,60 @@ public class DependencyScopeTests : DependencyTestsBase
 
     [Fact]
     public void
+        Dispose_ThroughRootScope_ShouldDisposeAllOwnedDisposableDependenciesAndThrowOwnedDependenciesDisposalAggregateException_WhenDependencyAsyncDisposalHasThrown()
+    {
+        var exception = new Exception();
+        var factory = Substitute.For<Func<IDependencyScope, IDisposableDependency>>();
+        factory.WithAnyArgs( _ => Substitute.For<IDisposableDependency>() );
+        var throwingFactory = Substitute.For<Func<IDependencyScope, IAsyncDisposable>>();
+        throwingFactory.WithAnyArgs( _ =>
+        {
+            var result = Substitute.For<IAsyncDisposable>();
+            result.When( x => x.DisposeAsync() ).Throw( exception );
+            return result;
+        } );
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IDisposableDependency>().FromFactory( factory );
+        builder.Add<IAsyncDisposable>().FromFactory( throwingFactory );
+        var container = builder.Build();
+        var childScope = container.RootScope.BeginScope();
+        var grandchildScope = childScope.BeginScope();
+
+        var resolved1 = container.RootScope.Locator.Resolve<IDisposableDependency>();
+        var resolved2 = container.RootScope.Locator.Resolve<IAsyncDisposable>();
+        var resolved3 = childScope.Locator.Resolve<IDisposableDependency>();
+        var resolved4 = childScope.Locator.Resolve<IAsyncDisposable>();
+        var resolved5 = grandchildScope.Locator.Resolve<IDisposableDependency>();
+        var resolved6 = grandchildScope.Locator.Resolve<IAsyncDisposable>();
+
+        var action = Lambda.Of( () => container.Dispose() );
+
+        action.Test( exc => Assertion.All(
+                resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved2.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved4.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved6.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                container.RootScope.IsDisposed.TestTrue(),
+                childScope.IsDisposed.TestTrue(),
+                grandchildScope.IsDisposed.TestTrue(),
+                exc.TestType()
+                    .Exact<OwnedDependenciesDisposalAggregateException>( aggregateException => Assertion.All(
+                        aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                        aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                            .TestAll( (e, _) => Assertion.All(
+                                e.InnerException.TestRefEquals( exception ),
+                                Assertion.Any(
+                                    e.Scope.TestRefEquals( container.RootScope ),
+                                    e.Scope.TestRefEquals( childScope ),
+                                    e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void
         Dispose_ThroughChildScope_ShouldDisposeAllNestedOwnedDisposableDependenciesAndThrowOwnedDependenciesDisposalAggregateException_WhenDependencyDisposalHasThrown()
     {
         var exception = new Exception();
@@ -761,6 +832,61 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
+    public void
+        Dispose_ThroughChildScope_ShouldDisposeAllNestedOwnedDisposableDependenciesAndThrowOwnedDependenciesDisposalAggregateException_WhenDependencyAsyncDisposalHasThrown()
+    {
+        var exception = new Exception();
+        var factory = Substitute.For<Func<IDependencyScope, IDisposableDependency>>();
+        factory.WithAnyArgs( _ => Substitute.For<IDisposableDependency>() );
+        var throwingFactory = Substitute.For<Func<IDependencyScope, IAsyncDisposable>>();
+        throwingFactory.WithAnyArgs( _ =>
+        {
+            var result = Substitute.For<IAsyncDisposable>();
+            result.When( x => x.DisposeAsync() ).Throw( exception );
+            return result;
+        } );
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IDisposableDependency>().FromFactory( factory );
+        builder.Add<IAsyncDisposable>().FromFactory( throwingFactory );
+        var container = builder.Build();
+        var sut = container.RootScope.BeginScope();
+        var childScope = sut.BeginScope();
+        var grandchildScope = childScope.BeginScope();
+
+        var resolved1 = sut.Locator.Resolve<IDisposableDependency>();
+        var resolved2 = sut.Locator.Resolve<IAsyncDisposable>();
+        var resolved3 = childScope.Locator.Resolve<IDisposableDependency>();
+        var resolved4 = childScope.Locator.Resolve<IAsyncDisposable>();
+        var resolved5 = grandchildScope.Locator.Resolve<IDisposableDependency>();
+        var resolved6 = grandchildScope.Locator.Resolve<IAsyncDisposable>();
+
+        var action = Lambda.Of( () => sut.Dispose() );
+
+        action.Test( exc => Assertion.All(
+                resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved2.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved4.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved6.TestReceivedCalls( x => x.DisposeAsync(), count: 1 ),
+                sut.IsDisposed.TestTrue(),
+                childScope.IsDisposed.TestTrue(),
+                grandchildScope.IsDisposed.TestTrue(),
+                exc.TestType()
+                    .Exact<OwnedDependenciesDisposalAggregateException>( aggregateException => Assertion.All(
+                        aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                        aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                            .TestAll( (e, _) => Assertion.All(
+                                e.InnerException.TestRefEquals( exception ),
+                                Assertion.Any(
+                                    e.Scope.TestRefEquals( sut ),
+                                    e.Scope.TestRefEquals( childScope ),
+                                    e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void Dispose_ShouldNotDisposeDisposableDependencies_WhenTheirDisposalStrategyIsSetToRenounceOwnership()
     {
         var factory = Substitute.For<Func<IDependencyScope, IDisposable>>();
@@ -797,6 +923,31 @@ public class DependencyScopeTests : DependencyTestsBase
 
         Assertion.All(
                 resolved.TestDidNotReceiveCall( x => x.Dispose() ),
+                callback.CallAt( 0 ).Exists.TestTrue(),
+                callback.CallAt( 0 ).Arguments.TestSequence( [ resolved ] ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Dispose_ShouldCallCustomDisposableAsyncCallback_WhenTheirDisposalStrategyIsSetToUseCallback()
+    {
+        var factory = Substitute.For<Func<IDependencyScope, IAsyncDisposable>>();
+        factory.WithAnyArgs( _ => Substitute.For<IAsyncDisposable>() );
+        var callback = Substitute.For<Func<object, ValueTask>>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IAsyncDisposable>()
+            .FromFactory( factory )
+            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseAsyncCallback( callback ) );
+
+        var container = builder.Build();
+
+        var resolved = container.RootScope.Locator.Resolve<IAsyncDisposable>();
+
+        container.Dispose();
+
+        Assertion.All(
+                resolved.TestDidNotReceiveCall( x => x.DisposeAsync() ),
                 callback.CallAt( 0 ).Exists.TestTrue(),
                 callback.CallAt( 0 ).Arguments.TestSequence( [ resolved ] ) )
             .Go();

@@ -740,7 +740,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
 
-        action.Test( exc => Assertion.All( exc.TestRefEquals( exception ), scope.ScopedInstancesByResolverId.TestEmpty() ) ).Go();
+        action.Test( exc => Assertion.All( exc.TestRefEquals( exception ), scope.GetScopedInstancesByResolverId().TestEmpty() ) ).Go();
     }
 
     [Fact]

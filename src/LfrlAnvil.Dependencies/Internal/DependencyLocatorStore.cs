@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
         KeyedCache<TKey>? cache = null;
         using ( ReadLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
         {
-            if ( ! entered || Global.InternalAttachedScope.IsDisposed )
+            if ( ! entered || Global.InternalAttachedScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
 
             if ( _cachesByKeyType.TryGetValue( typeof( TKey ), out var outCache ) )
@@ -75,7 +75,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
 
         using ( WriteLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
         {
-            if ( ! entered || Global.InternalAttachedScope.IsDisposed )
+            if ( ! entered || Global.InternalAttachedScope.IsDisposedInternal )
                 ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
 
             if ( cache is null )

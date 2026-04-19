@@ -17,14 +17,18 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
-internal class DependencyScope : IDependencyScope, IDisposable
+internal class DependencyScope : IDependencyScope, IDisposable, IAsyncDisposable
 {
     internal readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim( LockRecursionPolicy.SupportsRecursion );
+    internal bool IsDisposedInternal;
+    private readonly DependencyLocatorStore _locatorStore;
+    private Stack<DependencyDisposer>? _disposers;
     private int _level;
 
     protected DependencyScope(DependencyContainer container, DependencyScope? parentScope, string? name)
@@ -33,10 +37,10 @@ internal class DependencyScope : IDependencyScope, IDisposable
         Name = name;
         InternalContainer = container;
         InternalParentScope = parentScope;
-        IsDisposed = false;
-        InternalDisposers = new Stack<DependencyDisposer>();
-        ScopedInstancesByResolverId = new Dictionary<ulong, object>();
-        InternalLocatorStore = DependencyLocatorStore.Create( container.KeyedResolversStore, container.GlobalResolvers, this );
+        IsDisposedInternal = false;
+        _disposers = null;
+        ScopedInstancesByResolverId = null;
+        _locatorStore = DependencyLocatorStore.Create( container.KeyedResolversStore, container.GlobalResolvers, this );
         FirstChild = null;
         LastChild = null;
         _level = -1;
@@ -44,10 +48,19 @@ internal class DependencyScope : IDependencyScope, IDisposable
 
     public string? Name { get; }
     public int OriginalThreadId { get; }
-    public bool IsDisposed { get; private set; }
+
+    public bool IsDisposed
+    {
+        get
+        {
+            using ( ReadLockSlim.TryEnter( Lock, out var entered ) )
+                return ! entered || IsDisposedInternal;
+        }
+    }
+
     public IDependencyContainer Container => InternalContainer;
     public IDependencyScope? ParentScope => InternalParentScope;
-    public IDependencyLocator Locator => InternalLocatorStore.Global;
+    public IDependencyLocator Locator => _locatorStore.Global;
     public bool IsRoot => InternalParentScope is null;
 
     public int Level
@@ -63,15 +76,18 @@ internal class DependencyScope : IDependencyScope, IDisposable
 
     internal DependencyContainer InternalContainer { get; }
     internal DependencyScope? InternalParentScope { get; }
-    internal DependencyLocatorStore InternalLocatorStore { get; }
-    internal Stack<DependencyDisposer> InternalDisposers { get; }
-    internal Dictionary<ulong, object> ScopedInstancesByResolverId { get; }
+    internal Dictionary<ulong, object>? ScopedInstancesByResolverId { get; private set; }
     internal ChildDependencyScope? FirstChild { get; private set; }
     internal ChildDependencyScope? LastChild { get; private set; }
 
     public void Dispose()
     {
-        InternalContainer.DisposeScope( this );
+        DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return InternalContainer.DisposeScopeAsync( this );
     }
 
     [Pure]
@@ -102,7 +118,7 @@ internal class DependencyScope : IDependencyScope, IDisposable
     internal DependencyLocator<TKey> GetKeyedLocator<TKey>(TKey key)
         where TKey : notnull
     {
-        return InternalLocatorStore.GetOrCreate( key );
+        return _locatorStore.GetOrCreate( key );
     }
 
     internal ChildDependencyScope BeginScope(string? name = null)
@@ -169,24 +185,61 @@ internal class DependencyScope : IDependencyScope, IDisposable
         child.NextSibling.PrevSibling = child.PrevSibling;
     }
 
-    internal Chain<OwnedDependencyDisposalException> FinalizeDisposal()
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddDisposer(DependencyDisposer disposer)
     {
         Assume.True( Lock.IsWriteLockHeld );
-        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        Assume.False( IsDisposedInternal );
+        _disposers ??= new Stack<DependencyDisposer>();
+        _disposers.Push( disposer );
+    }
 
-        while ( InternalDisposers.TryPop( out var disposer ) )
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal Dictionary<ulong, object> GetScopedInstancesByResolverId()
+    {
+        return ScopedInstancesByResolverId ??= new Dictionary<ulong, object>();
+    }
+
+    internal void MarkAsDisposed()
+    {
+        Assume.True( Lock.IsWriteLockHeld );
+        Assume.False( IsDisposedInternal );
+        IsDisposedInternal = true;
+    }
+
+    internal async ValueTask<Chain<OwnedDependencyDisposalException>> FinalizeDisposalAsync()
+    {
+        Stack<DependencyDisposer>? disposers;
+        using ( WriteLockSlim.Enter( Lock ) )
         {
-            var exception = disposer.TryDispose();
-            if ( exception is not null )
-                exceptions = exceptions.Extend( new OwnedDependencyDisposalException( this, exception ) );
+            Assume.True( IsDisposedInternal );
+            disposers = _disposers;
+            _disposers = null;
         }
 
-        InternalDisposers.Clear();
-        ScopedInstancesByResolverId.Clear();
-        InternalLocatorStore.Dispose();
-        FirstChild = null;
-        LastChild = null;
-        IsDisposed = true;
+        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        if ( disposers is not null )
+        {
+            while ( disposers.TryPop( out var disposer ) )
+            {
+                var exception = disposer.IsAsync
+                    ? await disposer.TryDisposeAsync().ConfigureAwait( false )
+                    : disposer.TryDispose();
+
+                if ( exception is not null )
+                    exceptions = exceptions.Extend( new OwnedDependencyDisposalException( this, exception ) );
+            }
+        }
+
+        using ( WriteLockSlim.Enter( Lock ) )
+        {
+            Assume.True( IsDisposedInternal );
+            ScopedInstancesByResolverId = null;
+            _locatorStore.Dispose();
+            FirstChild = null;
+            LastChild = null;
+        }
+
         return exceptions;
     }
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ namespace LfrlAnvil.Dependencies;
 public enum DependencyImplementorDisposalStrategyType : byte
 {
     /// <summary>
-    /// Invokes the <see cref="IDisposable.Dispose()"/> method if possible. This is the default strategy.
+    /// Invokes the <see cref="IAsyncDisposable.DisposeAsync()"/> or <see cref="IDisposable.Dispose()"/> method if possible.
+    /// This is the default strategy.
     /// </summary>
     UseDisposableInterface = 0,
 
