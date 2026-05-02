@@ -154,10 +154,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 }
             }
 
-            if ( parameter.HasDefaultValue
-                || parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
-                || (parameter.ParameterType.IsGenericType
-                    && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( parameter.IsInjectableParameterOptional( configuration ) )
             {
                 ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )null );
                 continue;
@@ -221,8 +218,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 }
             }
 
-            if ( member.IsInjectableMemberOptional( configuration )
-                || (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( member.IsInjectableMemberOptional( memberType, configuration ) )
             {
                 MemberResolutions[i] = KeyValuePair.Create( member, ( object? )null );
                 continue;
@@ -376,10 +372,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                     }
                 }
 
-                if ( ! parameter.HasDefaultValue
-                    && ! parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
-                    && ! (parameter.ParameterType.IsGenericType
-                        && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+                if ( ! parameter.IsInjectableParameterOptional( configuration ) )
                 {
                     score = notEligibleScore;
                     break;

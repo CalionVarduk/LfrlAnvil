@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Dependencies.Internal;
@@ -71,11 +70,17 @@ internal sealed class DependencyKey : IInternalDependencyKey
     }
 
     [Pure]
-    public Dictionary<Type, DependencyResolver> GetTargetResolvers(
-        Dictionary<Type, DependencyResolver> globalResolvers,
-        KeyedDependencyResolversStore keyedResolversStore)
+    public DependencyResolversStore GetTargetResolversStore(
+        in DependencyResolversStore globalResolvers,
+        in KeyedDependencyResolversStore keyedResolversStore)
     {
         return globalResolvers;
+    }
+
+    [Pure]
+    public DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator)
+    {
+        return dependencyLocator.InternalAttachedScope.InternalContainer.GlobalResolvers;
     }
 
     [Pure]
@@ -149,11 +154,23 @@ internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyK
     }
 
     [Pure]
-    public Dictionary<Type, DependencyResolver> GetTargetResolvers(
-        Dictionary<Type, DependencyResolver> globalResolvers,
-        KeyedDependencyResolversStore keyedResolversStore)
+    public DependencyResolversStore GetTargetResolversStore(
+        in DependencyResolversStore globalResolvers,
+        in KeyedDependencyResolversStore keyedResolversStore)
     {
         return keyedResolversStore.GetOrAddResolvers( Key );
+    }
+
+    [Pure]
+    public DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator)
+    {
+        if ( (( IDependencyLocator )dependencyLocator).IsKeyed
+            && dependencyLocator is DependencyLocator<TKey> keyedLocator
+            && EqualityComparer<TKey>.Default.Equals( Key, keyedLocator.Key ) )
+            return dependencyLocator.Resolvers;
+
+        var container = dependencyLocator.InternalAttachedScope.InternalContainer;
+        return container.KeyedResolversStore.GetResolversStore( Key, container );
     }
 
     [Pure]

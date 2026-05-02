@@ -77,6 +77,16 @@ public abstract class DependencyTestsBase : TestsBase
         public IGenericFoo<T> Foo { get; }
     }
 
+    public class OptionallyChainableGenericQux<T> : IGenericQux<T>
+    {
+        public OptionallyChainableGenericQux(IGenericFoo<T>? foo = null)
+        {
+            Foo = foo;
+        }
+
+        public IGenericFoo<T>? Foo { get; }
+    }
+
     public class ChainableFieldGenericFoo<T> : IGenericFoo<T>
     {
         private readonly Injected<IGenericBar<T>> _bar = default;
@@ -154,6 +164,19 @@ public abstract class DependencyTestsBase : TestsBase
         public string Text => $"{_member.Instance}{_param}";
     }
 
+    public class CtorAndValueMemberGenericImplementor<T> : IGenericFoo<T>
+    {
+        private readonly byte? _param;
+        private readonly Injected<int> _member = default;
+
+        public CtorAndValueMemberGenericImplementor(byte? value)
+        {
+            _param = value;
+        }
+
+        public string Text => $"{_member.Instance}{_param}";
+    }
+
     public class DefaultCtorParamGenericImplementor<T> : IGenericFoo<T>
     {
         public DefaultCtorParamGenericImplementor(IGenericBar<T>? bar = null)
@@ -183,6 +206,24 @@ public abstract class DependencyTestsBase : TestsBase
     }
 
     public class GenericFreeFoo<T1, T2> : IGenericFoo<T1> { }
+
+    public class MultiCtorGenericImplementor<T> : IGenericFoo<T>
+    {
+        public MultiCtorGenericImplementor(IGenericBar<T> bar)
+        {
+            Bar = bar;
+            Qux = null;
+        }
+
+        public MultiCtorGenericImplementor([OptionalDependency] IGenericQux<T>? qux)
+        {
+            Bar = null;
+            Qux = qux ?? new GenericImplementor<T>();
+        }
+
+        public IGenericBar<T>? Bar { get; }
+        public IGenericQux<T>? Qux { get; }
+    }
 
     public class Parameterized<T>
     {
@@ -564,5 +605,18 @@ public abstract class DependencyTestsBase : TestsBase
     {
         private readonly Injected<IBar> _foo;
         public IBar Bar => _foo.Instance;
+    }
+
+    public class GenericNestedMemberBase<T>
+    {
+        private readonly Injected<IGenericFoo<T>> _foo;
+
+        public IGenericFoo<T> Foo => _foo.Instance;
+    }
+
+    public class GenericNestedMember<T> : GenericNestedMemberBase<T>
+    {
+        private readonly Injected<IGenericBar<T>> _foo;
+        public IGenericBar<T> Bar => _foo.Instance;
     }
 }

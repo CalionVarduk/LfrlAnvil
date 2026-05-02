@@ -13,10 +13,8 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
@@ -29,9 +27,12 @@ internal interface IInternalDependencyKey : IDependencyKey
     OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore);
 
     [Pure]
-    Dictionary<Type, DependencyResolver> GetTargetResolvers(
-        Dictionary<Type, DependencyResolver> globalResolvers,
-        KeyedDependencyResolversStore keyedResolversStore);
+    DependencyResolversStore GetTargetResolversStore(
+        in DependencyResolversStore globalResolvers,
+        in KeyedDependencyResolversStore keyedResolversStore);
+
+    [Pure]
+    DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator);
 
     [Pure]
     IInternalDependencyKey WithType(Type type);

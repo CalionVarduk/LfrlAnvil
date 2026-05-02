@@ -369,6 +369,13 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string OpenGenericCannotBeResolved(Type type)
+    {
+        return $"'{type.GetDebugString()}' cannot be resolved because it is an open generic type.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static string GetScopeString(IDependencyScope scope, bool capitalize)
     {
         if ( capitalize )

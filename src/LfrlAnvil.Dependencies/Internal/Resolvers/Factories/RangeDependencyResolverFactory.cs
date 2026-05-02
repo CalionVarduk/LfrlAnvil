@@ -147,13 +147,15 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
         }
     }
 
-    protected override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
+    protected override DependencyResolver CreateResolver(
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         Assume.Conditional(
             Factories is not null,
             () => Assume.True( Factories!.All( f => ! f.HasState( DependencyResolverFactoryState.Invalid ) ) ) );
 
-        var expression = CreateExpression( idGenerator );
+        var expression = CreateExpression( idGenerator, configuration );
 
         return OnResolvingCallback is null
             ? new TransientDependencyResolver(
@@ -170,13 +172,15 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
     }
 
     [Pure]
-    private Expression<Func<DependencyScope, object>> CreateExpression(UlongSequenceGenerator idGenerator)
+    private Expression<Func<DependencyScope, object>> CreateExpression(
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         var (expressionBuilder, factoryCount) = CreateExpressionBuilder();
         for ( var i = 0; i < factoryCount; ++i )
         {
             Assume.IsNotNull( Factories );
-            expressionBuilder.AddDependencyResolverFactoryResolution( ElementType, $"e{i}", Factories[i], idGenerator );
+            expressionBuilder.AddDependencyResolverFactoryResolution( ElementType, $"e{i}", Factories[i], idGenerator, configuration );
         }
 
         var arrayInit = factoryCount > 0

@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
@@ -34,19 +35,21 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
     internal DependencyContainer(
         UlongSequenceGenerator idGenerator,
-        Dictionary<Type, DependencyResolver> globalResolvers,
+        DependencyResolversStore globalResolvers,
         KeyedDependencyResolversStore keyedResolversStore)
     {
-        GlobalResolvers = DependencyResolversStore.Create( globalResolvers );
+        GlobalResolvers = globalResolvers;
         KeyedResolversStore = keyedResolversStore;
         _idGenerator = idGenerator;
         _namedScopes = NamedDependencyScopeStore.Create();
         InternalRootScope = new RootDependencyScope( this );
+        SharedGenericImplementorsLock = new ReaderWriterLockSlim( LockRecursionPolicy.SupportsRecursion );
     }
 
     /// <inheritdoc />
     public IDependencyScope RootScope => InternalRootScope;
 
+    internal ReaderWriterLockSlim SharedGenericImplementorsLock { get; }
     internal RootDependencyScope InternalRootScope { get; }
     internal DependencyResolversStore GlobalResolvers { get; }
     internal KeyedDependencyResolversStore KeyedResolversStore { get; }
@@ -89,8 +92,8 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         DependencyResolver? resolver;
         using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
         {
-            if ( ! entered || locator.InternalAttachedScope.IsDisposedInternal )
-                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
+            if ( ! entered )
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( InternalRootScope ) ) );
 
             resolver = locator.Resolvers.TryGetResolver( dependencyType );
         }
@@ -119,6 +122,14 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         return ReferenceEquals( scope, InternalRootScope )
             ? DisposeRootScopeAsync()
             : DisposeChildScopeAsync( ReinterpretCast.To<ChildDependencyScope>( scope ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ulong GenerateResolverId()
+    {
+        using ( ExclusiveLock.Enter( _idGenerator ) )
+            return _idGenerator.Generate();
     }
 
     private async ValueTask DisposeRootScopeAsync()
@@ -155,6 +166,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         }
 
         InternalRootScope.Lock.DisposeGracefully();
+        SharedGenericImplementorsLock.DisposeGracefully();
 
         if ( exceptions.Count > 0 )
             ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( InternalRootScope, exceptions ) );
@@ -238,35 +250,54 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
     private object? TryResolveDynamicDependency(DependencyLocator locator, Type dependencyType)
     {
-        if ( ! dependencyType.IsGenericType || dependencyType.GetGenericTypeDefinition() != typeof( IEnumerable<> ) )
+        if ( ! dependencyType.IsGenericType || dependencyType.ContainsGenericParameters )
             return null;
 
-        using var @lock = UpgradeableReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered );
-        if ( ! entered || locator.InternalAttachedScope.IsDisposedInternal )
-            ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
+        var openDependencyType = dependencyType.GetGenericTypeDefinition();
+        return openDependencyType == typeof( IEnumerable<> )
+            ? ResolveEmptyRangeDependency( locator, dependencyType )
+            : TryResolveOpenGenericDependency( locator, dependencyType, openDependencyType );
+    }
 
-        var resolver = locator.Resolvers.TryGetResolver( dependencyType );
-        if ( resolver is not null )
-            return resolver;
-
+    private static object ResolveEmptyRangeDependency(DependencyLocator locator, Type dependencyType)
+    {
         var underlyingType = dependencyType.GetGenericArguments()[0];
         var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
         var emptyArray = emptyArrayMethod.Invoke( null, null );
         Assume.IsNotNull( emptyArray );
 
-        var id = GenerateResolverId();
-        resolver = new EmptyRangeResolver( id, dependencyType, emptyArray );
-        using ( @lock.Upgrade() )
-            locator.Resolvers.AddResolver( dependencyType, resolver );
+        var container = locator.InternalAttachedScope.InternalContainer;
+        var id = container.GenerateResolverId();
+        var resolver = new EmptyRangeResolver( id, dependencyType, emptyArray );
+        using ( WriteLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
+        {
+            if ( ! entered )
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
+
+            locator.Resolvers.GetOrAddResolver( dependencyType, resolver );
+        }
 
         return emptyArray;
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ulong GenerateResolverId()
+    private static object? TryResolveOpenGenericDependency(DependencyLocator locator, Type dependencyType, Type openDependencyType)
     {
-        using ( ExclusiveLock.Enter( _idGenerator ) )
-            return _idGenerator.Generate();
+        DependencyResolver? baseResolver;
+        using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
+        {
+            if ( ! entered )
+                ExceptionThrower.Throw(
+                    new ObjectDisposedException(
+                        null,
+                        Resources.ScopeIsDisposed( locator.InternalAttachedScope.InternalContainer.InternalRootScope ) ) );
+
+            baseResolver = locator.Resolvers.TryGetResolver( openDependencyType );
+        }
+
+        if ( baseResolver is not OpenGenericDependencyResolver openGenericResolver )
+            return null;
+
+        var resolver = openGenericResolver.Close( locator, dependencyType );
+        return resolver.Create( locator.InternalAttachedScope, dependencyType );
     }
 }

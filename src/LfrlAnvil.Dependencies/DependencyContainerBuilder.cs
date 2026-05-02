@@ -15,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -169,26 +168,35 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                 return new DependencyContainerBuildResult<DependencyContainer>( null, messages );
         }
 
-        // TODO: allow open generics
-        foreach ( var factory in resolverFactories.Where( static f => ! f.IsOpenGeneric ) )
-            factory.Build( idGenerator );
+        foreach ( var factory in resolverFactories )
+            factory.Build( idGenerator, Configuration );
 
         var defaultResolvers = extractionParams.GetDefaultResolvers();
-        var globalDependencyResolvers = new Dictionary<Type, DependencyResolver>( defaultResolvers );
+        var globalResolvers = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( defaultResolvers ) );
         var keyedDependencyResolvers = KeyedDependencyResolversStore.Create( defaultResolvers );
 
         foreach ( var (dependencyKey, factory) in extractionParams.ResolverFactories )
         {
-            if ( factory.IsOpenGeneric )
-                continue;
+            var dependencyStore = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
+                .GetTargetResolversStore( in globalResolvers, in keyedDependencyResolvers );
 
-            var resolvers = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
-                .GetTargetResolvers( globalDependencyResolvers, keyedDependencyResolvers );
+            var resolver = factory.GetResolver();
+            dependencyStore.Resolvers.TryAdd( dependencyKey.Type, resolver );
 
-            resolvers.TryAdd( dependencyKey.Type, factory.GetResolver() );
+            if ( factory.ImplementorKey.IsShared && factory is RegisteredClosedGenericDependencyResolverFactory closedGenericFactory )
+            {
+                var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( closedGenericFactory.ImplementorKey.Value )
+                    .GetTargetResolversStore( in globalResolvers, in keyedDependencyResolvers );
+
+                implementorStore.SharedGenericResolvers.TryAdd(
+                    new SharedGenericKey(
+                        closedGenericFactory.Base.ImplementorKey.Value.Type,
+                        closedGenericFactory.ImplementorKey.Value.Type ),
+                    resolver );
+            }
         }
 
-        var result = new DependencyContainer( idGenerator, globalDependencyResolvers, keyedDependencyResolvers );
+        var result = new DependencyContainer( idGenerator, globalResolvers, keyedDependencyResolvers );
         return new DependencyContainerBuildResult<DependencyContainer>( result, messages );
     }
 

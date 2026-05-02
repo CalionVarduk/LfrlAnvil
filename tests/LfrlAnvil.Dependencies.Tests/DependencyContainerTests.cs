@@ -891,13 +891,38 @@ public partial class DependencyContainerTests : DependencyTestsBase
     [InlineData( DependencyLifetime.Scoped )]
     [InlineData( DependencyLifetime.ScopedSingleton )]
     [InlineData( DependencyLifetime.Singleton )]
-    public void ResolvingDependency_BasedOnFactory_ShouldThrowObjectDisposedException_WhenScopeIsDisposed(DependencyLifetime lifetime)
+    public void ResolvingDependency_BasedOnFactory_ShouldThrowObjectDisposedException_WhenContainerIsDisposed(DependencyLifetime lifetime)
     {
         var factory = Substitute.For<Func<IDependencyScope, object>>();
         factory.WithAnyArgs( _ => new Implementor() );
 
         var builder = new DependencyContainerBuilder();
         builder.Add<IFoo>().SetLifetime( lifetime ).FromFactory( factory );
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+        sut.Dispose();
+
+        var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
+
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    public void ResolvingDependency_BasedOnFactory_ShouldThrowObjectDisposedException_WhenScopeIsDisposedAndResolverUsesScopeStorage(
+        DependencyLifetime lifetime)
+    {
+        var factory = Substitute.For<Func<IDependencyScope, object>>();
+        factory.WithAnyArgs( _ => new Implementor() );
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( lifetime )
+            .FromFactory( factory )
+            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( _ => { } ) );
+
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
         scope.Dispose();
@@ -912,10 +937,33 @@ public partial class DependencyContainerTests : DependencyTestsBase
     [InlineData( DependencyLifetime.Scoped )]
     [InlineData( DependencyLifetime.ScopedSingleton )]
     [InlineData( DependencyLifetime.Singleton )]
-    public void ResolvingDependency_BasedOnImplementor_ShouldThrowObjectDisposedException_WhenScopeIsDisposed(DependencyLifetime lifetime)
+    public void ResolvingDependency_BasedOnImplementor_ShouldThrowObjectDisposedException_WhenContainerIsDisposed(
+        DependencyLifetime lifetime)
     {
         var builder = new DependencyContainerBuilder();
         builder.Add<IFoo>().SetLifetime( lifetime ).FromType<Implementor>();
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+        sut.Dispose();
+
+        var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
+
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    public void ResolvingDependency_BasedOnImplementor_ShouldThrowObjectDisposedException_WhenScopeIsDisposedAndResolverUsesScopeStorage(
+        DependencyLifetime lifetime)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( lifetime )
+            .FromType<Implementor>()
+            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( _ => { } ) );
+
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
         scope.Dispose();

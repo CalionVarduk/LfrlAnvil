@@ -14,9 +14,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Generators;
 
@@ -32,7 +30,9 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
 
     protected abstract Action<object, Type, IDependencyScope>? OnCreatedCallback { get; }
 
-    protected override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
+    protected override DependencyResolver CreateResolver(
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         Assume.IsNotNull( ConstructorInfo );
         var (expressionBuilder, parameterCount, memberCount) = CreateExpressionBuilder();
@@ -50,7 +50,7 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
             else
             {
                 var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
-                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator );
+                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator, configuration );
             }
         }
 
@@ -71,16 +71,10 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
             else
             {
                 var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
-                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator );
+                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator, configuration );
             }
 
-            var memberCtor = memberType.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
-                .First( c =>
-                {
-                    var parameters = c.GetParameters();
-                    return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
-                } );
-
+            var memberCtor = memberType.FindInjectableMemberCtor( instanceType );
             memberBindings[i] = expressionBuilder.CreateMemberBindingForLastVariable( member, memberCtor );
         }
 

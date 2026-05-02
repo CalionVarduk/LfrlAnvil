@@ -132,12 +132,12 @@ internal class DependencyResolverFactory
         pathBuffer.Clear();
     }
 
-    internal void Build(UlongSequenceGenerator idGenerator)
+    internal void Build(UlongSequenceGenerator idGenerator, IDependencyContainerConfigurationBuilder configuration)
     {
         if ( IsFinished )
             return;
 
-        var resolver = CreateResolver( idGenerator );
+        var resolver = CreateResolver( idGenerator, configuration );
         Finish( resolver );
     }
 
@@ -282,7 +282,9 @@ internal class DependencyResolverFactory
 
     protected virtual void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path) { }
 
-    protected virtual DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
+    protected virtual DependencyResolver CreateResolver(
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         throw new InvalidOperationException( nameof( CreateResolver ) + " method must be overriden." );
     }

@@ -15,15 +15,17 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
     public void Ctor_ShouldCreateWithDefaultTransientLifetimeAndUseDisposableInterfaceStrategy()
     {
         var sut = new DependencyContainerBuilder();
-        sut.DefaultLifetime.TestEquals( DependencyLifetime.Transient ).Go();
-        sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ).Go();
-        sut.DefaultDisposalStrategy.Callback.TestNull().Go();
-        sut.Configuration.InjectablePropertyType.TestRefEquals( typeof( Injected<> ) ).Go();
-        sut.Configuration.OptionalDependencyAttributeType.TestRefEquals( typeof( OptionalDependencyAttribute ) ).Go();
-        sut.Configuration.TreatCaptiveDependenciesAsErrors.TestFalse().Go();
-        (( IDependencyLocatorBuilder )sut).KeyType.TestNull().Go();
-        (( IDependencyLocatorBuilder )sut).Key.TestNull().Go();
-        (( IDependencyLocatorBuilder )sut).IsKeyed.TestFalse().Go();
+        Assertion.All(
+                sut.DefaultLifetime.TestEquals( DependencyLifetime.Transient ),
+                sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                sut.DefaultDisposalStrategy.Callback.TestNull(),
+                sut.Configuration.InjectablePropertyType.TestRefEquals( typeof( Injected<> ) ),
+                sut.Configuration.OptionalDependencyAttributeType.TestRefEquals( typeof( OptionalDependencyAttribute ) ),
+                sut.Configuration.TreatCaptiveDependenciesAsErrors.TestFalse(),
+                (( IDependencyLocatorBuilder )sut).KeyType.TestNull(),
+                (( IDependencyLocatorBuilder )sut).Key.TestNull(),
+                (( IDependencyLocatorBuilder )sut).IsKeyed.TestFalse() )
+            .Go();
     }
 
     [Theory]

@@ -50,7 +50,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Dictionary<Type, DependencyResolver> GetOrAddResolvers<TKey>(TKey key)
+    internal DependencyResolversStore GetOrAddResolvers<TKey>(TKey key)
         where TKey : notnull
     {
         ref var cacheRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _cachesByKeyType, typeof( TKey ), out var exists )!;
@@ -62,7 +62,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
         if ( ! exists )
             result = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( _defaultResolvers ) );
 
-        return result.Resolvers;
+        return result;
     }
 
     [Pure]

@@ -21,7 +21,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -194,10 +193,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 }
             }
 
-            if ( parameter.HasDefaultValue
-                || parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
-                || (parameter.ParameterType.IsGenericType
-                    && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( parameter.IsInjectableParameterOptional( configuration ) )
             {
                 ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )null );
                 continue;
@@ -257,8 +253,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 }
             }
 
-            if ( member.IsInjectableMemberOptional( configuration )
-                || (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( member.IsInjectableMemberOptional( memberType, configuration ) )
             {
                 MemberResolutions[i] = KeyValuePair.Create( member, ( object? )null );
                 continue;
@@ -271,9 +266,63 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         return true;
     }
 
-    protected override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
+    protected override DependencyResolver CreateResolver(
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
-        return base.CreateResolver( idGenerator );
+        Assume.IsNotNull( ConstructorInfo );
+
+        DependencyResolver?[]? parameterResolvers = null;
+        KeyValuePair<MemberInfo, DependencyResolver?>[]? memberResolvers = null;
+
+        if ( ParameterResolutions is not null )
+        {
+            Assume.ContainsAtLeast( ParameterResolutions, 1 );
+            parameterResolvers = new DependencyResolver?[ParameterResolutions.Length];
+            for ( var i = 0; i < parameterResolvers.Length; ++i )
+            {
+                var resolution = ParameterResolutions[i].Value;
+                if ( resolution is null )
+                    parameterResolvers[i] = null;
+                else
+                {
+                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
+                    factory.Build( idGenerator, configuration );
+                    parameterResolvers[i] = factory.GetResolver();
+                }
+            }
+        }
+
+        if ( MemberResolutions is not null )
+        {
+            Assume.ContainsAtLeast( MemberResolutions, 1 );
+            memberResolvers = new KeyValuePair<MemberInfo, DependencyResolver?>[MemberResolutions.Length];
+            for ( var i = 0; i < memberResolvers.Length; ++i )
+            {
+                var resolution = MemberResolutions[i];
+                if ( resolution.Value is null )
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( DependencyResolver? )null );
+                else
+                {
+                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution.Value );
+                    factory.Build( idGenerator, configuration );
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( DependencyResolver? )factory.GetResolver() );
+                }
+            }
+        }
+
+        return new OpenGenericDependencyResolver(
+            idGenerator.Generate(),
+            ImplementorBuilder.ImplementorType,
+            ImplementorBuilder.DisposalStrategy,
+            ConstructorInfo,
+            parameterResolvers,
+            memberResolvers,
+            ImplementorBuilder.OnResolvingCallback,
+            ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
+            configuration.InjectablePropertyType,
+            ImplementorKey.IsShared ? ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value ) : null,
+            Lifetime );
     }
 
     [Pure]
@@ -407,10 +456,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                     }
                 }
 
-                if ( ! parameter.HasDefaultValue
-                    && ! parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
-                    && ! (parameter.ParameterType.IsGenericType
-                        && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+                if ( ! parameter.IsInjectableParameterOptional( configuration ) )
                 {
                     score = notEligibleScore;
                     break;

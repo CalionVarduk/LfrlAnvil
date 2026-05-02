@@ -147,11 +147,10 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
             }
         }
 
-        var injectableMembers = ConstructorInfo.DeclaringType?.FindInjectableMembers( configuration.InjectablePropertyType ) ?? [ ];
-        if ( injectableMembers.Count > 0 )
+        if ( Base.MemberResolutions is not null )
         {
-            Assume.IsNotNull( Base.MemberResolutions );
-            Assume.Equals( Base.MemberResolutions.Length, injectableMembers.Count );
+            var injectableMembers = ConstructorInfo.DeclaringType?.FindInjectableMembers( configuration.InjectablePropertyType ) ?? [ ];
+            Assume.ContainsExactly( injectableMembers, Base.MemberResolutions.Length );
             MemberResolutions = new KeyValuePair<MemberInfo, object?>[injectableMembers.Count];
 
             for ( var i = 0; i < MemberResolutions.Length; ++i )
@@ -159,9 +158,9 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                 var member = injectableMembers[i];
                 var memberInjectableType = member.GetInjectableMemberType();
                 var memberType = memberInjectableType.GetGenericArguments()[0];
-                var baseResolution = Base.MemberResolutions[i];
+                var baseResolution = member.FindCorrespondingOpenTypeMemberResolution<object>( Base.MemberResolutions );
 
-                if ( baseResolution.Value is null )
+                if ( baseResolution is null )
                 {
                     var implementorKey = InternalImplementorKey.WithType( memberType );
                     if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
@@ -175,7 +174,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                 }
                 else
                 {
-                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
+                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution );
                     if ( ! baseResolver.IsOpenGeneric )
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )baseResolver );
                     else

@@ -107,9 +107,18 @@ Low priority/probably won't do:
   - while the decorator registration resolves ctor-param/member from that keyed locator
   - instead, range index from the range dependency builder could be used and decorated registration could be marked as excluded from range
   - this, however, would complicate resolver factories extraction etc.
+- custom ctor-param/member resolutions using factories don't enable circular dependency checks; they should
+- add possibility to disable circular dependency checks in resolvers
+- add possibility to track captive dependencies during manual open generic resolver closure and potentially treat them as errors
+  - mostly range resolvers are the issue, they currently don't store underlying resolvers, only the expression/delegate
+  - this only impacts dynamic parameter/member generic specializations
+  - alternative is to do it during container building, since generic dependency builders will know about their open versions etc.
 - open generics:
   - support factory-based resolution and ctor-param/member custom resolution
     - would require an additional 'Type requestedType' parameter
+    - ctor-param/member custom resolution would be quite easy to implement due to resolver factory structure
+  - add validation of additional notnull generic constrains on implementors
+    - complex, requires working with compiler-generated attributes
 
 ### MessageBroker: Refinements
 

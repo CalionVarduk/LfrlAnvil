@@ -180,10 +180,19 @@ internal sealed class ExpressionBuilder
         Type variableType,
         string variableName,
         DependencyResolverFactory factory,
-        UlongSequenceGenerator idGenerator)
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         var variable = AddVariable( variableType, variableName );
-        var rawValue = GetDependencyResolverFactoryResolutionRawValue( variableType, factory, idGenerator );
+        var rawValue = GetDependencyResolverFactoryResolutionRawValue( variableType, factory, idGenerator, configuration );
+        AddRawValueAssignment( variable, rawValue );
+        return variable;
+    }
+
+    internal ParameterExpression AddDependencyResolverResolution(Type variableType, string variableName, DependencyResolver resolver)
+    {
+        var variable = AddVariable( variableType, variableName );
+        var rawValue = GetDependencyResolverResolutionRawValue( variableType, resolver );
         AddRawValueAssignment( variable, rawValue );
         return variable;
     }
@@ -268,11 +277,18 @@ internal sealed class ExpressionBuilder
     private Expression GetDependencyResolverFactoryResolutionRawValue(
         Type variableType,
         DependencyResolverFactory factory,
-        UlongSequenceGenerator idGenerator)
+        UlongSequenceGenerator idGenerator,
+        IDependencyContainerConfigurationBuilder configuration)
     {
-        factory.Build( idGenerator );
+        factory.Build( idGenerator, configuration );
         var resolver = factory.GetResolver();
+        return GetDependencyResolverResolutionRawValue( variableType, resolver );
+    }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Expression GetDependencyResolverResolutionRawValue(Type variableType, DependencyResolver resolver)
+    {
         return Expression.Call(
             Expression.Constant( resolver ),
             CreateMethodsByResolverType[resolver.GetType()],

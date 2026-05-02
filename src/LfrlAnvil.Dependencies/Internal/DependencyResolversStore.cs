@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -26,11 +27,13 @@ internal readonly struct DependencyResolversStore : IDisposable
 {
     internal readonly ReaderWriterLockSlim Lock;
     internal readonly Dictionary<Type, DependencyResolver> Resolvers;
+    internal readonly Dictionary<SharedGenericKey, DependencyResolver> SharedGenericResolvers;
 
     private DependencyResolversStore(Dictionary<Type, DependencyResolver> resolvers)
     {
         Lock = new ReaderWriterLockSlim( LockRecursionPolicy.SupportsRecursion );
         Resolvers = resolvers;
+        SharedGenericResolvers = new Dictionary<SharedGenericKey, DependencyResolver>();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -55,10 +58,38 @@ internal readonly struct DependencyResolversStore : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddResolver(Type type, DependencyResolver resolver)
+    internal DependencyResolver GetOrAddResolver(Type type, DependencyResolver resolver)
     {
         Assume.True( Lock.IsWriteLockHeld );
-        Resolvers.Add( type, resolver );
+        ref var current = ref CollectionsMarshal.GetValueRefOrAddDefault( Resolvers, type, out var exists )!;
+        if ( ! exists )
+            current = resolver;
+
+        return current;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void SetResolver(Type type, DependencyResolver resolver)
+    {
+        Assume.True( Lock.IsWriteLockHeld );
+        ref var current = ref CollectionsMarshal.GetValueRefOrAddDefault( Resolvers, type, out var exists )!;
+        if ( exists )
+            Assume.True( ReferenceEquals( current, resolver ) );
+        else
+            current = resolver;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DependencyResolver? TryGetSharedGenericResolver(Type openType, Type closedType)
+    {
+        return SharedGenericResolvers.TryGetValue( new SharedGenericKey( openType, closedType ), out var value ) ? value : null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddSharedGenericResolver(Type openType, Type closedType, DependencyResolver resolver)
+    {
+        SharedGenericResolvers.Add( new SharedGenericKey( openType, closedType ), resolver );
     }
 
     [Pure]

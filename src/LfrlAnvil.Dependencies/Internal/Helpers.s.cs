@@ -218,10 +218,66 @@ internal static class Helpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static bool IsInjectableMemberOptional(this MemberInfo member, IDependencyContainerConfigurationBuilder configuration)
+    internal static bool IsInjectableMemberOptional(
+        this MemberInfo member,
+        Type memberType,
+        IDependencyContainerConfigurationBuilder configuration)
     {
         member = member.GetActualMember();
-        return member.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: true );
+        Assume.Equals( memberType, member.GetInjectableMemberType().GetGenericArguments()[0] );
+        return member.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: true )
+            || (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof( IEnumerable<> ));
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsInjectableParameterOptional(this ParameterInfo parameter, IDependencyContainerConfigurationBuilder configuration)
+    {
+        return parameter.HasDefaultValue
+            || parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
+            || (parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> ));
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static ConstructorInfo FindInjectableMemberCtor(this Type memberType, Type instanceType)
+    {
+        Assume.True(
+            memberType.IsGenericType
+            && memberType.GetGenericArguments().Length == 1
+            && memberType.GetGenericArguments()[0] == instanceType );
+
+        var ctor = memberType.GetConstructor( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, [ instanceType ] );
+        Assume.IsNotNull( ctor );
+        return ctor;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static T? FindCorrespondingOpenTypeMemberResolution<T>(
+        this MemberInfo closedTypeMember,
+        ReadOnlyArray<KeyValuePair<MemberInfo, T?>> openMemberResolutions)
+        where T : class
+    {
+        Assume.True( closedTypeMember.MemberType is MemberTypes.Field or MemberTypes.Property );
+
+        var closedType = closedTypeMember.DeclaringType;
+        Assume.IsNotNull( closedType );
+        var closedTypeDefinition = closedType.IsGenericType ? closedType.GetGenericTypeDefinition() : closedType;
+
+        foreach ( var (openTypeMember, resolution) in openMemberResolutions )
+        {
+            if ( openTypeMember.Name != closedTypeMember.Name )
+                continue;
+
+            var openType = openTypeMember.DeclaringType;
+            Assume.IsNotNull( openType );
+            var openTypeDefinition = openType.IsGenericType ? openType.GetGenericTypeDefinition() : openType;
+            if ( openTypeDefinition == closedTypeDefinition )
+                return resolution;
+        }
+
+        return null;
     }
 
     [Pure]
