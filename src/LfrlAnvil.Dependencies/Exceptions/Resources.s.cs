@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -126,6 +127,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string FailedToFindValidCtorForClosedGenericType(Type openType, Type closedType)
+    {
+        return
+            $"Failed to find a valid constructor for type '{closedType.GetDebugString()}' from open generic type '{openType.GetDebugString()}'.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ProvidedConstructorDoesNotCreateInstancesOfCorrectType(ConstructorInfo ctor)
     {
         return
@@ -221,10 +230,14 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string UnusedResolution<T>(ConstructorInfo ctor, int index, InjectableDependencyResolution<T> resolution)
+    internal static string UnusedResolution<T>(
+        ConstructorInfo ctor,
+        int index,
+        IDependencyKey? implementorKey,
+        Expression<Func<IDependencyScope, object>>? factory)
         where T : class, ICustomAttributeProvider
     {
-        var resolutionText = resolution.Factory is not null ? "from factory" : $"from implementor {resolution.ImplementorKey}";
+        var resolutionText = factory is not null ? "from factory" : $"from implementor {implementorKey}";
 
         return typeof( T ) == typeof( ParameterInfo )
             ? $"Explicit parameter resolution {resolutionText} (index: {index}) in '{ctor.GetDebugString( includeDeclaringType: true )}' constructor is unused."

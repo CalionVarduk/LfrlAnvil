@@ -938,7 +938,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.Add<IAsyncDisposable>()
             .FromFactory( factory )
-            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseAsyncCallback( callback ) );
+            .SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
 
         var container = builder.Build();
 

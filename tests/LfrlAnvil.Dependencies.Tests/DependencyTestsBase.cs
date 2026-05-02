@@ -18,6 +18,14 @@ public abstract class DependencyTestsBase : TestsBase
         string? Text { get; }
     }
 
+    public interface IGenericFoo<T> { }
+
+    public interface IGenericBar<T> { }
+
+    public interface IGenericQux<T> { }
+
+    public interface IGenericMulti<T1, T2, T3> { }
+
     public interface IBuiltIn
     {
         IDependencyContainer Container { get; }
@@ -36,6 +44,160 @@ public abstract class DependencyTestsBase : TestsBase
     }
 
     public class Implementor : IFoo, IBar, IQux { }
+
+    public class GenericImplementor<T> : IGenericFoo<T>, IGenericBar<T>, IGenericQux<T> { }
+
+    public class ChainableGenericFoo<T> : IGenericFoo<T>
+    {
+        public ChainableGenericFoo(IGenericBar<T> bar)
+        {
+            Bar = bar;
+        }
+
+        public IGenericBar<T> Bar { get; }
+    }
+
+    public class ChainableGenericBar<T> : IGenericBar<T>
+    {
+        public ChainableGenericBar(IGenericQux<T> qux)
+        {
+            Qux = qux;
+        }
+
+        public IGenericQux<T> Qux { get; }
+    }
+
+    public class ChainableGenericQux<T> : IGenericQux<T>
+    {
+        public ChainableGenericQux(IGenericFoo<T> foo)
+        {
+            Foo = foo;
+        }
+
+        public IGenericFoo<T> Foo { get; }
+    }
+
+    public class ChainableFieldGenericFoo<T> : IGenericFoo<T>
+    {
+        private readonly Injected<IGenericBar<T>> _bar = default;
+        public IGenericBar<T> Bar => _bar.Instance;
+    }
+
+    public class ChainableFieldGenericBar<T> : IGenericBar<T>
+    {
+        private readonly Injected<IGenericQux<T>> _qux = default;
+        public IGenericQux<T> Qux => _qux.Instance;
+    }
+
+    public class ChainableFieldGenericQux<T> : IGenericQux<T>
+    {
+        private readonly Injected<IGenericFoo<T>> _foo = default;
+        public IGenericFoo<T> Foo => _foo.Instance;
+    }
+
+    public class ChainablePropertyGenericFoo<T> : IGenericFoo<T>
+    {
+        private Injected<IGenericBar<T>> _bar { get; } = default;
+        public IGenericBar<T> Bar => _bar.Instance;
+    }
+
+    public class ChainablePropertyGenericBar<T> : IGenericBar<T>
+    {
+        private Injected<IGenericQux<T>> _qux { get; } = default;
+        public IGenericQux<T> Qux => _qux.Instance;
+    }
+
+    public class ChainablePropertyGenericQux<T> : IGenericQux<T>
+    {
+        private Injected<IGenericFoo<T>> _foo { get; } = default;
+        public IGenericFoo<T> Foo => _foo.Instance;
+    }
+
+    public class DecoratedGenericFoo<T> : IGenericFoo<T>
+    {
+        public DecoratedGenericFoo(IGenericFoo<T> inner)
+        {
+            Inner = inner;
+        }
+
+        public IGenericFoo<T> Inner { get; }
+    }
+
+    public abstract class GenericAbstractFoo<T> : IGenericFoo<T> { }
+
+    public class ExplicitCtorGenericImplementor<T> : IGenericFoo<T>
+    {
+        public ExplicitCtorGenericImplementor(string text)
+        {
+            Text = text;
+        }
+
+        public string Text { get; }
+    }
+
+    public class FieldGenericImplementor<T> : IGenericFoo<T>
+    {
+        private readonly Injected<string> _text;
+        public string Text => _text.Instance;
+    }
+
+    public class CtorAndRefMemberGenericImplementor<T> : IGenericFoo<T>
+    {
+        private readonly int _param;
+        private readonly Injected<string> _member = default;
+
+        public CtorAndRefMemberGenericImplementor(int value)
+        {
+            _param = value;
+        }
+
+        public string Text => $"{_member.Instance}{_param}";
+    }
+
+    public class DefaultCtorParamGenericImplementor<T> : IGenericFoo<T>
+    {
+        public DefaultCtorParamGenericImplementor(IGenericBar<T>? bar = null)
+        {
+            Bar = bar;
+        }
+
+        public IGenericBar<T>? Bar { get; }
+    }
+
+    public class OptionalCtorParamGenericImplementor<T> : IGenericFoo<T>
+    {
+        public OptionalCtorParamGenericImplementor([OptionalDependency] IGenericBar<T>? bar)
+        {
+            Bar = bar;
+        }
+
+        public IGenericBar<T>? Bar { get; }
+    }
+
+    public class OptionalMemberGenericImplementor<T> : IGenericFoo<T>
+    {
+        [OptionalDependency]
+        private readonly Injected<IGenericBar<T>?> _bar;
+
+        public IGenericBar<T>? Bar => _bar.Instance;
+    }
+
+    public class GenericFreeFoo<T1, T2> : IGenericFoo<T1> { }
+
+    public class Parameterized<T>
+    {
+        public Parameterized(T inner)
+        {
+            Inner = inner;
+        }
+
+        public T Inner { get; }
+    }
+
+    public class ParameterizedMember<T>
+    {
+        public Injected<T> Inner { get; }
+    }
 
     public class ChainableFoo : IFoo
     {
@@ -389,5 +551,18 @@ public abstract class DependencyTestsBase : TestsBase
         }
 
         public IEnumerable<IWithText> Texts { get; }
+    }
+
+    public class NestedMemberBase
+    {
+        private readonly Injected<IFoo> _foo;
+
+        public IFoo Foo => _foo.Instance;
+    }
+
+    public class NestedMember : NestedMemberBase
+    {
+        private readonly Injected<IBar> _foo;
+        public IBar Bar => _foo.Instance;
     }
 }

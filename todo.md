@@ -98,10 +98,18 @@ Might do:
 
 ### Dependencies: Refinements
 
-- consider adding some sort of Decorate method/extension
-  - or some extension method?
 - hosted services registration?
 - options registration?
+
+Low priority/probably won't do:
+- better decorator registration support
+  - currently, the goto way is to define a keyed locator and register base implementations there
+  - while the decorator registration resolves ctor-param/member from that keyed locator
+  - instead, range index from the range dependency builder could be used and decorated registration could be marked as excluded from range
+  - this, however, would complicate resolver factories extraction etc.
+- open generics:
+  - support factory-based resolution and ctor-param/member custom resolution
+    - would require an additional 'Type requestedType' parameter
 
 ### MessageBroker: Refinements
 

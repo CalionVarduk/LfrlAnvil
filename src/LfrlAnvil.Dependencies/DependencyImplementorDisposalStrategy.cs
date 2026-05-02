@@ -85,11 +85,11 @@ public readonly struct DependencyImplementorDisposalStrategy
     /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
     /// with <see cref="DependencyImplementorDisposalStrategyType.UseCallback"/> and custom asynchronous <paramref name="callback"/>.
     /// </summary>
-    /// <param name="callback">Custom disposal callback.</param>
+    /// <param name="callback">Custom asynchronous disposal callback.</param>
     /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static DependencyImplementorDisposalStrategy UseAsyncCallback(Func<object, ValueTask> callback)
+    public static DependencyImplementorDisposalStrategy UseCallback(Func<object, ValueTask> callback)
     {
         return new DependencyImplementorDisposalStrategy( DependencyImplementorDisposalStrategyType.UseCallback, callback );
     }

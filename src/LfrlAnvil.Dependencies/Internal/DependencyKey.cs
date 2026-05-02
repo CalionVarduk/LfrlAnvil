@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,6 +62,12 @@ internal sealed class DependencyKey : IInternalDependencyKey
     public DependencyImplementorBuilder? GetSharedImplementor(DependencyLocatorBuilderStore builderStore)
     {
         return builderStore.Global.SharedImplementors.GetValueOrDefault( Type );
+    }
+
+    [Pure]
+    public OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore)
+    {
+        return builderStore.Global.SharedGenericImplementors.GetValueOrDefault( Type );
     }
 
     [Pure]
@@ -133,6 +139,13 @@ internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyK
     {
         var locator = builderStore.GetKeyed( Key );
         return locator?.SharedImplementors.GetValueOrDefault( Type );
+    }
+
+    [Pure]
+    public OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore)
+    {
+        var locator = builderStore.GetKeyed( Key );
+        return locator?.SharedGenericImplementors.GetValueOrDefault( Type );
     }
 
     [Pure]

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ internal interface IInternalDependencyKey : IDependencyKey
 {
     [Pure]
     DependencyImplementorBuilder? GetSharedImplementor(DependencyLocatorBuilderStore builderStore);
+
+    [Pure]
+    OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore);
 
     [Pure]
     Dictionary<Type, DependencyResolver> GetTargetResolvers(

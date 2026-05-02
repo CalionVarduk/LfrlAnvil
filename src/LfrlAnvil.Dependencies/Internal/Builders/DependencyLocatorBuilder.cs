@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,13 +28,17 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DefaultLifetime = DependencyLifetime.Transient;
         DefaultDisposalStrategy = DependencyImplementorDisposalStrategy.UseDisposableInterface();
         SharedImplementors = new Dictionary<Type, DependencyImplementorBuilder>();
+        SharedGenericImplementors = new Dictionary<Type, OpenGenericDependencyImplementorBuilder>();
         Dependencies = new Dictionary<Type, DependencyRangeBuilder>();
+        GenericDependencies = new Dictionary<Type, OpenGenericDependencyRangeBuilder>();
     }
 
     public DependencyLifetime DefaultLifetime { get; private set; }
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy { get; private set; }
     internal Dictionary<Type, DependencyImplementorBuilder> SharedImplementors { get; }
+    internal Dictionary<Type, OpenGenericDependencyImplementorBuilder> SharedGenericImplementors { get; }
     internal Dictionary<Type, DependencyRangeBuilder> Dependencies { get; }
+    internal Dictionary<Type, OpenGenericDependencyRangeBuilder> GenericDependencies { get; }
 
     Type? IDependencyLocatorBuilder.KeyType => null;
     object? IDependencyLocatorBuilder.Key => null;
@@ -51,9 +55,26 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         return result;
     }
 
+    public IOpenGenericDependencyImplementorBuilder AddSharedGenericImplementor(Type type)
+    {
+        AssertRegisteredGenericType( type );
+
+        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( SharedGenericImplementors, type, out var exists )!;
+        if ( ! exists )
+            result = new OpenGenericDependencyImplementorBuilder( this, type );
+
+        return result;
+    }
+
     public IDependencyBuilder Add(Type type)
     {
         var range = GetDependencyRange( type );
+        return range.Add();
+    }
+
+    public IOpenGenericDependencyBuilder AddGeneric(Type type)
+    {
+        var range = GetGenericDependencyRange( type );
         return range.Add();
     }
 
@@ -76,6 +97,12 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         return SharedImplementors.GetValueOrDefault( type );
     }
 
+    [Pure]
+    public IOpenGenericDependencyImplementorBuilder? TryGetSharedGenericImplementor(Type type)
+    {
+        return SharedGenericImplementors.GetValueOrDefault( type );
+    }
+
     public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
         AssertRegisteredType( type );
@@ -83,6 +110,17 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         ref var range = ref CollectionsMarshal.GetValueRefOrAddDefault( Dependencies, type, out var exists )!;
         if ( ! exists )
             range = new DependencyRangeBuilder( this, type );
+
+        return range;
+    }
+
+    public IOpenGenericDependencyRangeBuilder GetGenericDependencyRange(Type type)
+    {
+        AssertRegisteredGenericType( type );
+
+        ref var range = ref CollectionsMarshal.GetValueRefOrAddDefault( GenericDependencies, type, out var exists )!;
+        if ( ! exists )
+            range = new OpenGenericDependencyRangeBuilder( this, type );
 
         return range;
     }
@@ -164,6 +202,25 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             @params.ResolverFactories.Add( rangeDependencyKey.Value, rangeFactory );
         }
 
+        foreach ( var rangeBuilder in GenericDependencies.Values )
+        {
+            var builderSpan = CollectionsMarshal.AsSpan( rangeBuilder.InternalElements );
+            if ( builderSpan.Length == 0 )
+                continue;
+
+            var dependencyKey = CreateImplementorKey( rangeBuilder.DependencyType );
+            var builder = builderSpan[^1];
+            var builderFactory = ExtractGenericResolverFactory(
+                locatorBuilderStore,
+                @params,
+                ImplementorKey.Create( dependencyKey ),
+                builder,
+                out var m );
+
+            messages = messages.Extend( m );
+            @params.ResolverFactories.Add( dependencyKey, builderFactory );
+        }
+
         @params.AddDefaultResolverFactories( this );
         return messages;
     }
@@ -193,17 +250,40 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             var sharedImplementorBuilder = builder.InternalSharedImplementorKey.GetSharedImplementor( locatorBuilderStore );
             if ( sharedImplementorBuilder is null )
             {
-                errors = errors.Extend( Resources.SharedImplementorIsMissing( builder.InternalSharedImplementorKey ) );
-                messages = Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) );
-                return DependencyResolverFactory.CreateInvalid( key, builder.Lifetime );
+                if ( ! builder.InternalSharedImplementorKey.Type.IsGenericType )
+                {
+                    errors = errors.Extend( Resources.SharedImplementorIsMissing( builder.InternalSharedImplementorKey ) );
+                    messages = Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) );
+                    return DependencyResolverFactory.CreateInvalid( key, builder.Lifetime );
+                }
+
+                var openGenericKey = builder.InternalSharedImplementorKey.WithType(
+                    builder.InternalSharedImplementorKey.Type.GetGenericTypeDefinition() );
+
+                var sharedGenericFactory = TryGetSharedGenericResolverFactory(
+                    locatorBuilderStore,
+                    @params,
+                    openGenericKey,
+                    builder.Lifetime );
+
+                if ( sharedGenericFactory is null )
+                {
+                    errors = errors.Extend( Resources.SharedImplementorIsMissing( builder.InternalSharedImplementorKey ) );
+                    messages = Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) );
+                    return DependencyResolverFactory.CreateInvalid( key, builder.Lifetime );
+                }
+
+                sharedFactory = sharedGenericFactory.CloseShared( builder.InternalSharedImplementorKey, @params );
             }
+            else
+            {
+                sharedFactory = DependencyResolverFactory.Create(
+                    ImplementorKey.CreateShared( builder.InternalSharedImplementorKey ),
+                    builder.Lifetime,
+                    sharedImplementorBuilder );
 
-            sharedFactory = DependencyResolverFactory.Create(
-                ImplementorKey.CreateShared( builder.InternalSharedImplementorKey ),
-                builder.Lifetime,
-                sharedImplementorBuilder );
-
-            @params.AddSharedResolverFactory( builder.InternalSharedImplementorKey, builder.Lifetime, sharedFactory );
+                @params.AddSharedResolverFactory( builder.InternalSharedImplementorKey, builder.Lifetime, sharedFactory );
+            }
         }
 
         messages = errors.Count > 0
@@ -213,9 +293,79 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         return sharedFactory;
     }
 
+    private DependencyResolverFactory ExtractGenericResolverFactory(
+        DependencyLocatorBuilderStore locatorBuilderStore,
+        DependencyLocatorBuilderExtractionParams @params,
+        ImplementorKey key,
+        OpenGenericDependencyBuilder builder,
+        out Chain<DependencyContainerBuildMessages> messages)
+    {
+        var errors = Chain<string>.Empty;
+
+        if ( builder.InternalSharedImplementorKey is null )
+        {
+            messages = Chain<DependencyContainerBuildMessages>.Empty;
+            var implementorBuilder = builder.Implementor ?? new OpenGenericDependencyImplementorBuilder( this, builder.DependencyType );
+            return OpenGenericDependencyResolverFactory.Create( key, builder.Lifetime, implementorBuilder );
+        }
+
+        if ( ! builder.InternalSharedImplementorKey.Type.IsOpenGenericAssignableTo( key.Value.Type ) )
+            errors = errors.Extend( Resources.ProvidedSharedImplementorTypeIsIncorrect( builder.InternalSharedImplementorKey.Type ) );
+
+        var sharedFactory = TryGetSharedGenericResolverFactory(
+            locatorBuilderStore,
+            @params,
+            builder.InternalSharedImplementorKey,
+            builder.Lifetime );
+
+        if ( sharedFactory is null )
+        {
+            errors = errors.Extend( Resources.SharedImplementorIsMissing( builder.InternalSharedImplementorKey ) );
+            messages = Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) );
+            return DependencyResolverFactory.CreateInvalid( key, builder.Lifetime, isOpenGeneric: true );
+        }
+
+        messages = errors.Count > 0
+            ? Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) )
+            : Chain<DependencyContainerBuildMessages>.Empty;
+
+        return sharedFactory;
+    }
+
+    private static OpenGenericDependencyResolverFactory? TryGetSharedGenericResolverFactory(
+        DependencyLocatorBuilderStore locatorBuilderStore,
+        DependencyLocatorBuilderExtractionParams @params,
+        IInternalDependencyKey openDependencyKey,
+        DependencyLifetime lifetime)
+    {
+        Assume.True( openDependencyKey.Type.IsGenericTypeDefinition );
+
+        var factory = @params.GetSharedResolverFactory( openDependencyKey, lifetime );
+        if ( factory is not null )
+            return ReinterpretCast.To<OpenGenericDependencyResolverFactory>( factory );
+
+        var sharedImplementorBuilder = openDependencyKey.GetSharedGenericImplementor( locatorBuilderStore );
+        if ( sharedImplementorBuilder is null )
+            return null;
+
+        factory = OpenGenericDependencyResolverFactory.Create(
+            ImplementorKey.CreateShared( openDependencyKey ),
+            lifetime,
+            sharedImplementorBuilder );
+
+        @params.AddSharedResolverFactory( openDependencyKey, lifetime, factory );
+        return ReinterpretCast.To<OpenGenericDependencyResolverFactory>( factory );
+    }
+
     private static void AssertRegisteredType(Type type)
     {
-        if ( type.IsGenericTypeDefinition || type.ContainsGenericParameters )
+        if ( type.ContainsGenericParameters )
+            throw new InvalidTypeRegistrationException( type, nameof( type ) );
+    }
+
+    private static void AssertRegisteredGenericType(Type type)
+    {
+        if ( ! type.IsGenericTypeDefinition || type == typeof( IEnumerable<> ) )
             throw new InvalidTypeRegistrationException( type, nameof( type ) );
     }
 }

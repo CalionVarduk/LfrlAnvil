@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -57,9 +58,21 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     }
 
     /// <inheritdoc />
+    public IOpenGenericDependencyImplementorBuilder AddSharedGenericImplementor(Type type)
+    {
+        return _locatorBuilderStore.Global.AddSharedGenericImplementor( type );
+    }
+
+    /// <inheritdoc />
     public IDependencyBuilder Add(Type type)
     {
         return _locatorBuilderStore.Global.Add( type );
+    }
+
+    /// <inheritdoc />
+    public IOpenGenericDependencyBuilder AddGeneric(Type type)
+    {
+        return _locatorBuilderStore.Global.AddGeneric( type );
     }
 
     /// <inheritdoc cref="IDependencyContainerBuilder.SetDefaultLifetime(DependencyLifetime)" />
@@ -85,9 +98,23 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
     /// <inheritdoc />
     [Pure]
+    public IOpenGenericDependencyImplementorBuilder? TryGetSharedGenericImplementor(Type type)
+    {
+        return _locatorBuilderStore.Global.TryGetSharedGenericImplementor( type );
+    }
+
+    /// <inheritdoc />
+    [Pure]
     public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
         return _locatorBuilderStore.Global.GetDependencyRange( type );
+    }
+
+    /// <inheritdoc />
+    [Pure]
+    public IOpenGenericDependencyRangeBuilder GetGenericDependencyRange(Type type)
+    {
+        return _locatorBuilderStore.Global.GetGenericDependencyRange( type );
     }
 
     /// <inheritdoc />
@@ -110,11 +137,21 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
             messages = messages.Extend( locatorBuilder.ExtractResolverFactories( _locatorBuilderStore, extractionParams ) );
 
         var resolverFactories = extractionParams.ResolverFactories.Values;
-        foreach ( var factory in resolverFactories )
-            factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
+        var resolverFactoriesToScan = resolverFactories;
+        while ( resolverFactoriesToScan.Count > 0 )
+        {
+            var dynamicResolverFactories = new Dictionary<IDependencyKey, DependencyResolverFactory>();
+            foreach ( var factory in resolverFactoriesToScan )
+                factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
 
-        foreach ( var factory in resolverFactories )
-            factory.ValidateRequiredDependencies( extractionParams.ResolverFactories, Configuration );
+            foreach ( var factory in resolverFactoriesToScan )
+                factory.ValidateRequiredDependencies( extractionParams, dynamicResolverFactories, Configuration );
+
+            foreach ( var (key, factory) in dynamicResolverFactories )
+                extractionParams.ResolverFactories.Add( key, factory );
+
+            resolverFactoriesToScan = dynamicResolverFactories.Values;
+        }
 
         var pathBuffer = new List<DependencyGraphNode>();
         foreach ( var factory in resolverFactories )
@@ -132,7 +169,8 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
                 return new DependencyContainerBuildResult<DependencyContainer>( null, messages );
         }
 
-        foreach ( var factory in resolverFactories )
+        // TODO: allow open generics
+        foreach ( var factory in resolverFactories.Where( static f => ! f.IsOpenGeneric ) )
             factory.Build( idGenerator );
 
         var defaultResolvers = extractionParams.GetDefaultResolvers();
@@ -141,6 +179,9 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
         foreach ( var (dependencyKey, factory) in extractionParams.ResolverFactories )
         {
+            if ( factory.IsOpenGeneric )
+                continue;
+
             var resolvers = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
                 .GetTargetResolvers( globalDependencyResolvers, keyedDependencyResolvers );
 

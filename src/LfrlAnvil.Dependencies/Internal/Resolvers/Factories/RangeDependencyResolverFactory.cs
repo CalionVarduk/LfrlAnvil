@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
@@ -29,7 +30,7 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
         ImplementorKey implementorKey,
         Action<Type, IDependencyScope>? onResolvingCallback,
         DependencyResolverFactory[]? factories)
-        : base( implementorKey, DependencyLifetime.Transient )
+        : base( implementorKey, DependencyLifetime.Transient, isOpenGeneric: false )
     {
         Assume.True( implementorKey.Value.Type.IsGenericType );
         Assume.Equals(
@@ -102,14 +103,15 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
     }
 
     protected override bool AreRequiredDependenciesValid(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyLocatorBuilderExtractionParams @params,
+        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
         IDependencyContainerConfigurationBuilder configuration)
     {
         if ( Factories is null )
             return true;
 
         foreach ( var f in Factories )
-            f.ValidateRequiredDependencies( availableDependencies, configuration );
+            f.ValidateRequiredDependencies( @params, dynamicResolverFactories, configuration );
 
         return true;
     }

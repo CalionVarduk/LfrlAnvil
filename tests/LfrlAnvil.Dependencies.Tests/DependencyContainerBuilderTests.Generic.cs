@@ -1,0 +1,1534 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using LfrlAnvil.Dependencies.Exceptions;
+using LfrlAnvil.Dependencies.Extensions;
+using LfrlAnvil.Dependencies.Internal;
+using LfrlAnvil.Functional;
+
+namespace LfrlAnvil.Dependencies.Tests;
+
+public partial class DependencyContainerBuilderTests
+{
+    public class Generic : DependencyTestsBase
+    {
+        [Fact]
+        public void AddGeneric_ShouldAddNewDependencyWithoutImplementationDetailsAndWithDefaultLifetime()
+        {
+            var sut = new DependencyContainerBuilder();
+
+            var result = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            Assertion.All(
+                    result.DependencyType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.Lifetime.TestEquals( sut.DefaultLifetime ),
+                    result.Implementor.TestNull(),
+                    result.SharedImplementorKey.TestNull(),
+                    result.IsIncludedInRange.TestTrue() )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromConstructor_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor();
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromConstructor_WithConfiguration_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+        {
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromConstructor_WithInfo_ShouldSetConstructorAsCreationDetail()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructor( Type.EmptyTypes )!;
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( ctor );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestRefEquals( ctor ),
+                        c.Type.TestRefEquals( ctor.DeclaringType ),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromConstructor_WithInfoAndConfiguration_ShouldSetConstructorAsCreationDetail()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructor( Type.EmptyTypes )!;
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestRefEquals( ctor ),
+                        c.Type.TestRefEquals( ctor.DeclaringType ),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromConstructor_ShouldUpdateConstructorInfoAsCreationDetail_WhenCalledMultipleTimes()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructor( Type.EmptyTypes )!;
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromConstructor();
+
+            var result = builder.FromConstructor( ctor );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestRefEquals( ctor ),
+                        c.Type.TestRefEquals( ctor.DeclaringType ),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromType_ShouldSetTypeAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var result = builder.FromType( typeof( GenericImplementor<> ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestRefEquals( typeof( GenericImplementor<> ) ),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromType_WithConfiguration_ShouldSetTypeAsCreationDetail()
+        {
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var result = builder.FromType( typeof( GenericImplementor<> ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder.Implementor ),
+                    builder.SharedImplementorKey.TestNull(),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull(),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestRefEquals( typeof( GenericImplementor<> ) ),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Singleton )]
+        public void AddGeneric_SetLifetime_ShouldUpdateDependencyLifetime(DependencyLifetime lifetime)
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var result = builder.SetLifetime( lifetime );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.Lifetime.TestEquals( lifetime ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_SetLifetime_ShouldThrowArgumentException_WhenValueIsNotValid()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var action = Lambda.Of( () => { builder.SetLifetime( ( DependencyLifetime )4 ); } );
+
+            action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
+        }
+
+        [Theory]
+        [InlineData( true )]
+        [InlineData( false )]
+        public void AddGeneric_IncludeInRange_ShouldUpdateIsIncludedInRangeCorrectly(bool included)
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var result = builder.IncludeInRange( included );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.IsIncludedInRange.TestEquals( included ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromSharedImplementor_ShouldSetProvidedSharedImplementorTypeAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromConstructor();
+
+            var result = builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.Implementor.TestNull(),
+                    result.SharedImplementorKey.TestNotNull( k => Assertion.All(
+                        k.Type.TestEquals( typeof( GenericImplementor<> ) ),
+                        k.Key.TestNull(),
+                        k.KeyType.TestNull(),
+                        k.IsKeyed.TestFalse() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromSharedImplementor_Keyed_ShouldSetProvidedSharedImplementorTypeAndKeyAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromConstructor();
+
+            var result = builder.FromSharedImplementor( typeof( GenericImplementor<> ), o => o.Keyed( 1 ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.Implementor.TestNull(),
+                    result.SharedImplementorKey.TestNotNull( k => Assertion.All(
+                        k.Type.TestEquals( typeof( GenericImplementor<> ) ),
+                        k.Key.TestEquals( 1 ),
+                        k.KeyType.TestEquals( typeof( int ) ),
+                        k.IsKeyed.TestTrue() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            AddGeneric_FromSharedImplementor_ShouldSetProvidedSharedImplementorTypeAndLocatorKeyAsCreationDetail_WhenLocatorIsKeyed()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromConstructor();
+
+            var result = builder.FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.Implementor.TestNull(),
+                    result.SharedImplementorKey.TestNotNull( k => Assertion.All(
+                        k.Type.TestEquals( typeof( GenericImplementor<> ) ),
+                        k.Key.TestEquals( 1 ),
+                        k.KeyType.TestEquals( typeof( int ) ),
+                        k.IsKeyed.TestTrue() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddGeneric_FromSharedImplementor_NotKeyed_ShouldSetProvidedSharedImplementorTypeWithoutKeyAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) );
+            builder.FromConstructor();
+
+            var result = builder.FromSharedImplementor( typeof( GenericImplementor<> ), o => o.NotKeyed() );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.Implementor.TestNull(),
+                    result.SharedImplementorKey.TestNotNull( k => Assertion.All(
+                        k.Type.TestEquals( typeof( GenericImplementor<> ) ),
+                        k.Key.TestNull(),
+                        k.KeyType.TestNull(),
+                        k.IsKeyed.TestFalse() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_ShouldAddNewSharedImplementorWithoutCreationDetails()
+        {
+            var sut = new DependencyContainerBuilder();
+
+            var result = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            Assertion.All(
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull(),
+                    result.OnResolvingCallback.TestNull() )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_ShouldDoNothingAndReturnPreviousBuilder_WhenAddingExistingSharedImplementorType()
+        {
+            var sut = new DependencyContainerBuilder();
+            var expected = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            result.TestRefEquals( expected ).Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor();
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_WithConfiguration_ShouldSetDefaultAutomaticConstructorAsCreationDetail()
+        {
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_WithInfo_ShouldSetConstructorAsCreationDetail()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructor( Type.EmptyTypes )!;
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( ctor );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestRefEquals( ctor ),
+                        c.Type.TestRefEquals( ctor.DeclaringType ),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_WithInfoAndConfiguration_ShouldSetConstructorAsCreationDetail()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructor( Type.EmptyTypes )!;
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestRefEquals( ctor ),
+                        c.Type.TestRefEquals( ctor.DeclaringType ),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            AddSharedGenericImplementor_FromConstructor_WithParameterResolutions_ShouldAddConstructorParameterResolutionsAsCreationDetail()
+        {
+            var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o => o.ResolveParameter( predicate, typeof( IFoo ), i => i.Keyed( 1 ) ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty(),
+                        c.InvocationOptions.ParameterResolutions.TestSequence(
+                        [
+                            OpenGenericInjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
+                                predicate,
+                                new DependencyKey<int>( typeof( IFoo ), 1 ) )
+                        ] ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            AddSharedGenericImplementor_FromConstructor_WithMemberResolutions_ShouldAddConstructorMemberResolutionsAsCreationDetail()
+        {
+            var predicate = Substitute.For<Func<MemberInfo, bool>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o => o.ResolveMember( predicate, typeof( IFoo ), i => i.Keyed( 1 ) ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestSequence(
+                        [
+                            OpenGenericInjectableDependencyResolution<MemberInfo>.FromImplementorKey(
+                                predicate,
+                                new DependencyKey<int>( typeof( IFoo ), 1 ) )
+                        ] ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_WithClearedParameterResolutions_ShouldClearConstructorParameterResolutions()
+        {
+            var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o =>
+                o.ResolveParameter( predicate, typeof( IFoo ) ).ResolveMember( _ => true, typeof( IFoo ) ).ClearParameterResolutions() );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromConstructor_WithClearedMemberResolutions_ShouldClearConstructorMemberResolutions()
+        {
+            var predicate = Substitute.For<Func<MemberInfo, bool>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.FromConstructor( o =>
+                o.ResolveParameter( _ => true, typeof( IFoo ) ).ResolveMember( predicate, typeof( IFoo ) ).ClearMemberResolutions() );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( GenericImplementor<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestNull(),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.Count.TestEquals( 1 ),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromType_ShouldSetTypeAsCreationDetail()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( IGenericFoo<> ) );
+
+            var result = builder.FromType( typeof( GenericImplementor<> ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestRefEquals( typeof( GenericImplementor<> ) ),
+                        c.InvocationOptions.OnCreatedCallback.TestNull(),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_FromType_WithConfiguration_ShouldSetTypeAsCreationDetail()
+        {
+            var onCreatedCallback = Substitute.For<Action<object, Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( IGenericFoo<> ) );
+
+            var result = builder.FromType( typeof( GenericImplementor<> ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.ImplementorType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.Constructor.TestNotNull( c => Assertion.All(
+                        c.Info.TestNull(),
+                        c.Type.TestRefEquals( typeof( GenericImplementor<> ) ),
+                        c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                        c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                        c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToUseDisposableInterfaceCorrectly()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseDisposableInterface() );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                    result.DisposalStrategy.Callback.TestNull() )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToRenounceOwnershipCorrectly()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.RenounceOwnership ),
+                    result.DisposalStrategy.Callback.TestNull() )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_SetDisposalStrategy_ShouldUpdateDisposalStrategyToUseCallbackCorrectly()
+        {
+            var callback = Substitute.For<Action<object>>();
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
+
+            Assertion.All(
+                    result.TestRefEquals( builder ),
+                    result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseCallback ),
+                    result.DisposalStrategy.Callback.TestRefEquals( callback ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsNotOpenGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            var action = Lambda.Of( () => sut.AddSharedGenericImplementor( typeof( IList<int> ) ) );
+            action.Test( exc => exc.TestType().Exact<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IList<int> ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void AddSharedGenericImplementor_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsOpenIEnumerable()
+        {
+            var sut = new DependencyContainerBuilder();
+            var action = Lambda.Of( () => sut.AddSharedGenericImplementor( typeof( IEnumerable<> ) ) );
+            action.Test( exc =>
+                    exc.TestType().Exact<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IEnumerable<> ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void GetGenericDependencyRange_ShouldReturnNewlyCreatedEmptyRange_WhenDependencyTypeWasNotRegistered()
+        {
+            var sut = new DependencyContainerBuilder();
+
+            var result = sut.GetGenericDependencyRange( typeof( IGenericFoo<> ) );
+
+            Assertion.All(
+                    result.DependencyType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.Elements.TestEmpty(),
+                    result.TryGetLast().TestNull() )
+                .Go();
+        }
+
+        [Fact]
+        public void GetGenericDependencyRange_ShouldReturnCorrectBuilder_WhenDependencyTypeWasRegistered()
+        {
+            var sut = new DependencyContainerBuilder();
+            var expected1 = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            var expected2 = sut.AddGeneric( typeof( IGenericFoo<> ) );
+
+            var result = sut.GetGenericDependencyRange( typeof( IGenericFoo<> ) );
+
+            Assertion.All(
+                    result.DependencyType.TestEquals( typeof( IGenericFoo<> ) ),
+                    result.Elements.TestSequence( [ expected1, expected2 ] ),
+                    result.TryGetLast().TestRefEquals( expected2 ),
+                    expected1.RangeBuilder.TestRefEquals( result ),
+                    expected2.RangeBuilder.TestRefEquals( result ) )
+                .Go();
+        }
+
+        [Fact]
+        public void GetGenericDependencyRange_SetOnResolvingCallback_ShouldUpdateCallback()
+        {
+            var callback = Substitute.For<Action<Type, IDependencyScope>>();
+            var sut = new DependencyContainerBuilder();
+
+            var result = sut.GetGenericDependencyRange( typeof( IGenericFoo<> ) ).SetOnResolvingCallback( callback );
+
+            result.OnResolvingCallback.TestRefEquals( callback ).Go();
+        }
+
+        [Fact]
+        public void GetGenericDependencyRange_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsNotOpenGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            var action = Lambda.Of( () => sut.GetGenericDependencyRange( typeof( IList<int> ) ) );
+            action.Test( exc => exc.TestType().Exact<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IList<int> ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void GetGenericDependencyRange_ShouldThrowInvalidTypeRegistrationException_WhenTypeIsOpenIEnumerable()
+        {
+            var sut = new DependencyContainerBuilder();
+            var action = Lambda.Of( () => sut.GetGenericDependencyRange( typeof( IEnumerable<> ) ) );
+            action.Test( exc =>
+                    exc.TestType().Exact<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IEnumerable<> ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryGetSharedGenericImplementor_ShouldReturnNull_WhenSharedImplementorTypeWasNotRegistered()
+        {
+            var sut = new DependencyContainerBuilder();
+            var result = sut.TryGetSharedGenericImplementor( typeof( GenericImplementor<> ) );
+            result.TestNull().Go();
+        }
+
+        [Fact]
+        public void TryGetSharedGenericImplementor_ShouldReturnCorrectBuilder_WhenSharedImplementorTypeWasRegistered()
+        {
+            var sut = new DependencyContainerBuilder();
+            var expected = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            var result = sut.TryGetSharedGenericImplementor( typeof( GenericImplementor<> ) );
+
+            result.TestRefEquals( expected ).Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingSharedImplementor()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndNonCachedKeyType()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( GenericImplementor<> ), o => o.Keyed( 1 ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyIsImplementedByNonExistingKeyedSharedImplementorAndCachedKeyType()
+        {
+            var sut = new DependencyContainerBuilder();
+            _ = sut.GetKeyedLocator( 1 );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( GenericImplementor<> ), o => o.Keyed( 2 ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCtorParamDependencyCannotBeResolved()
+        {
+            var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenMemberDependencyCannotBeResolved()
+        {
+            var ctor = typeof( FieldGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnResultWithWarnings_WhenExplicitResolutionsAreUnused()
+        {
+            var ctor = typeof( GenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Add<int>().FromFactory( _ => 0 );
+            sut.Add<string>().FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter( _ => false, typeof( int ) )
+                        .ResolveMember( _ => false, typeof( string ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestTrue(),
+                    result.Container.TestNotNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 2 ),
+                            messages[0].Errors.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypedResolutionsHaveInvalidType()
+        {
+            var ctor = typeof( CtorAndRefMemberGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Add<int>().FromFactory( _ => 0 );
+            sut.Add<string>().FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromConstructor( ctor, o => o.ResolveParameter( _ => true, typeof( string ) ).ResolveMember( _ => true, typeof( int ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenClosedTypeIsExplicitlyResolvedWithOpenGenericType()
+        {
+            var ctor = typeof( CtorAndRefMemberGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Add<string>().FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter( _ => true, typeof( List<> ) ).ResolveMember( _ => true, typeof( string ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeIsExplicitlyResolvedWithClosedType()
+        {
+            var ctor = typeof( ChainableGenericFoo<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromConstructor( ctor, o => o.ResolveParameter( _ => true, typeof( IGenericBar<int> ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitCtorDoesNotCreateInstancesOfCorrectType()
+        {
+            var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitCtorCreatesAbstractInstances()
+        {
+            var ctor = typeof( GenericAbstractFoo<> )
+                .GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
+                .First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsNotOfCorrectType()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( ExplicitCtorGenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsNotOpenGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( ExplicitCtorImplementor ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeHasFreeGenericArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericFreeFoo<,> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeUsesSameGenericArgForMultipleDependencyArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericMulti<,,> ) ).FromType( typeof( GenericCollapsedMulti<,,> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericMulti<,,> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeUsesClosedTypeForSomeDependencyGenericArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericMulti<,,> ) ).FromType( typeof( GenericPartiallyClosedMulti<,,> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericMulti<,,> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( typeof( GenericRefTypeFoo<> ) )]
+        [InlineData( typeof( GenericValueTypeFoo<> ) )]
+        [InlineData( typeof( GenericDefaultCtorFoo<> ) )]
+        [InlineData( typeof( GenericDisposableFoo<> ) )]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeAddsMoreGenericConstraints(Type type)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( type );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsAbstract()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericAbstractFoo<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCtorForTypeCouldNotBeFound()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( ExplicitCtorGenericImplementor<> ) ).FromConstructor();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals(
+                                    ImplementorKey.Create( new DependencyKey( typeof( ExplicitCtorGenericImplementor<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCtorForExplicitTypeCouldNotBeFound()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( ExplicitCtorGenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( typeof( IGenericFoo<> ) )]
+        [InlineData( typeof( GenericAbstractFoo<> ) )]
+        public void TryBuild_ShouldReturnFailureResult_WhenImplicitCtorCannotBeFoundBecauseDependencyIsAbstract(Type dependencyType)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( dependencyType ).FromConstructor();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( dependencyType ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( typeof( IGenericFoo<> ) )]
+        [InlineData( typeof( GenericAbstractFoo<> ) )]
+        public void TryBuild_ShouldReturnFailureResult_WhenImplicitCtorCannotBeFoundBecauseExplicitTypeIsAbstract(Type type)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( type );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WithOnlyOneEntryWhenTwoDependenciesUseTheSameInvalidSharedImplementor()
+        {
+            var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) ).FromConstructor( ctor );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals(
+                                    ImplementorKey.CreateShared( new DependencyKey( typeof( GenericImplementor<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorWithInvalidType()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.Add<string>().FromFactory( _ => "foo" );
+            sut.AddSharedGenericImplementor( typeof( ExplicitCtorGenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromSharedImplementor( typeof( ExplicitCtorGenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughCtorParamsIsDetected()
+        {
+            var fooCtor = typeof( ChainableGenericFoo<> ).GetConstructors().First();
+            var barCtor = typeof( ChainableGenericBar<> ).GetConstructors().First();
+            var quxCtor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( fooCtor );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromConstructor( barCtor );
+            sut.AddGeneric( typeof( IGenericQux<> ) ).FromConstructor( quxCtor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ),
+                            messages[1]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[1].Warnings.TestEmpty(),
+                            messages[1].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughFieldsIsDetected()
+        {
+            var fooCtor = typeof( ChainableFieldGenericFoo<> ).GetConstructors().First();
+            var barCtor = typeof( ChainableFieldGenericBar<> ).GetConstructors().First();
+            var quxCtor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( fooCtor );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromConstructor( barCtor );
+            sut.AddGeneric( typeof( IGenericQux<> ) ).FromConstructor( quxCtor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ),
+                            messages[1]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[1].Warnings.TestEmpty(),
+                            messages[1].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyThroughPropertiesIsDetected()
+        {
+            var fooCtor = typeof( ChainablePropertyGenericFoo<> ).GetConstructors().First();
+            var barCtor = typeof( ChainablePropertyGenericBar<> ).GetConstructors().First();
+            var quxCtor = typeof( ChainablePropertyGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( fooCtor );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromConstructor( barCtor );
+            sut.AddGeneric( typeof( IGenericQux<> ) ).FromConstructor( quxCtor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ),
+                            messages[1]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[1].Warnings.TestEmpty(),
+                            messages[1].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenSelfDependencyIsDetected()
+        {
+            var ctor = typeof( DecoratedGenericFoo<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ),
+                            messages[1]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[1].Warnings.TestEmpty(),
+                            messages[1].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Transient, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Transient, DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Transient, DependencyLifetime.Singleton )]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Singleton )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Singleton )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Singleton )]
+        public void TryBuild_ShouldReturnResultWithoutWarnings_WhenThereAreNotCaptiveDependencies(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestTrue(),
+                    result.Container.TestNotNull(),
+                    result.Messages.TestEmpty() )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnResultWithWarnings_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsWarnings(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+            sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestTrue(),
+                    result.Container.TestNotNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 1 ),
+                            messages[0].Errors.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnFailureResult_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsErrors(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( dependencyLifetime ).FromType( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) ).SetLifetime( parentLifetime ).FromConstructor( ctor );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnResultWithWarnings_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsWarnings_ForClosedType(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var ctor = typeof( DefaultCtorParamGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).SetLifetime( parentLifetime ).FromType( typeof( GenericImplementor<> ) );
+            sut.Add<IGenericBar<string>>().SetLifetime( dependencyLifetime ).FromFactory( _ => new GenericImplementor<string>() );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromConstructor( ctor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestTrue(),
+                    result.Container.TestNotNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 1 ),
+                            messages[0].Errors.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnFailureResult_WhenCaptiveDependencyIsDetectedAndTheyAreTreatedAsErrors_ForClosedType(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var ctor = typeof( DefaultCtorParamGenericImplementor<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).SetLifetime( parentLifetime ).FromType( typeof( GenericImplementor<> ) );
+            sut.Add<IGenericBar<string>>().SetLifetime( dependencyLifetime ).FromFactory( _ => new GenericImplementor<string>() );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromConstructor( ctor );
+            sut.Add<Parameterized<IGenericFoo<string>>>();
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<string> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+    }
+}
+
+public class GenericCollapsedMulti<T1, T2, T3> : DependencyTestsBase.IGenericMulti<T1, T2, T1> { }
+
+public class GenericPartiallyClosedMulti<T1, T2, T3> : DependencyTestsBase.IGenericMulti<T1, T2, int> { }
+
+public class GenericRefTypeFoo<T> : DependencyTestsBase.IGenericFoo<T>
+    where T : class { }
+
+public class GenericValueTypeFoo<T> : DependencyTestsBase.IGenericFoo<T>
+    where T : struct { }
+
+public class GenericDefaultCtorFoo<T> : DependencyTestsBase.IGenericFoo<T>
+    where T : new() { }
+
+public class GenericDisposableFoo<T> : DependencyTestsBase.IGenericFoo<T>
+    where T : IDisposable { }

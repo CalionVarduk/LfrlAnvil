@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
@@ -26,12 +27,13 @@ internal class DependencyResolverFactory
     private DependencyResolver? _resolver;
     private bool _messagesCreated;
 
-    protected DependencyResolverFactory(ImplementorKey implementorKey, DependencyLifetime lifetime)
+    protected DependencyResolverFactory(ImplementorKey implementorKey, DependencyLifetime lifetime, bool isOpenGeneric)
     {
         Assume.IsDefined( lifetime );
         Lifetime = lifetime;
         State = DependencyResolverFactoryState.Created;
         ImplementorKey = implementorKey;
+        IsOpenGeneric = isOpenGeneric;
         _resolver = null;
         _messagesCreated = false;
     }
@@ -39,6 +41,7 @@ internal class DependencyResolverFactory
     internal DependencyResolverFactoryState State { get; private set; }
     internal DependencyLifetime Lifetime { get; }
     internal ImplementorKey ImplementorKey { get; }
+    internal bool IsOpenGeneric { get; }
     internal IInternalDependencyKey InternalImplementorKey => ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value );
     internal bool IsFinished => HasState( DependencyResolverFactoryState.Finished );
 
@@ -71,15 +74,18 @@ internal class DependencyResolverFactory
         DependencyLifetime lifetime,
         DependencyResolver resolver)
     {
-        var result = new DependencyResolverFactory( implementorKey, lifetime );
+        var result = new DependencyResolverFactory( implementorKey, lifetime, isOpenGeneric: false );
         result.Finish( resolver );
         return result;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static DependencyResolverFactory CreateInvalid(ImplementorKey implementorKey, DependencyLifetime lifetime)
+    internal static DependencyResolverFactory CreateInvalid(
+        ImplementorKey implementorKey,
+        DependencyLifetime lifetime,
+        bool isOpenGeneric = false)
     {
-        var result = new DependencyResolverFactory( implementorKey, lifetime );
+        var result = new DependencyResolverFactory( implementorKey, lifetime, isOpenGeneric );
         result.FinishAsInvalid();
         return result;
     }
@@ -99,13 +105,14 @@ internal class DependencyResolverFactory
     }
 
     internal void ValidateRequiredDependencies(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyLocatorBuilderExtractionParams @params,
+        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
         IDependencyContainerConfigurationBuilder configuration)
     {
         if ( State != DependencyResolverFactoryState.Validatable )
             return;
 
-        if ( AreRequiredDependenciesValid( availableDependencies, configuration ) )
+        if ( AreRequiredDependenciesValid( @params, dynamicResolverFactories, configuration ) )
             SetState( DependencyResolverFactoryState.ValidatedRequiredDependencies );
         else
             FinishAsInvalid();
@@ -264,7 +271,8 @@ internal class DependencyResolverFactory
     }
 
     protected virtual bool AreRequiredDependenciesValid(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyLocatorBuilderExtractionParams @params,
+        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
         IDependencyContainerConfigurationBuilder configuration)
     {
         return true;

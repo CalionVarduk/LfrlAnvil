@@ -59,6 +59,16 @@ public interface IDependencyLocatorBuilder
     IDependencyImplementorBuilder AddSharedImplementor(Type type);
 
     /// <summary>
+    /// Gets or creates a new <see cref="IOpenGenericDependencyImplementorBuilder"/> instance for the provided <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Shared implementor type.</param>
+    /// <returns>New <see cref="IOpenGenericDependencyImplementorBuilder"/> instance or an existing instance.</returns>
+    /// <exception cref="InvalidTypeRegistrationException">
+    /// When the provided <paramref name="type"/> is not an open generic type.
+    /// </exception>
+    IOpenGenericDependencyImplementorBuilder AddSharedGenericImplementor(Type type);
+
+    /// <summary>
     /// Creates a new <see cref="IDependencyBuilder"/> instance for the provided <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Dependency type.</param>
@@ -71,6 +81,20 @@ public interface IDependencyLocatorBuilder
     /// for the provided <paramref name="type"/>.
     /// </remarks>
     IDependencyBuilder Add(Type type);
+
+    /// <summary>
+    /// Creates a new <see cref="IOpenGenericDependencyBuilder"/> instance for the provided <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Dependency type.</param>
+    /// <returns>New <see cref="IOpenGenericDependencyBuilder"/> instance.</returns>
+    /// <exception cref="InvalidTypeRegistrationException">
+    /// When the provided <paramref name="type"/> is not an open generic type.
+    /// </exception>
+    /// <remarks>
+    /// This may also create an <see cref="IOpenGenericDependencyRangeBuilder"/> instance if it did not exist yet
+    /// for the provided <paramref name="type"/>.
+    /// </remarks>
+    IOpenGenericDependencyBuilder AddGeneric(Type type);
 
     /// <summary>
     /// Sets the <see cref="DefaultLifetime"/> of this instance.
@@ -98,6 +122,18 @@ public interface IDependencyLocatorBuilder
     IDependencyImplementorBuilder? TryGetSharedImplementor(Type type);
 
     /// <summary>
+    /// Attempts to get an <see cref="IOpenGenericDependencyImplementorBuilder"/> instance
+    /// associated with the provided <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Type to get the shared implementor builder for.</param>
+    /// <returns>
+    /// <see cref="IOpenGenericDependencyImplementorBuilder"/> instance associated with the provided <paramref name="type"/>
+    /// or null when it does not exist.
+    /// </returns>
+    [Pure]
+    IOpenGenericDependencyImplementorBuilder? TryGetSharedGenericImplementor(Type type);
+
+    /// <summary>
     /// Gets or creates a new <see cref="IDependencyRangeBuilder"/> instance for the provided element <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Element type.</param>
@@ -107,6 +143,17 @@ public interface IDependencyLocatorBuilder
     /// </exception>
     [Pure]
     IDependencyRangeBuilder GetDependencyRange(Type type);
+
+    /// <summary>
+    /// Gets or creates a new <see cref="IOpenGenericDependencyRangeBuilder"/> instance for the provided element <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Element type.</param>
+    /// <returns>New <see cref="IOpenGenericDependencyRangeBuilder"/> instance or an existing instance.</returns>
+    /// <exception cref="InvalidTypeRegistrationException">
+    /// When the provided element <paramref name="type"/> is not an open generic type.
+    /// </exception>
+    [Pure]
+    IOpenGenericDependencyRangeBuilder GetGenericDependencyRange(Type type);
 }
 
 /// <summary>

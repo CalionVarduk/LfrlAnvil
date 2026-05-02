@@ -13,7 +13,7 @@ using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Dependencies.Tests;
 
-public class DependencyContainerTests : DependencyTestsBase
+public partial class DependencyContainerTests : DependencyTestsBase
 {
     [Fact]
     public void ResolvingDependencyContainer_ThroughRootScope_ShouldReturnContainerItself()
@@ -996,7 +996,7 @@ public class DependencyContainerTests : DependencyTestsBase
     [InlineData( typeof( IQux ) )]
     [InlineData( typeof( IBar ) )]
     [InlineData( typeof( IFoo ) )]
-    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenOnlyOneDependencyInCycleBasedOnFactory(Type type)
+    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WithOnlyOneDependencyInCycleBasedOnFactory(Type type)
     {
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>().FromFactory( s => new ChainableQux( s.Locator.Resolve<IFoo>() ) );
@@ -1850,6 +1850,22 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependency_WithNestedMembers()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromType<Implementor>();
+        builder.Add<IBar>().FromType<ChainableBar>();
+        builder.Add<IQux>().FromType<Implementor>();
+        builder.Add<NestedMember>();
+
+        var sut = builder.Build();
+
+        var result = sut.RootScope.Locator.Resolve<NestedMember>();
+
+        Assertion.All( result.Foo.TestType().AssignableTo<Implementor>(), result.Bar.TestType().AssignableTo<ChainableBar>() ).Go();
+    }
+
+    [Fact]
     public void ResolvingDependency_ShouldCallOnCreatedCallback_WhenThereAreNoDependencies()
     {
         var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
@@ -1874,7 +1890,6 @@ public class DependencyContainerTests : DependencyTestsBase
         var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
         var builder = new DependencyContainerBuilder();
         builder.Add<IBar>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>();
-
         builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromType<ChainableFoo>( o => o.SetOnCreatedCallback( callback ) );
 
         var sut = builder.Build();

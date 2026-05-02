@@ -9,7 +9,7 @@ using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Dependencies.Tests;
 
-public class DependencyContainerBuilderTests : DependencyTestsBase
+public partial class DependencyContainerBuilderTests : DependencyTestsBase
 {
     [Fact]
     public void Ctor_ShouldCreateWithDefaultTransientLifetimeAndUseDisposableInterfaceStrategy()
@@ -173,7 +173,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void Configuration_SetInjectablePropertyType_ShouldUpdateTheOptions(bool enabled)
+    public void Configuration_EnableTreatingCaptiveDependenciesAsErrors_ShouldUpdateTheOptions(bool enabled)
     {
         IDependencyContainerBuilder sut = new DependencyContainerBuilder();
 
@@ -1747,6 +1747,27 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                             second.Warnings.TestEmpty(),
                             second.Errors.Count.TestEquals( 1 ) );
                     } ) )
+            .Go();
+    }
+
+    [Fact]
+    public void TryBuild_ShouldReturnFailureResult_WhenClosedGenericTypeUsesNonExistingOpenGenericSharedImplementor()
+    {
+        var sut = new DependencyContainerBuilder();
+        sut.Add<IGenericFoo<int>>().FromSharedImplementor<GenericImplementor<int>>();
+
+        var result = sut.TryBuild();
+
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then( messages =>
+                        Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<int> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 

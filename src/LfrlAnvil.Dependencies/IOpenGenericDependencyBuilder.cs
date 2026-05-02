@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2026 Łukasz Furlepa
+﻿// Copyright 2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ using System.Reflection;
 namespace LfrlAnvil.Dependencies;
 
 /// <summary>
-/// Represents a dependency resolution builder.
+/// Represents an open generic dependency resolution builder.
 /// </summary>
-public interface IDependencyBuilder
+public interface IOpenGenericDependencyBuilder
 {
     /// <summary>
     /// Dependency's type.
@@ -40,12 +40,12 @@ public interface IDependencyBuilder
     /// <summary>
     /// Builder of an implementor of this dependency.
     /// </summary>
-    IDependencyImplementorBuilder? Implementor { get; }
+    IOpenGenericDependencyImplementorBuilder? Implementor { get; }
 
     /// <summary>
     /// Related dependency range builder instance.
     /// </summary>
-    IDependencyRangeBuilder RangeBuilder { get; }
+    IOpenGenericDependencyRangeBuilder RangeBuilder { get; }
 
     /// <summary>
     /// Specifies whether this dependency is included in the related <see cref="RangeBuilder"/>.
@@ -57,14 +57,14 @@ public interface IDependencyBuilder
     /// </summary>
     /// <param name="included">Value to set. Equal to <b>true</b> by default.</param>
     /// <returns><b>this</b>.</returns>
-    IDependencyBuilder IncludeInRange(bool included = true);
+    IOpenGenericDependencyBuilder IncludeInRange(bool included = true);
 
     /// <summary>
     /// Sets <see cref="Lifetime"/> of this instance.
     /// </summary>
     /// <param name="lifetime">Lifetime to set.</param>
     /// <returns><b>this</b>.</returns>
-    IDependencyBuilder SetLifetime(DependencyLifetime lifetime);
+    IOpenGenericDependencyBuilder SetLifetime(DependencyLifetime lifetime);
 
     /// <summary>
     /// Specifies that this dependency should be implemented through a shared implementor of the provided <paramref name="type"/>.
@@ -73,7 +73,7 @@ public interface IDependencyBuilder
     /// <param name="configuration">Optional configurator of the shared implementor.</param>
     /// <returns><b>this</b>.</returns>
     /// <remarks>Resets <see cref="Implementor"/> to null.</remarks>
-    IDependencyBuilder FromSharedImplementor(Type type, Action<IDependencyImplementorOptions>? configuration = null);
+    IOpenGenericDependencyBuilder FromSharedImplementor(Type type, Action<IDependencyImplementorOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this dependency should be implemented by the best suited constructor of this dependency's type.
@@ -81,7 +81,8 @@ public interface IDependencyBuilder
     /// <param name="configuration">Optional configurator of the constructor invocation.</param>
     /// <returns><see cref="Implementor"/>.</returns>
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
-    IDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null);
+    IOpenGenericDependencyImplementorBuilder FromConstructor(
+        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this dependency should be implemented by the provided constructor.
@@ -90,9 +91,9 @@ public interface IDependencyBuilder
     /// <param name="configuration">Optional configurator of the constructor invocation.</param>
     /// <returns><see cref="Implementor"/>.</returns>
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
-    IDependencyImplementorBuilder FromConstructor(
+    IOpenGenericDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
-        Action<IDependencyConstructorInvocationOptions>? configuration = null);
+        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this dependency should be implemented by the best suited constructor of the provided <paramref name="type"/>.
@@ -101,13 +102,7 @@ public interface IDependencyBuilder
     /// <param name="configuration">Optional configurator of the constructor invocation.</param>
     /// <returns><see cref="Implementor"/>.</returns>
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
-    IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null);
-
-    /// <summary>
-    /// Specifies that this dependency should be implemented by the provided explicit <paramref name="factory"/>.
-    /// </summary>
-    /// <param name="factory">Explicit creator of dependency instances.</param>
-    /// <returns><see cref="Implementor"/>.</returns>
-    /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
-    IDependencyImplementorBuilder FromFactory(Func<IDependencyScope, object> factory);
+    IOpenGenericDependencyImplementorBuilder FromType(
+        Type type,
+        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
 }
