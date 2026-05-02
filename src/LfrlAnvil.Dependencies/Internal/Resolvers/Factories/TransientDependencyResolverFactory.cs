@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class TransientDependencyResolverFactory : RegisteredDependencyResolverFactory
+internal sealed class TransientDependencyResolverFactory : RegisteredImmediatelyConstructableDependencyResolverFactory
 {
     internal TransientDependencyResolverFactory(ImplementorKey implementorKey, IDependencyImplementorBuilder implementorBuilder)
         : base( implementorKey, implementorBuilder, DependencyLifetime.Transient ) { }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
-internal sealed class DependencyRangeBuilder : IDependencyRangeBuilder
+internal sealed class DependencyRangeBuilder : IDependencyRangeBuilder, IInternalDependencyRangeBuilder
 {
     internal DependencyRangeBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType)
     {
@@ -30,6 +30,7 @@ internal sealed class DependencyRangeBuilder : IDependencyRangeBuilder
 
     public Type DependencyType { get; }
     public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
+    public bool IsOpenGeneric => false;
     public IReadOnlyList<IDependencyBuilder> Elements => InternalElements;
     internal List<DependencyBuilder> InternalElements { get; }
     internal DependencyLocatorBuilder LocatorBuilder { get; }

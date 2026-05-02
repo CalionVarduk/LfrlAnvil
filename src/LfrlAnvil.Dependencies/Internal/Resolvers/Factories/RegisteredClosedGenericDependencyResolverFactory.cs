@@ -15,38 +15,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal abstract class RegisteredClosedGenericDependencyResolverFactory : DependencyResolverFactory
+internal abstract class RegisteredClosedGenericDependencyResolverFactory : RegisteredConstructableDependencyResolverFactory
 {
-    private ConstructorInfo? _constructorInfo;
-    private KeyValuePair<ParameterInfo, DependencyResolverFactory?>[]? _parameterResolutions;
-    private KeyValuePair<MemberInfo, DependencyResolverFactory?>[]? _memberResolutions;
-    private Chain<string> _errors;
-    private Chain<string> _warnings;
-
     protected RegisteredClosedGenericDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
-        : base( implementorKey, @base.Lifetime, isOpenGeneric: false )
+        : base( implementorKey, @base.Lifetime )
     {
         Base = @base;
-        _constructorInfo = null;
-        _parameterResolutions = null;
-        _memberResolutions = null;
-        _errors = Chain<string>.Empty;
-        _warnings = Chain<string>.Empty;
     }
 
     internal OpenGenericDependencyResolverFactory Base { get; }
+
+    protected override Action<object, Type, IDependencyScope>? OnCreatedCallback =>
+        Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback;
 
     [Pure]
     internal static RegisteredClosedGenericDependencyResolverFactory Create(
@@ -58,76 +45,61 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Depen
 
         RegisteredClosedGenericDependencyResolverFactory result = @base.Lifetime switch
         {
-            DependencyLifetime.Singleton => new SingletonClosedGenericDependencyResolverFactory( implementorKey, @base ),
-            DependencyLifetime.ScopedSingleton => new ScopedSingletonClosedGenericDependencyResolverFactory( implementorKey, @base ),
-            DependencyLifetime.Scoped => new ScopedClosedGenericDependencyResolverFactory( implementorKey, @base ),
-            _ => new TransientClosedGenericDependencyResolverFactory( implementorKey, @base )
+            DependencyLifetime.Singleton => new ClosedGenericSingletonDependencyResolverFactory( implementorKey, @base ),
+            DependencyLifetime.ScopedSingleton => new ClosedGenericScopedSingletonDependencyResolverFactory( implementorKey, @base ),
+            DependencyLifetime.Scoped => new ClosedGenericScopedDependencyResolverFactory( implementorKey, @base ),
+            _ => new ClosedGenericTransientDependencyResolverFactory( implementorKey, @base )
         };
 
         return result;
     }
 
-    [Pure]
-    internal sealed override Chain<DependencyResolverFactory> GetCaptiveDependencyFactories(DependencyLifetime lifetime)
-    {
-        return IsCaptiveDependencyOf( lifetime ) ? Chain.Create<DependencyResolverFactory>( this ) : Chain<DependencyResolverFactory>.Empty;
-    }
-
-    [Pure]
-    internal sealed override bool IsCaptiveDependencyOf(DependencyLifetime lifetime)
-    {
-        return Lifetime < lifetime;
-    }
-
-    [Pure]
-    protected sealed override Chain<DependencyContainerBuildMessages> CreateMessages()
-    {
-        return _errors.Count == 0 && _warnings.Count == 0
-            ? Chain<DependencyContainerBuildMessages>.Empty
-            : Chain.Create( new DependencyContainerBuildMessages( ImplementorKey, _errors, _warnings ) );
-    }
-
-    protected sealed override bool IsCreationMethodValid(
+    protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
+        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        IDependencyContainerConfigurationBuilder configuration,
+        out DependencyResolver? resolver)
+    {
+        resolver = null;
+        Base.PrepareCreationMethod( idGenerator, availableDependencies, configuration );
+        return ! Base.HasState( DependencyResolverFactoryState.Invalid );
+    }
+
+    [Pure]
+    protected sealed override ConstructorInfo? FindValidConstructor(
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         IDependencyContainerConfigurationBuilder configuration)
     {
-        Base.PrepareCreationMethod( idGenerator, availableDependencies, configuration );
-        if ( Base.HasState( DependencyResolverFactoryState.Invalid ) )
-            return false;
-
         var openCtor = Base.ConstructorInfo;
         Assume.IsNotNull( openCtor );
-        _constructorInfo = openCtor.TryCloseGenericCtor( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type );
-        if ( _constructorInfo is not null )
-            return true;
+        var result = openCtor.TryCloseGenericCtor( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type );
+        if ( result is null )
+            Errors = Errors.Extend(
+                Resources.FailedToFindValidCtorForClosedGenericType( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type ) );
 
-        _errors = _errors.Extend(
-            Resources.FailedToFindValidCtorForClosedGenericType( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type ) );
-
-        return false;
+        return result;
     }
 
-    protected sealed override bool AreRequiredDependenciesValid(
+    protected sealed override bool ValidateDependencies(
         DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration)
+        IDependencyContainerConfigurationBuilder configuration,
+        ref Chain<string> captiveDependencies)
     {
         Base.ValidateRequiredDependencies( @params, dynamicResolverFactories, configuration );
         if ( Base.HasState( DependencyResolverFactoryState.Invalid ) )
             return false;
 
-        Assume.IsNotNull( _constructorInfo );
-        var captiveDependencies = Chain<string>.Empty;
+        Assume.IsNotNull( ConstructorInfo );
 
-        var parameters = _constructorInfo.GetParameters();
+        var parameters = ConstructorInfo.GetParameters();
         if ( parameters.Length > 0 )
         {
             Assume.IsNotNull( Base.ParameterResolutions );
             Assume.Equals( Base.ParameterResolutions.Length, parameters.Length );
-            _parameterResolutions = new KeyValuePair<ParameterInfo, DependencyResolverFactory?>[parameters.Length];
+            ParameterResolutions = new KeyValuePair<ParameterInfo, object?>[parameters.Length];
 
-            for ( var i = 0; i < _parameterResolutions.Length; ++i )
+            for ( var i = 0; i < ParameterResolutions.Length; ++i )
             {
                 var parameter = parameters[i];
                 var baseResolution = Base.ParameterResolutions[i];
@@ -136,47 +108,56 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Depen
                     var implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
                     if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                     {
-                        _parameterResolutions[i] = KeyValuePair.Create( parameter, ( DependencyResolverFactory? )parameterFactory );
+                        ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                         continue;
                     }
 
-                    _parameterResolutions[i] = KeyValuePair.Create( parameter, ( DependencyResolverFactory? )null );
+                    ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )null );
                 }
-                else if ( ! baseResolution.Value.IsOpenGeneric )
-                    _parameterResolutions[i] = KeyValuePair.Create( parameter, ( DependencyResolverFactory? )baseResolution.Value );
                 else
                 {
-                    var implementorKey = InternalImplementorKey.WithType(
-                        baseResolution.Value.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
-
-                    if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
+                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
+                    if ( ! baseResolver.IsOpenGeneric )
+                        ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )baseResolver );
+                    else
                     {
-                        _parameterResolutions[i] = KeyValuePair.Create( parameter, ( DependencyResolverFactory? )parameterFactory );
+                        var implementorKey = InternalImplementorKey.WithType(
+                            baseResolver.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
+
+                        if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
+                        {
+                            ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
+                            captiveDependencies = ValidateCaptiveDependency(
+                                captiveDependencies,
+                                parameter,
+                                implementorKey,
+                                parameterFactory );
+
+                            continue;
+                        }
+
+                        var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolver );
+                        parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
+
+                        ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
-                        continue;
                     }
-
-                    var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolution.Value );
-                    parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
-
-                    _parameterResolutions[i] = KeyValuePair.Create( parameter, ( DependencyResolverFactory? )parameterFactory );
-                    captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                 }
             }
         }
 
-        var injectableMembers = _constructorInfo.DeclaringType?.FindInjectableMembers( configuration.InjectablePropertyType ) ?? [ ];
+        var injectableMembers = ConstructorInfo.DeclaringType?.FindInjectableMembers( configuration.InjectablePropertyType ) ?? [ ];
         if ( injectableMembers.Count > 0 )
         {
             Assume.IsNotNull( Base.MemberResolutions );
             Assume.Equals( Base.MemberResolutions.Length, injectableMembers.Count );
-            _memberResolutions = new KeyValuePair<MemberInfo, DependencyResolverFactory?>[injectableMembers.Count];
+            MemberResolutions = new KeyValuePair<MemberInfo, object?>[injectableMembers.Count];
 
-            for ( var i = 0; i < _memberResolutions.Length; ++i )
+            for ( var i = 0; i < MemberResolutions.Length; ++i )
             {
                 var member = injectableMembers[i];
-                var memberInjectableType = GetInjectableMemberType( member );
+                var memberInjectableType = member.GetInjectableMemberType();
                 var memberType = memberInjectableType.GetGenericArguments()[0];
                 var baseResolution = Base.MemberResolutions[i];
 
@@ -185,238 +166,45 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Depen
                     var implementorKey = InternalImplementorKey.WithType( memberType );
                     if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                     {
-                        _memberResolutions[i] = KeyValuePair.Create( member, ( DependencyResolverFactory? )parameterFactory );
+                        MemberResolutions[i] = KeyValuePair.Create( member, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, parameterFactory );
                         continue;
                     }
 
-                    _memberResolutions[i] = KeyValuePair.Create( member, ( DependencyResolverFactory? )null );
+                    MemberResolutions[i] = KeyValuePair.Create( member, ( object? )null );
                 }
-                else if ( ! baseResolution.Value.IsOpenGeneric )
-                    _memberResolutions[i] = KeyValuePair.Create( member, ( DependencyResolverFactory? )baseResolution.Value );
                 else
                 {
-                    var implementorKey = InternalImplementorKey.WithType(
-                        baseResolution.Value.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
-
-                    if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
+                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
+                    if ( ! baseResolver.IsOpenGeneric )
+                        MemberResolutions[i] = KeyValuePair.Create( member, ( object? )baseResolver );
+                    else
                     {
-                        _memberResolutions[i] = KeyValuePair.Create( member, ( DependencyResolverFactory? )parameterFactory );
+                        var implementorKey = InternalImplementorKey.WithType(
+                            baseResolver.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
+
+                        if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
+                        {
+                            MemberResolutions[i] = KeyValuePair.Create( member, ( object? )parameterFactory );
+                            captiveDependencies = ValidateCaptiveDependency(
+                                captiveDependencies,
+                                member,
+                                implementorKey,
+                                parameterFactory );
+
+                            continue;
+                        }
+
+                        var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolver );
+                        parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
+
+                        MemberResolutions[i] = KeyValuePair.Create( member, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, parameterFactory );
-                        continue;
                     }
-
-                    var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolution.Value );
-                    parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
-
-                    _memberResolutions[i] = KeyValuePair.Create( member, ( DependencyResolverFactory? )parameterFactory );
-                    captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, parameterFactory );
                 }
             }
-        }
-
-        if ( configuration.TreatCaptiveDependenciesAsErrors )
-            _errors = _errors.Extend( captiveDependencies );
-        else
-            _warnings = _warnings.Extend( captiveDependencies );
-
-        if ( _errors.Count > 0 )
-        {
-            _parameterResolutions = null;
-            _memberResolutions = null;
-            return false;
         }
 
         return true;
-    }
-
-    protected sealed override void OnCircularDependencyDetected(List<DependencyGraphNode> path)
-    {
-        var pathSpan = CollectionsMarshal.AsSpan( path );
-
-        var startIndex = pathSpan.Length - 2;
-        while ( ! ReferenceEquals( pathSpan[startIndex].Factory, this ) )
-            --startIndex;
-
-        pathSpan = pathSpan.Slice( startIndex + 1 );
-
-        foreach ( var pathNode in pathSpan )
-            AddState( pathNode.Factory, DependencyResolverFactoryState.CircularDependenciesDetected );
-
-        _errors = _errors.Extend( Resources.CircularDependenciesDetected( pathSpan ) );
-    }
-
-    protected sealed override void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path)
-    {
-        Assume.ContainsAtLeast( path, 1 );
-
-        if ( _parameterResolutions is not null )
-        {
-            foreach ( var (parameter, factory) in _parameterResolutions )
-            {
-                if ( factory is null )
-                    continue;
-
-                path[^1] = new DependencyGraphNode( parameter, factory );
-                DetectCircularDependencies( factory, path );
-            }
-        }
-
-        if ( _memberResolutions is not null )
-        {
-            foreach ( var (member, factory) in _memberResolutions )
-            {
-                if ( factory is null )
-                    continue;
-
-                path[^1] = new DependencyGraphNode( GetActualMember( member ), factory );
-                DetectCircularDependencies( factory, path );
-            }
-        }
-    }
-
-    protected sealed override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
-    {
-        Assume.IsNotNull( _constructorInfo );
-        var (expressionBuilder, parameterCount, memberCount) = CreateExpressionBuilder();
-
-        for ( var i = 0; i < parameterCount; ++i )
-        {
-            Assume.IsNotNull( _parameterResolutions );
-            var (parameter, factory) = _parameterResolutions[i];
-            var (instanceType, name) = (parameter.ParameterType, $"p{i}");
-
-            if ( factory is null )
-                expressionBuilder.AddDefaultResolution( instanceType, name, parameter.HasDefaultValue, parameter.DefaultValue );
-            else
-                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator );
-        }
-
-        var memberBindings = memberCount > 0 ? new MemberBinding[memberCount] : null;
-        for ( var i = 0; i < memberCount; ++i )
-        {
-            Assume.IsNotNull( _memberResolutions );
-            Assume.IsNotNull( memberBindings );
-
-            var (member, factory) = _memberResolutions[i];
-            var memberType = GetInjectableMemberType( member );
-            var (instanceType, name) = (memberType.GetGenericArguments()[0], $"m{i}");
-
-            if ( factory is null )
-                expressionBuilder.AddDefaultResolution( instanceType, name );
-            else
-                expressionBuilder.AddDependencyResolverFactoryResolution( instanceType, name, factory, idGenerator );
-
-            var memberCtor = memberType.GetConstructors( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic )
-                .First( c =>
-                {
-                    var parameters = c.GetParameters();
-                    return parameters.Length == 1 && parameters[0].ParameterType == instanceType;
-                } );
-
-            memberBindings[i] = expressionBuilder.CreateMemberBindingForLastVariable( member, memberCtor );
-        }
-
-        var ctorParameters = expressionBuilder.GetVariableRange( parameterCount );
-        var ctorCall = parameterCount > 0 ? Expression.New( _constructorInfo, ctorParameters ) : Expression.New( _constructorInfo );
-        Expression instance = memberBindings is not null ? Expression.MemberInit( ctorCall, memberBindings ) : ctorCall;
-        var result = expressionBuilder.Build( instance );
-        return CreateFromExpression( result, idGenerator );
-    }
-
-    protected abstract DependencyResolver CreateFromExpression(
-        Expression<Func<DependencyScope, object>> expression,
-        UlongSequenceGenerator idGenerator);
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Chain<string> ValidateCaptiveDependency<T>(
-        Chain<string> currentMessages,
-        T target,
-        IDependencyKey implementorKey,
-        DependencyResolverFactory resolverFactory)
-        where T : notnull
-    {
-        var captiveFactories = resolverFactory.GetCaptiveDependencyFactories( Lifetime );
-        foreach ( var f in captiveFactories )
-        {
-            var message = Resources.CaptiveDependencyDetected( target, Lifetime, implementorKey, f.Lifetime, f.ImplementorKey.RangeIndex );
-            currentMessages = currentMessages.Extend( message );
-        }
-
-        return currentMessages;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static Type GetInjectableMemberType(MemberInfo member)
-    {
-        return member.MemberType == MemberTypes.Field
-            ? ReinterpretCast.To<FieldInfo>( member ).FieldType
-            : ReinterpretCast.To<PropertyInfo>( member ).PropertyType;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static MemberInfo GetActualMember(MemberInfo member)
-    {
-        return member.MemberType == MemberTypes.Field
-            ? ReinterpretCast.To<FieldInfo>( member ).GetBackedProperty() ?? member
-            : member;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private (ExpressionBuilder Builder, int ParameterCount, int MemberCount) CreateExpressionBuilder()
-    {
-        var parameterCount = _parameterResolutions?.Length ?? 0;
-        var memberCount = _memberResolutions?.Length ?? 0;
-        var defaultResolutionCount = 0;
-        var hasRequiredValueTypeDependency = false;
-
-        for ( var i = 0; i < parameterCount; ++i )
-        {
-            Assume.IsNotNull( _parameterResolutions );
-            var (parameter, resolution) = _parameterResolutions[i];
-
-            if ( resolution is null )
-            {
-                ++defaultResolutionCount;
-                continue;
-            }
-
-            if ( ! hasRequiredValueTypeDependency
-                && parameter.ParameterType.IsValueType
-                && Nullable.GetUnderlyingType( parameter.ParameterType ) is null )
-                hasRequiredValueTypeDependency = true;
-        }
-
-        for ( var i = 0; i < memberCount; ++i )
-        {
-            Assume.IsNotNull( _memberResolutions );
-            var (member, resolution) = _memberResolutions[i];
-
-            if ( resolution is null )
-            {
-                ++defaultResolutionCount;
-                continue;
-            }
-
-            if ( hasRequiredValueTypeDependency )
-                continue;
-
-            var memberType = GetInjectableMemberType( member ).GetGenericArguments()[0];
-            if ( memberType.IsValueType && Nullable.GetUnderlyingType( memberType ) is null )
-                hasRequiredValueTypeDependency = true;
-        }
-
-        var builder = new ExpressionBuilder(
-            parameterCount + memberCount,
-            defaultResolutionCount,
-            hasRequiredValueTypeDependency,
-            ImplementorKey.Value.Type,
-            Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback );
-
-        return (builder, parameterCount, memberCount);
     }
 }

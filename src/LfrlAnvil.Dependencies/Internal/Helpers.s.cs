@@ -199,6 +199,32 @@ internal static class Helpers
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Type GetInjectableMemberType(this MemberInfo member)
+    {
+        return member.MemberType == MemberTypes.Field
+            ? ReinterpretCast.To<FieldInfo>( member ).FieldType
+            : ReinterpretCast.To<PropertyInfo>( member ).PropertyType;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static MemberInfo GetActualMember(this MemberInfo member)
+    {
+        return member.MemberType == MemberTypes.Field
+            ? ReinterpretCast.To<FieldInfo>( member ).GetBackedProperty() ?? member
+            : member;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static bool IsInjectableMemberOptional(this MemberInfo member, IDependencyContainerConfigurationBuilder configuration)
+    {
+        member = member.GetActualMember();
+        return member.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: true );
+    }
+
+    [Pure]
     internal static bool IsOpenGenericAssignableTo(this Type type, Type targetType)
     {
         Assume.True( targetType.IsGenericTypeDefinition );

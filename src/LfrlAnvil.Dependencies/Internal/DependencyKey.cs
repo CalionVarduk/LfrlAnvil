@@ -61,13 +61,13 @@ internal sealed class DependencyKey : IInternalDependencyKey
     [Pure]
     public DependencyImplementorBuilder? GetSharedImplementor(DependencyLocatorBuilderStore builderStore)
     {
-        return builderStore.Global.SharedImplementors.GetValueOrDefault( Type );
+        return builderStore.Global.SharedImplementors.GetValueOrDefault( Type ) as DependencyImplementorBuilder;
     }
 
     [Pure]
     public OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore)
     {
-        return builderStore.Global.SharedGenericImplementors.GetValueOrDefault( Type );
+        return builderStore.Global.SharedImplementors.GetValueOrDefault( Type ) as OpenGenericDependencyImplementorBuilder;
     }
 
     [Pure]
@@ -138,14 +138,14 @@ internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyK
     public DependencyImplementorBuilder? GetSharedImplementor(DependencyLocatorBuilderStore builderStore)
     {
         var locator = builderStore.GetKeyed( Key );
-        return locator?.SharedImplementors.GetValueOrDefault( Type );
+        return locator?.SharedImplementors.GetValueOrDefault( Type ) as DependencyImplementorBuilder;
     }
 
     [Pure]
     public OpenGenericDependencyImplementorBuilder? GetSharedGenericImplementor(DependencyLocatorBuilderStore builderStore)
     {
         var locator = builderStore.GetKeyed( Key );
-        return locator?.SharedGenericImplementors.GetValueOrDefault( Type );
+        return locator?.SharedImplementors.GetValueOrDefault( Type ) as OpenGenericDependencyImplementorBuilder;
     }
 
     [Pure]

@@ -18,7 +18,7 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
-internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependencyRangeBuilder
+internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependencyRangeBuilder, IInternalDependencyRangeBuilder
 {
     internal OpenGenericDependencyRangeBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType)
     {
@@ -30,6 +30,7 @@ internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependency
 
     public Type DependencyType { get; }
     public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
+    public bool IsOpenGeneric => true;
     public IReadOnlyList<IOpenGenericDependencyBuilder> Elements => InternalElements;
     internal List<OpenGenericDependencyBuilder> InternalElements { get; }
     internal DependencyLocatorBuilder LocatorBuilder { get; }

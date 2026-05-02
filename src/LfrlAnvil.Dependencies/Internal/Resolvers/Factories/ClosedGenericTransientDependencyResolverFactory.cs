@@ -18,9 +18,9 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class TransientClosedGenericDependencyResolverFactory : RegisteredClosedGenericDependencyResolverFactory
+internal sealed class ClosedGenericTransientDependencyResolverFactory : RegisteredClosedGenericDependencyResolverFactory
 {
-    internal TransientClosedGenericDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
+    internal ClosedGenericTransientDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
         : base( implementorKey, @base ) { }
 
     protected override DependencyResolver CreateFromExpression(

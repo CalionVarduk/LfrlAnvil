@@ -18,9 +18,9 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class ScopedClosedGenericDependencyResolverFactory : RegisteredClosedGenericDependencyResolverFactory
+internal sealed class ClosedGenericSingletonDependencyResolverFactory : RegisteredClosedGenericDependencyResolverFactory
 {
-    internal ScopedClosedGenericDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
+    internal ClosedGenericSingletonDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
         : base( implementorKey, @base ) { }
 
     protected override DependencyResolver CreateFromExpression(
@@ -29,12 +29,12 @@ internal sealed class ScopedClosedGenericDependencyResolverFactory : RegisteredC
     {
         return Base.ImplementorBuilder.OnResolvingCallback is null
             && Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback is null
-                ? new ScopedDependencyResolver(
+                ? new SingletonDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
                     Base.ImplementorBuilder.DisposalStrategy,
                     expression )
-                : new CycleTrackingScopedDependencyResolver(
+                : new CycleTrackingSingletonDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
                     Base.ImplementorBuilder.DisposalStrategy,

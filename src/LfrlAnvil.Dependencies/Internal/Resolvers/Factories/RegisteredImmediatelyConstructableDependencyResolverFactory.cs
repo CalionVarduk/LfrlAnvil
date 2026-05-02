@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Extensions;
@@ -26,90 +25,47 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependencyResolverFactory
+internal abstract class RegisteredImmediatelyConstructableDependencyResolverFactory : RegisteredConstructableDependencyResolverFactory
 {
-    internal OpenGenericDependencyResolverFactory(
+    protected RegisteredImmediatelyConstructableDependencyResolverFactory(
         ImplementorKey implementorKey,
-        DependencyLifetime lifetime,
-        IOpenGenericDependencyImplementorBuilder implementorBuilder)
-        : base( implementorKey, lifetime, isOpenGeneric: true )
+        IDependencyImplementorBuilder implementorBuilder,
+        DependencyLifetime lifetime)
+        : base( implementorKey, lifetime )
     {
         ImplementorBuilder = implementorBuilder;
     }
 
-    internal IOpenGenericDependencyImplementorBuilder ImplementorBuilder { get; }
+    internal IDependencyImplementorBuilder ImplementorBuilder { get; }
 
-    internal DependencyResolverFactory Close(
-        IInternalDependencyKey dependencyKey,
-        DependencyLocatorBuilderExtractionParams @params,
-        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
-    {
-        Assume.False( dependencyKey.Type.ContainsGenericParameters );
+    protected override Action<object, Type, IDependencyScope>? OnCreatedCallback =>
+        ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback;
 
-        if ( ImplementorKey.IsShared )
-        {
-            var sharedResolverFactory = CloseShared( dependencyKey, @params );
-            dynamicResolverFactories.Add( dependencyKey, sharedResolverFactory );
-            return sharedResolverFactory;
-        }
-
-        ref var parameterFactory
-            = ref CollectionsMarshal.GetValueRefOrAddDefault( dynamicResolverFactories, dependencyKey, out var exists )!;
-
-        if ( ! exists )
-            parameterFactory = RegisteredClosedGenericDependencyResolverFactory.Create(
-                this,
-                ImplementorKey.Create( dependencyKey, ImplementorKey.RangeIndex ) );
-
-        return parameterFactory;
-    }
-
-    internal DependencyResolverFactory CloseShared(
-        IInternalDependencyKey dependencyKey,
-        DependencyLocatorBuilderExtractionParams @params)
-    {
-        Assume.False( dependencyKey.Type.ContainsGenericParameters );
-        Assume.True( ImplementorKey.IsShared );
-
-        var sharedImplementorType = ImplementorKey.Value.Type.CloseImplementorType( dependencyKey.Type );
-        var sharedImplementorKey = InternalImplementorKey.WithType( sharedImplementorType );
-        var sharedResolverFactory = @params.GetSharedResolverFactory( sharedImplementorKey, Lifetime );
-        if ( sharedResolverFactory is null )
-        {
-            sharedResolverFactory = RegisteredClosedGenericDependencyResolverFactory.Create(
-                this,
-                ImplementorKey.CreateShared( sharedImplementorKey ) );
-
-            @params.AddSharedResolverFactory( sharedImplementorKey, Lifetime, sharedResolverFactory );
-        }
-
-        return sharedResolverFactory;
-    }
-
-    protected override bool TryResolveCreationMethodImmediately(
+    protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         IDependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
     {
-        resolver = null;
+        resolver = ImplementorBuilder.Factory is not null ? CreateFromFactory( idGenerator ) : null;
         return true;
     }
 
     [Pure]
-    protected override ConstructorInfo? FindValidConstructor(
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected sealed override ConstructorInfo? FindValidConstructor(
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         IDependencyContainerConfigurationBuilder configuration)
     {
-        var ctor = ImplementorBuilder.Constructor?.Info;
+        Assume.IsNull( ImplementorBuilder.Factory );
 
+        var ctor = ImplementorBuilder.Constructor?.Info;
         if ( ctor is not null )
         {
-            var declaringType = ctor.DeclaringType;
-            if ( declaringType is null || ! declaringType.IsOpenGenericAssignableTo( ImplementorKey.Value.Type ) )
+            if ( ctor.DeclaringType?.IsAssignableTo( ImplementorKey.Value.Type ) != true )
                 Errors = Errors.Extend( Resources.ProvidedConstructorDoesNotCreateInstancesOfCorrectType( ctor ) );
 
-            if ( declaringType?.IsAbstract != false )
+            if ( ctor.DeclaringType?.IsConstructable() != true )
                 Errors = Errors.Extend( Resources.ProvidedConstructorBelongsToNonConstructableType( ctor ) );
 
             return Errors.Count == 0 ? ctor : null;
@@ -120,13 +76,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         if ( explicitType is not null )
         {
             type = explicitType;
-            if ( ! explicitType.IsOpenGenericAssignableTo( ImplementorKey.Value.Type ) )
+            if ( ! explicitType.IsAssignableTo( ImplementorKey.Value.Type ) )
                 Errors = Errors.Extend( Resources.ProvidedTypeIsIncorrect( explicitType ) );
         }
         else
             type = ImplementorKey.Value.Type;
 
-        if ( type.IsAbstract )
+        if ( ! type.IsConstructable() )
             Errors = Errors.Extend( Resources.ProvidedTypeIsNonConstructable( explicitType ) );
 
         if ( Errors.Count == 0 )
@@ -139,7 +95,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         return ctor;
     }
 
-    protected override bool ValidateDependencies(
+    protected sealed override bool ValidateDependencies(
         DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
         IDependencyContainerConfigurationBuilder configuration,
@@ -169,6 +125,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             else
             {
                 var resolution = GetResolution( explicitParameterResolutions, usedExplicitResolutions, customResolutionIndex );
+                if ( resolution.Factory is not null )
+                {
+                    ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )resolution.Factory );
+                    continue;
+                }
+
                 implementorKey = ValidateDependencyImplementorType( parameter, parameter.ParameterType, resolution.ImplementorKey );
             }
 
@@ -181,13 +143,11 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( internalKey.Type.GetGenericTypeDefinition() );
+                var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
                 if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory )
                     && parameterFactory is OpenGenericDependencyResolverFactory genericParameterFactory )
                 {
-                    if ( ! implementorKey.Type.ContainsGenericParameters )
-                        parameterFactory = genericParameterFactory.Close( internalKey, @params, dynamicResolverFactories );
-
+                    parameterFactory = genericParameterFactory.Close( internalKey, @params, dynamicResolverFactories );
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     continue;
@@ -232,6 +192,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             else
             {
                 var resolution = GetResolution( explicitMemberResolutions, usedExplicitResolutions, customResolutionIndex );
+                if ( resolution.Factory is not null )
+                {
+                    MemberResolutions[i] = KeyValuePair.Create( member, ( object? )resolution.Factory );
+                    continue;
+                }
+
                 implementorKey = ValidateDependencyImplementorType( member, memberType, resolution.ImplementorKey );
             }
 
@@ -244,13 +210,11 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( internalKey.Type.GetGenericTypeDefinition() );
+                var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
                 if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory )
                     && memberFactory is OpenGenericDependencyResolverFactory genericMemberFactory )
                 {
-                    if ( ! implementorKey.Type.ContainsGenericParameters )
-                        memberFactory = genericMemberFactory.Close( internalKey, @params, dynamicResolverFactories );
-
+                    memberFactory = genericMemberFactory.Close( internalKey, @params, dynamicResolverFactories );
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     continue;
@@ -271,15 +235,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         return true;
     }
 
-    protected override DependencyResolver CreateResolver(UlongSequenceGenerator idGenerator)
-    {
-        return base.CreateResolver( idGenerator );
-    }
+    protected abstract DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator);
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static int FindCustomResolutionIndex<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
         int resolutionsLength,
         T target)
         where T : class, ICustomAttributeProvider
@@ -295,8 +256,8 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static OpenGenericInjectableDependencyResolution<T> GetResolution<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
+    private static InjectableDependencyResolution<T> GetResolution<T>(
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
         BitArray? usedResolutions,
         int index)
         where T : class, ICustomAttributeProvider
@@ -313,7 +274,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
     {
         Assume.IsNotNull( implementorKey );
 
-        if ( ! dependencyType.IsAnyResolvableBy( implementorKey.Type ) )
+        if ( ! implementorKey.Type.IsAssignableTo( dependencyType ) )
         {
             var message = Resources.ProvidedImplementorTypeIsNotAssignableToDependencyType( target, implementorKey );
             Errors = Errors.Extend( message );
@@ -324,7 +285,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void ValidateUnusedResolutions<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
         BitArray? usedResolutions,
         int resolutionsLength)
         where T : class, ICustomAttributeProvider
@@ -340,7 +301,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 continue;
 
             var resolution = resolutions[i];
-            var message = Resources.UnusedResolution<T>( ConstructorInfo, i, resolution.ImplementorKey, factory: null );
+            var message = Resources.UnusedResolution<T>( ConstructorInfo, i, resolution.ImplementorKey, resolution.Factory );
             Warnings = Warnings.Extend( message );
         }
     }
@@ -377,7 +338,14 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 {
                     Assume.IsNotNull( explicitParameterResolutions );
                     var resolution = explicitParameterResolutions[customResolutionIndex];
-                    if ( ! parameter.ParameterType.IsAnyResolvableBy( resolution.ImplementorKey.Type ) )
+                    if ( resolution.Factory is not null )
+                    {
+                        score += defaultScore * 3;
+                        continue;
+                    }
+
+                    Assume.IsNotNull( resolution.ImplementorKey );
+                    if ( ! resolution.ImplementorKey.Type.IsAssignableTo( parameter.ParameterType ) )
                     {
                         score = notEligibleScore;
                         break;
@@ -398,7 +366,8 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
                 {
                     var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
-                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory ) )
+                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory )
+                        && parameterFactory is OpenGenericDependencyResolverFactory )
                     {
                         if ( ! parameterFactory.IsCaptiveDependencyOf( Lifetime ) )
                             score += defaultScore * 2;
