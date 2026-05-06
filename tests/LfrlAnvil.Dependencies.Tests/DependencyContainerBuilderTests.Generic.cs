@@ -1514,6 +1514,181 @@ public partial class DependencyContainerBuilderTests
                             messages[0].Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenFirstRangeDependencyElementIsInvalid()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( ChainableGenericBar<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( ChainableGenericFoo<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ), 0 ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenSecondRangeDependencyElementIsInvalid()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( ChainableGenericFoo<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( MultiCtorGenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ), 1 ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnResultWithWarnings_WhenCaptiveDependencyIsDetectedInRangeElementAndTheyAreTreatedAsWarnings(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( false );
+            sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+            sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+            sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromType( typeof( GenericRangeFoo<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestTrue(),
+                    result.Container.TestNotNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 1 ),
+                            messages[0].Errors.TestEmpty() ) ) )
+                .Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Scoped, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.ScopedSingleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.Singleton, DependencyLifetime.ScopedSingleton )]
+        public void TryBuild_ShouldReturnFailureResult_WhenCaptiveDependencyIsDetectedInRangeElementAndTheyAreTreatedAsErrors(
+            DependencyLifetime parentLifetime,
+            DependencyLifetime dependencyLifetime)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors();
+            sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+            sut.Add<string>().SetLifetime( dependencyLifetime ).FromFactory( _ => string.Empty );
+            sut.Add<string>().SetLifetime( parentLifetime ).FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( parentLifetime ).FromType( typeof( GenericRangeFoo<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyForSelfRangeIsDetected()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericFooRangeDecorator<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericFooRangeDecorator<> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericFooRangeDecorator<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 3 ) )
+                        .Then( messages =>
+                        {
+                            var first = messages[0];
+                            var second = messages[1];
+                            var third = messages[2];
+                            return Assertion.All(
+                                "messages",
+                                first.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                                first.Warnings.TestEmpty(),
+                                first.Errors.Count.TestEquals( 3 ),
+                                second.ImplementorKey.TestEquals(
+                                    ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ), 0 ) ),
+                                second.Warnings.TestEmpty(),
+                                second.Errors.Count.TestEquals( 2 ),
+                                third.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ), 1 ) ),
+                                third.Warnings.TestEmpty(),
+                                third.Errors.Count.TestEquals( 1 ) );
+                        } ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenCircularDependencyForNestedRangeIsDetected()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.Add<string>().FromFactory( _ => string.Empty );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( ChainableGenericFooRange<> ) );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericBarRangeDecorator<> ) );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( ChainableGenericRange<> ) );
+            sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                        .Then( messages =>
+                        {
+                            var first = messages[0];
+                            var second = messages[1];
+                            return Assertion.All(
+                                "messages",
+                                first.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                                first.Warnings.TestEmpty(),
+                                first.Errors.Count.TestEquals( 1 ),
+                                second.ImplementorKey.TestEquals(
+                                    ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ), 0 ) ),
+                                second.Warnings.TestEmpty(),
+                                second.Errors.Count.TestEquals( 1 ) );
+                        } ) )
+                .Go();
+        }
     }
 }
 

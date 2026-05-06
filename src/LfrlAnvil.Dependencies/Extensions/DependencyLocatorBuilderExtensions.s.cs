@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
 
@@ -64,6 +65,7 @@ public static class DependencyLocatorBuilderExtensions
     /// <exception cref="InvalidTypeRegistrationException">
     /// When the provided element type is a generic type definition or contains generic parameters.
     /// </exception>
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IDependencyRangeBuilder GetDependencyRange<T>(this IDependencyLocatorBuilder builder)
     {

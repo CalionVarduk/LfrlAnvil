@@ -280,6 +280,24 @@ internal static class Helpers
         return null;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Type? GetOpenGenericDependencyType(this Type type)
+    {
+        if ( ! type.IsGenericType )
+            return null;
+
+        var openType = type.GetGenericTypeDefinition();
+        if ( openType != typeof( IEnumerable<> ) )
+            return openType;
+
+        var elementType = type.GetGenericArguments()[0];
+        if ( ! elementType.IsGenericType )
+            return null;
+
+        var openElementType = elementType.GetGenericTypeDefinition();
+        return openElementType == typeof( IEnumerable<> ) ? null : typeof( IEnumerable<> ).MakeGenericType( openElementType );
+    }
+
     [Pure]
     internal static bool IsOpenGenericAssignableTo(this Type type, Type targetType)
     {

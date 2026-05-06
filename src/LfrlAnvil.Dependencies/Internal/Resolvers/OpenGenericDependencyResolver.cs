@@ -34,6 +34,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
     private readonly Action<object, Type, IDependencyScope>? _onCreatedCallback;
     private readonly Type _injectablePropertyType;
     private readonly IInternalDependencyKey? _sharedImplementorKey;
+    private readonly bool _isRangeElement;
 
     internal OpenGenericDependencyResolver(
         ulong id,
@@ -46,6 +47,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         Action<object, Type, IDependencyScope>? onCreatedCallback,
         Type injectablePropertyType,
         IInternalDependencyKey? sharedImplementorKey,
+        bool isRangeElement,
         DependencyLifetime lifetime)
         : base( id, implementorType, disposalStrategy )
     {
@@ -57,6 +59,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         _onCreatedCallback = onCreatedCallback;
         _injectablePropertyType = injectablePropertyType;
         _sharedImplementorKey = sharedImplementorKey;
+        _isRangeElement = isRangeElement;
         Lifetime = lifetime;
     }
 
@@ -71,8 +74,11 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         if ( _sharedImplementorKey is null )
         {
             result = CreateClosedResolver( dependencyLocator, dependencyType, implementorType );
-            using ( AcquireActiveWriteLock( dependencyLocator ) )
-                result = dependencyLocator.Resolvers.GetOrAddResolver( dependencyType, result );
+            if ( ! _isRangeElement )
+            {
+                using ( AcquireActiveWriteLock( dependencyLocator ) )
+                    result = dependencyLocator.Resolvers.GetOrAddResolver( dependencyType, result );
+            }
         }
         else
         {
@@ -86,21 +92,29 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
             if ( sharedResolver is not null )
             {
                 result = sharedResolver;
-                using ( AcquireActiveWriteLock( dependencyLocator ) )
-                    dependencyLocator.Resolvers.SetResolver( dependencyType, result );
+                if ( ! _isRangeElement )
+                {
+                    using ( AcquireActiveWriteLock( dependencyLocator ) )
+                        dependencyLocator.Resolvers.SetResolver( dependencyType, result );
+                }
             }
             else
             {
                 result = CreateClosedResolver( dependencyLocator, dependencyType, implementorType );
 
-                using ( AcquireActiveSharedContainersWriteLock( container ) )
-                using ( AcquireActiveWriteLock( dependencyLocator ) )
+                if ( ! _isRangeElement )
                 {
-                    var resolver = dependencyLocator.Resolvers.GetOrAddResolver( dependencyType, result );
-                    if ( ReferenceEquals( result, resolver ) )
-                        implementorResolvers.AddSharedGenericResolver( ImplementorType, implementorType, result );
-
-                    result = resolver;
+                    using ( AcquireActiveSharedContainersWriteLock( container ) )
+                    using ( AcquireActiveWriteLock( dependencyLocator ) )
+                    {
+                        result = implementorResolvers.GetOrAddSharedGenericResolver( ImplementorType, implementorType, result );
+                        dependencyLocator.Resolvers.SetResolver( dependencyType, result );
+                    }
+                }
+                else
+                {
+                    using ( AcquireActiveSharedContainersWriteLock( container ) )
+                        result = implementorResolvers.GetOrAddSharedGenericResolver( ImplementorType, implementorType, result );
                 }
             }
         }
@@ -188,7 +202,6 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         var injectableMembers = memberCount > 0 ? closedCtor.DeclaringType?.FindInjectableMembers( _injectablePropertyType ) ?? [ ] : null;
         var (builder, parameters) = CreateExpressionBuilder( locator, closedCtor, implementorType, injectableMembers );
 
-        // TODO: update parameter/member preparation once open generic ranges will be added
         for ( var i = 0; i < parameters.Length; ++i )
         {
             Assume.IsNotNull( _parameterResolvers );
@@ -198,10 +211,12 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
 
             if ( resolver is null )
                 AddDefaultResolution( builder, locator, instanceType, name, parameter.HasDefaultValue, parameter.DefaultValue );
-            else if ( resolver is not OpenGenericDependencyResolver openGenericResolver )
-                builder.AddDependencyResolverResolution( instanceType, name, resolver );
-            else
+            else if ( resolver is OpenGenericDependencyResolver openGenericResolver )
                 AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
+            else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
+                AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+            else
+                builder.AddDependencyResolverResolution( instanceType, name, resolver );
         }
 
         MemberBinding[]? memberBindings = null;
@@ -221,10 +236,12 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
 
                 if ( resolver is null )
                     AddDefaultResolution( builder, locator, instanceType, name );
-                else if ( resolver is not OpenGenericDependencyResolver openGenericResolver )
-                    builder.AddDependencyResolverResolution( instanceType, name, resolver );
-                else
+                else if ( resolver is OpenGenericDependencyResolver openGenericResolver )
                     AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
+                else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
+                    AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+                else
+                    builder.AddDependencyResolverResolution( instanceType, name, resolver );
 
                 var memberCtor = memberType.FindInjectableMemberCtor( instanceType );
                 memberBindings[i] = builder.CreateMemberBindingForLastVariable( member, memberCtor );
@@ -275,6 +292,28 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         }
 
         resolver = openGenericResolver.Close( locator, instanceType );
+        builder.AddDependencyResolverResolution( instanceType, name, resolver );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void AddOpenGenericRangeResolution(
+        ExpressionBuilder builder,
+        DependencyLocator locator,
+        OpenGenericRangeDependencyResolver openGenericRangeResolver,
+        Type instanceType,
+        string name)
+    {
+        DependencyResolver? resolver;
+        using ( AcquireActiveReadLock( locator ) )
+            resolver = locator.Resolvers.TryGetResolver( instanceType );
+
+        if ( resolver is not null )
+        {
+            builder.AddDependencyResolverResolution( instanceType, name, resolver );
+            return;
+        }
+
+        resolver = openGenericRangeResolver.Close( locator, instanceType );
         builder.AddDependencyResolverResolution( instanceType, name, resolver );
     }
 

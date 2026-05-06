@@ -141,13 +141,13 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 continue;
             }
 
-            if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+            var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+            if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
-                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory )
-                    && parameterFactory is OpenGenericDependencyResolverFactory genericParameterFactory )
+                var openGenericKey = internalKey.WithType( openImplementorType );
+                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory ) && parameterFactory.IsOpenGeneric )
                 {
-                    parameterFactory = genericParameterFactory.Close( internalKey, @params, dynamicResolverFactories );
+                    parameterFactory = parameterFactory.Close( internalKey, @params, dynamicResolverFactories );
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     continue;
@@ -205,13 +205,13 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 continue;
             }
 
-            if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+            var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+            if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
-                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory )
-                    && memberFactory is OpenGenericDependencyResolverFactory genericMemberFactory )
+                var openGenericKey = internalKey.WithType( openImplementorType );
+                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory ) && memberFactory.IsOpenGeneric )
                 {
-                    memberFactory = genericMemberFactory.Close( internalKey, @params, dynamicResolverFactories );
+                    memberFactory = memberFactory.Close( internalKey, @params, dynamicResolverFactories );
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     continue;
@@ -359,11 +359,11 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                     continue;
                 }
 
-                if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+                var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+                if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
                 {
-                    var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
-                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory )
-                        && parameterFactory is OpenGenericDependencyResolverFactory )
+                    var openGenericKey = internalKey.WithType( openImplementorType );
+                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory ) && parameterFactory.IsOpenGeneric )
                     {
                         if ( ! parameterFactory.IsCaptiveDependencyOf( Lifetime ) )
                             score += defaultScore * 2;

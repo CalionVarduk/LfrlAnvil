@@ -72,11 +72,7 @@ internal readonly struct DependencyResolversStore : IDisposable
     internal void SetResolver(Type type, DependencyResolver resolver)
     {
         Assume.True( Lock.IsWriteLockHeld );
-        ref var current = ref CollectionsMarshal.GetValueRefOrAddDefault( Resolvers, type, out var exists )!;
-        if ( exists )
-            Assume.True( ReferenceEquals( current, resolver ) );
-        else
-            current = resolver;
+        Resolvers[type] = resolver;
     }
 
     [Pure]
@@ -87,9 +83,17 @@ internal readonly struct DependencyResolversStore : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddSharedGenericResolver(Type openType, Type closedType, DependencyResolver resolver)
+    internal DependencyResolver GetOrAddSharedGenericResolver(Type openType, Type closedType, DependencyResolver resolver)
     {
-        SharedGenericResolvers.Add( new SharedGenericKey( openType, closedType ), resolver );
+        ref var current = ref CollectionsMarshal.GetValueRefOrAddDefault(
+            SharedGenericResolvers,
+            new SharedGenericKey( openType, closedType ),
+            out var exists )!;
+
+        if ( ! exists )
+            current = resolver;
+
+        return current;
     }
 
     [Pure]

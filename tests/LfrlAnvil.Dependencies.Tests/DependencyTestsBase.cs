@@ -77,16 +77,6 @@ public abstract class DependencyTestsBase : TestsBase
         public IGenericFoo<T> Foo { get; }
     }
 
-    public class OptionallyChainableGenericQux<T> : IGenericQux<T>
-    {
-        public OptionallyChainableGenericQux(IGenericFoo<T>? foo = null)
-        {
-            Foo = foo;
-        }
-
-        public IGenericFoo<T>? Foo { get; }
-    }
-
     public class ChainableFieldGenericFoo<T> : IGenericFoo<T>
     {
         private readonly Injected<IGenericBar<T>> _bar = default;
@@ -556,6 +546,16 @@ public abstract class DependencyTestsBase : TestsBase
         public IEnumerable<string> Texts { get; }
     }
 
+    public class GenericRangeFoo<T> : IGenericFoo<T>
+    {
+        public GenericRangeFoo(IEnumerable<string> texts)
+        {
+            Texts = texts;
+        }
+
+        public IEnumerable<string> Texts { get; }
+    }
+
     public class RangeBar : IBar
     {
         private readonly Injected<IEnumerable<string>> _texts = default;
@@ -571,6 +571,52 @@ public abstract class DependencyTestsBase : TestsBase
 
         public IEnumerable<IWithText> Range { get; }
         public string Text => string.Join( '|', Range.Select( e => e.Text ) );
+    }
+
+    public class GenericFooRangeDecorator<T> : IGenericFoo<T>
+    {
+        public GenericFooRangeDecorator(IEnumerable<IGenericFoo<T>> range)
+        {
+            Range = range;
+        }
+
+        public IEnumerable<IGenericFoo<T>> Range { get; }
+    }
+
+    public class GenericBarRangeDecorator<T> : IGenericBar<T>
+    {
+        public GenericBarRangeDecorator(IEnumerable<IGenericBar<T>> range)
+        {
+            Range = range;
+        }
+
+        public IEnumerable<IGenericBar<T>> Range { get; }
+    }
+
+    public class ChainableGenericFooRange<T> : IGenericFoo<T>
+    {
+        public ChainableGenericFooRange(IEnumerable<IGenericBar<T>> bars)
+        {
+            Bars = bars;
+        }
+
+        public IEnumerable<IGenericBar<T>> Bars { get; }
+    }
+
+    public class ChainableGenericFooMemberRange<T> : IGenericFoo<T>
+    {
+        private readonly Injected<IEnumerable<IGenericBar<T>>> _bars;
+        public IEnumerable<IGenericBar<T>> Bars => _bars.Instance;
+    }
+
+    public class ChainableGenericRange<T> : IGenericBar<T>
+    {
+        public ChainableGenericRange(IGenericFoo<T> foo)
+        {
+            Foo = foo;
+        }
+
+        public IGenericFoo<T> Foo { get; }
     }
 
     public class ChainableRange : IWithText

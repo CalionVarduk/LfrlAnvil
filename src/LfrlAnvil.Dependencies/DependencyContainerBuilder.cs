@@ -110,7 +110,6 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     }
 
     /// <inheritdoc />
-    [Pure]
     public IOpenGenericDependencyRangeBuilder GetGenericDependencyRange(Type type)
     {
         return _locatorBuilderStore.Global.GetGenericDependencyRange( type );
@@ -176,25 +175,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         var keyedDependencyResolvers = KeyedDependencyResolversStore.Create( defaultResolvers );
 
         foreach ( var (dependencyKey, factory) in extractionParams.ResolverFactories )
-        {
-            var dependencyStore = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
-                .GetTargetResolversStore( in globalResolvers, in keyedDependencyResolvers );
-
-            var resolver = factory.GetResolver();
-            dependencyStore.Resolvers.TryAdd( dependencyKey.Type, resolver );
-
-            if ( factory.ImplementorKey.IsShared && factory is RegisteredClosedGenericDependencyResolverFactory closedGenericFactory )
-            {
-                var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( closedGenericFactory.ImplementorKey.Value )
-                    .GetTargetResolversStore( in globalResolvers, in keyedDependencyResolvers );
-
-                implementorStore.SharedGenericResolvers.TryAdd(
-                    new SharedGenericKey(
-                        closedGenericFactory.Base.ImplementorKey.Value.Type,
-                        closedGenericFactory.ImplementorKey.Value.Type ),
-                    resolver );
-            }
-        }
+            factory.RegisterResolver( dependencyKey, in globalResolvers, in keyedDependencyResolvers );
 
         var result = new DependencyContainer( idGenerator, globalResolvers, keyedDependencyResolvers );
         return new DependencyContainerBuildResult<DependencyContainer>( result, messages );

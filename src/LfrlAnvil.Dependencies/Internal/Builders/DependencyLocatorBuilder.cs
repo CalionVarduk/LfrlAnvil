@@ -173,6 +173,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 @params,
                 ImplementorKey.Create( dependencyKey ),
                 builder,
+                isLastInRange: true,
                 out var m );
 
             messages = messages.Extend( m );
@@ -213,6 +214,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 @params,
                 ImplementorKey.Create( dependencyKey, i ),
                 builder,
+                isLastInRange: false,
                 out var m );
 
             messages = messages.Extend( m );
@@ -220,7 +222,11 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         }
 
         var rangeDependencyKey = ImplementorKey.Create( CreateImplementorKey( rangeDependencyType ) );
-        var rangeFactory = new RangeDependencyResolverFactory( rangeDependencyKey, rangeBuilder.OnResolvingCallback, factoriesInRange );
+        var rangeFactory = new ClosedRangeDependencyResolverFactory(
+            rangeDependencyKey,
+            rangeBuilder.OnResolvingCallback,
+            factoriesInRange );
+
         @params.ResolverFactories.Add( rangeDependencyKey.Value, rangeFactory );
     }
 
@@ -242,10 +248,60 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             @params,
             ImplementorKey.Create( dependencyKey ),
             builder,
+            isLastInRange: true,
             out var m );
 
         messages = messages.Extend( m );
         @params.ResolverFactories.Add( dependencyKey, builderFactory );
+
+        var rangeDependencyType = typeof( IEnumerable<> ).MakeGenericType( rangeBuilder.DependencyType );
+        if ( Dependencies.ContainsKey( rangeDependencyType ) )
+            return;
+
+        var rangeBuilderCount = 0;
+        foreach ( var b in builderSpan )
+        {
+            if ( b.IsIncludedInRange )
+                ++rangeBuilderCount;
+        }
+
+        var factoriesInRange = rangeBuilderCount > 0 ? new DependencyResolverFactory[rangeBuilderCount] : null;
+        var factoriesInRangeToCreate = rangeBuilderCount;
+        if ( builder.IsIncludedInRange )
+        {
+            Assume.IsNotNull( factoriesInRange );
+            Assume.IsNotNull( builderFactory );
+            factoriesInRange[^1] = builderFactory;
+            --factoriesInRangeToCreate;
+        }
+
+        var builderIndex = 0;
+        for ( var i = 0; i < factoriesInRangeToCreate; ++i )
+        {
+            Assume.IsNotNull( factoriesInRange );
+            while ( ! builderSpan[builderIndex].IsIncludedInRange )
+                ++builderIndex;
+
+            builder = builderSpan[builderIndex++];
+            builderFactory = ExtractGenericResolverFactory(
+                locatorBuilderStore,
+                @params,
+                ImplementorKey.Create( dependencyKey, i ),
+                builder,
+                isLastInRange: false,
+                out m );
+
+            messages = messages.Extend( m );
+            factoriesInRange[i] = builderFactory;
+        }
+
+        var rangeDependencyKey = ImplementorKey.Create( CreateImplementorKey( rangeDependencyType ) );
+        var rangeFactory = new OpenGenericRangeDependencyResolverFactory(
+            rangeDependencyKey,
+            rangeBuilder.OnResolvingCallback,
+            factoriesInRange );
+
+        @params.ResolverFactories.Add( rangeDependencyKey.Value, rangeFactory );
     }
 
     private DependencyResolverFactory ExtractResolverFactory(
@@ -253,6 +309,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderExtractionParams @params,
         ImplementorKey key,
         DependencyBuilder builder,
+        bool isLastInRange,
         out Chain<DependencyContainerBuildMessages> messages)
     {
         var errors = Chain<string>.Empty;
@@ -287,7 +344,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                     locatorBuilderStore,
                     @params,
                     openGenericKey,
-                    builder.Lifetime );
+                    builder.Lifetime,
+                    isLastInRange );
 
                 if ( sharedGenericFactory is null )
                 {
@@ -321,6 +379,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderExtractionParams @params,
         ImplementorKey key,
         OpenGenericDependencyBuilder builder,
+        bool isLastInRange,
         out Chain<DependencyContainerBuildMessages> messages)
     {
         var errors = Chain<string>.Empty;
@@ -329,7 +388,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         {
             messages = Chain<DependencyContainerBuildMessages>.Empty;
             var implementorBuilder = builder.Implementor ?? new OpenGenericDependencyImplementorBuilder( this, builder.DependencyType );
-            return new OpenGenericDependencyResolverFactory( key, builder.Lifetime, implementorBuilder );
+            return new OpenGenericDependencyResolverFactory( key, builder.Lifetime, implementorBuilder, isLastInRange );
         }
 
         if ( ! builder.InternalSharedImplementorKey.Type.IsOpenGenericAssignableTo( key.Value.Type ) )
@@ -339,7 +398,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             locatorBuilderStore,
             @params,
             builder.InternalSharedImplementorKey,
-            builder.Lifetime );
+            builder.Lifetime,
+            isLastInRange );
 
         if ( sharedFactory is null )
         {
@@ -359,7 +419,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderStore locatorBuilderStore,
         DependencyLocatorBuilderExtractionParams @params,
         IInternalDependencyKey openDependencyKey,
-        DependencyLifetime lifetime)
+        DependencyLifetime lifetime,
+        bool isLastInRange)
     {
         Assume.True( openDependencyKey.Type.IsGenericTypeDefinition );
 
@@ -374,7 +435,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         factory = new OpenGenericDependencyResolverFactory(
             ImplementorKey.CreateShared( openDependencyKey ),
             lifetime,
-            sharedImplementorBuilder );
+            sharedImplementorBuilder,
+            isLastInRange );
 
         @params.AddSharedResolverFactory( openDependencyKey, lifetime, factory );
         return ReinterpretCast.To<OpenGenericDependencyResolverFactory>( factory );

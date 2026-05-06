@@ -758,6 +758,266 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithSpecializedRangeCtorParameter()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<IEnumerable<IGenericFoo<string>>>().FromFactory( _ => Array.Empty<IGenericFoo<string>>() );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<int>>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var result2 = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<int>>>>();
+
+            Assertion.All(
+                    result1.Inner.Count().TestEquals( 0 ),
+                    result2.Inner.Count().TestEquals( 2 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithSpecializedRangeMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<IEnumerable<IGenericFoo<string>>>().FromFactory( _ => Array.Empty<IGenericFoo<string>>() );
+            builder.Add<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            builder.Add<ParameterizedMember<IEnumerable<IGenericFoo<int>>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            var result2 = sut.RootScope.Locator.Resolve<ParameterizedMember<IEnumerable<IGenericFoo<int>>>>();
+
+            Assertion.All(
+                    result1.Inner.Instance.Count().TestEquals( 0 ),
+                    result2.Inner.Instance.Count().TestEquals( 2 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingRangeDependency_ShouldInvokeOnResolvingCallbackEveryTime()
+        {
+            var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
+
+            var builder = new DependencyContainerBuilder();
+            builder.GetGenericDependencyRange( typeof( IGenericFoo<> ) )
+                .SetOnResolvingCallback( onResolvingCallback )
+                .Add()
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<int>>>>();
+            var sut = builder.Build();
+
+            _ = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            _ = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<int>>>>();
+
+            Assertion.All(
+                    onResolvingCallback.CallCount().TestEquals( 2 ),
+                    onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IEnumerable<IGenericFoo<string>> ), sut.RootScope ] ),
+                    onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IEnumerable<IGenericFoo<int>> ), sut.RootScope ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorRequiresEmptyRegisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            _ = builder.GetGenericDependencyRange( typeof( IGenericFoo<> ) );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+
+            result.Inner.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnCorrectInstance_WhenMemberRequiresEmptyRegisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            _ = builder.GetGenericDependencyRange( typeof( IGenericFoo<> ) );
+            builder.Add<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+
+            result.Inner.Instance.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeOnlyContainsElementsExcludedFromRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+
+            result.Inner.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnLastRegisteredInstance_WhenMoreThanOneElementIsRegisteredInRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+
+            result.Inner.TestType().Exact<DefaultCtorParamGenericImplementor<string>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnCorrectInstance_WhenDependencyIsDecoratedRangeExcludingSelf()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericFooRangeDecorator<> ) );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+
+            result.Inner.TestType().Exact<GenericFooRangeDecorator<string>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenFirstElementIsExcluded()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+
+            result.Inner.Select( i => i.GetType() )
+                .TestSequence(
+                    [ typeof( OptionalCtorParamGenericImplementor<string> ), typeof( DefaultCtorParamGenericImplementor<string> ) ] )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenSecondElementIsExcluded()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .IncludeInRange( false )
+                .FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+
+            result.Inner.Select( i => i.GetType() )
+                .TestSequence( [ typeof( GenericImplementor<string> ), typeof( DefaultCtorParamGenericImplementor<string> ) ] )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenSomeElementsAreRegisteredAsKeyed()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalMemberGenericImplementor<> ) );
+            builder.GetKeyedLocator( 1 ).Add<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+            var keyedResult = sut.RootScope.GetKeyedLocator( 1 ).Resolve<Parameterized<IEnumerable<IGenericFoo<string>>>>();
+
+            Assertion.All(
+                    result.Inner.Select( i => i.GetType() )
+                        .TestSequence( [ typeof( GenericImplementor<string> ), typeof( OptionalCtorParamGenericImplementor<string> ) ] ),
+                    keyedResult.Inner.Select( i => i.GetType() )
+                        .TestSequence(
+                            [ typeof( DefaultCtorParamGenericImplementor<string> ), typeof( OptionalMemberGenericImplementor<string> ) ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithSharedImplementor_ShouldWorkCorrectlyForRangeElements()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            builder.Add<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            builder.Add<ParameterizedMember<IGenericBar<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            var result2 = sut.RootScope.Locator.Resolve<ParameterizedMember<IGenericBar<string>>>();
+
+            result1.Inner.Instance.TestCount( count => count.TestEquals( 2 ) )
+                .Then( foo => Assertion.All(
+                    foo[0].TestRefEquals( result2.Inner.Instance ),
+                    foo[1].TestNotRefEquals( result2.Inner.Instance ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaCtor()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooRange<> ) );
+            builder.Add<Parameterized<ChainableGenericFooRange<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<ChainableGenericFooRange<string>>>();
+
+            result.Inner.Bars.Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooMemberRange<> ) );
+            builder.Add<Parameterized<ChainableGenericFooMemberRange<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<ChainableGenericFooMemberRange<string>>>();
+
+            result.Inner.Bars.Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependencyDirectly_ShouldThrowOpenGenericDependencyException()
         {
             var builder = new DependencyContainerBuilder();
@@ -765,6 +1025,19 @@ public partial class DependencyContainerTests
             var sut = builder.Build();
 
             var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( typeof( GenericImplementor<> ) ) );
+
+            action.Test( exc => exc.TestType().Exact<OpenGenericDependencyException>() ).Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependencyDirectly_ShouldThrowOpenGenericDependencyException()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( GenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var action = Lambda.Of( () =>
+                sut.RootScope.Locator.Resolve( typeof( IEnumerable<> ).MakeGenericType( typeof( GenericImplementor<> ) ) ) );
 
             action.Test( exc => exc.TestType().Exact<OpenGenericDependencyException>() ).Go();
         }
@@ -1187,6 +1460,44 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingOpenDependency_WithSpecializedRangeCtorParameter()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<IEnumerable<IGenericBar<string>>>().FromFactory( _ => Array.Empty<IGenericBar<string>>() );
+            builder.AddGeneric( typeof( ChainableGenericFooRange<> ) );
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<ChainableGenericFooRange<string>>();
+            var result2 = sut.RootScope.Locator.Resolve<ChainableGenericFooRange<int>>();
+
+            Assertion.All(
+                    result1.Bars.Count().TestEquals( 0 ),
+                    result2.Bars.Count().TestEquals( 2 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithSpecializedRangeMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<IEnumerable<IGenericBar<string>>>().FromFactory( _ => Array.Empty<IGenericBar<string>>() );
+            builder.AddGeneric( typeof( ChainableGenericFooMemberRange<> ) );
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<string>>();
+            var result2 = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<int>>();
+
+            Assertion.All(
+                    result1.Bars.Count().TestEquals( 0 ),
+                    result2.Bars.Count().TestEquals( 2 ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependency_WithOptionalNonGenericCtorParameter()
         {
             var builder = new DependencyContainerBuilder();
@@ -1460,6 +1771,288 @@ public partial class DependencyContainerTests
                                                         inner4.InnerException.TestNull() ) ) ) ) ) ) ) ) ) ) )
                 .Go();
         }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldInvokeOnResolvingCallbackEveryTime()
+        {
+            var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
+
+            var builder = new DependencyContainerBuilder();
+            builder.GetGenericDependencyRange( typeof( IGenericFoo<> ) )
+                .SetOnResolvingCallback( onResolvingCallback )
+                .Add()
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            var sut = builder.Build();
+
+            _ = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            _ = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<int>>>();
+
+            Assertion.All(
+                    onResolvingCallback.CallCount().TestEquals( 2 ),
+                    onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IEnumerable<IGenericFoo<string>> ), sut.RootScope ] ),
+                    onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IEnumerable<IGenericFoo<int>> ), sut.RootScope ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenUnregisteredRangeDependency_ShouldReturnEmptyCollection_WhenDoingItForTheFirstTime()
+        {
+            var sut = new DependencyContainerBuilder().Build();
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            result.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenCtorRequiresUnregisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( ChainableGenericFooRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooRange<string>>();
+
+            result.Bars.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenCtorRequiresEmptyRegisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            _ = builder.GetGenericDependencyRange( typeof( IGenericBar<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooRange<string>>();
+
+            result.Bars.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenMemberRequiresEmptyRegisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            _ = builder.GetGenericDependencyRange( typeof( IGenericBar<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooMemberRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<string>>();
+
+            result.Bars.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenMemberRequiresUnregisteredRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( ChainableGenericFooMemberRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<string>>();
+
+            result.Bars.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldReturnCorrectInstance_WhenRangeDoesNotContainsAnyElements()
+        {
+            var builder = new DependencyContainerBuilder();
+            _ = builder.GetGenericDependencyRange( typeof( IGenericFoo<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+
+            result.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldReturnCorrectInstance_WhenRangeOnlyContainsElementsExcludedFromRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+
+            result.TestEmpty().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnLastRegisteredInstance_WhenMoreThanOneElementIsRegisteredInRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericFoo<string>>();
+
+            result.TestType().Exact<DefaultCtorParamGenericImplementor<string>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenDependencyIsDecoratedRangeExcludingSelf()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericFooRangeDecorator<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericFoo<string>>();
+
+            result.TestType().Exact<GenericFooRangeDecorator<string>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldReturnCorrectInstance_WhenFirstElementIsExcluded()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).IncludeInRange( false ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+
+            result.Select( i => i.GetType() )
+                .TestSequence(
+                    [ typeof( OptionalCtorParamGenericImplementor<string> ), typeof( DefaultCtorParamGenericImplementor<string> ) ] )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldReturnCorrectInstance_WhenSecondElementIsExcluded()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .IncludeInRange( false )
+                .FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+
+            result.Select( i => i.GetType() )
+                .TestSequence( [ typeof( GenericImplementor<string> ), typeof( DefaultCtorParamGenericImplementor<string> ) ] )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenRangeDependency_ShouldReturnCorrectInstance_WhenSomeElementsAreRegisteredAsKeyed()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalCtorParamGenericImplementor<> ) );
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( DefaultCtorParamGenericImplementor<> ) );
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( OptionalMemberGenericImplementor<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            var keyedResult = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IEnumerable<IGenericFoo<string>>>();
+
+            Assertion.All(
+                    result.Select( i => i.GetType() )
+                        .TestSequence( [ typeof( GenericImplementor<string> ), typeof( OptionalCtorParamGenericImplementor<string> ) ] ),
+                    keyedResult.Select( i => i.GetType() )
+                        .TestSequence(
+                            [ typeof( DefaultCtorParamGenericImplementor<string> ), typeof( OptionalMemberGenericImplementor<string> ) ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithSharedImplementor_ShouldWorkCorrectlyForRangeElements()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) );
+
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
+
+            result1.TestCount( count => count.TestEquals( 2 ) )
+                .Then( foo => Assertion.All(
+                    foo[0].TestRefEquals( result2 ),
+                    foo[1].TestNotRefEquals( result2 ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaCtor()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooRange<string>>();
+
+            result.Bars.Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( ChainableGenericFooMemberRange<> ) );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<string>>();
+
+            result.Bars.Count().TestEquals( 2 ).Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Singleton )]
+        public void DependencyLocator_TryGetLifetime_ShouldReturnCorrectResult(DependencyLifetime expected)
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( expected ).FromType( typeof( GenericImplementor<> ) );
+            var container = builder.Build();
+
+            var result = container.RootScope.Locator.TryGetLifetime( typeof( IGenericFoo<> ) );
+
+            result.TestEquals( expected ).Go();
+        }
+
+        [Fact]
+        public void DependencyLocator_TryGetLifetime_ShouldReturnCorrectResult_ForRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            var container = builder.Build();
+
+            var result = container.RootScope.Locator.TryGetLifetime( typeof( IEnumerable<> ).MakeGenericType( typeof( IGenericFoo<> ) ) );
+
+            result.TestEquals( DependencyLifetime.Transient ).Go();
+        }
     }
 }
 
@@ -1481,12 +2074,6 @@ public class OptionalCtorParameterGenericImplementor<T> : DependencyTestsBase.IG
     }
 
     public string? Text { get; }
-}
-
-public class OptionalMemberGenericImplementor<T> : DependencyTestsBase.IGenericFoo<T>
-{
-    [OptionalDependency]
-    public Injected<string?> Text { get; }
 }
 
 public class GenericCtorParameterGenericImplementor<T> : DependencyTestsBase.IGenericFoo<T>

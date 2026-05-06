@@ -54,6 +54,24 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
         return result;
     }
 
+    internal sealed override void RegisterResolver(
+        IDependencyKey dependencyKey,
+        in DependencyResolversStore globalResolvers,
+        in KeyedDependencyResolversStore keyedResolversStore)
+    {
+        base.RegisterResolver( dependencyKey, in globalResolvers, in keyedResolversStore );
+        if ( ! ImplementorKey.IsShared )
+            return;
+
+        var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value )
+            .GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
+
+        var resolver = GetResolver();
+        implementorStore.SharedGenericResolvers.TryAdd(
+            new SharedGenericKey( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type ),
+            resolver );
+    }
+
     protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
         IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
@@ -123,7 +141,9 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                     else
                     {
                         var implementorKey = InternalImplementorKey.WithType(
-                            baseResolver.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
+                            baseResolver is OpenGenericRangeDependencyResolverFactory
+                                ? parameter.ParameterType
+                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
 
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                         {
@@ -137,9 +157,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                             continue;
                         }
 
-                        var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolver );
-                        parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
-
+                        parameterFactory = baseResolver.Close( implementorKey, @params, dynamicResolverFactories );
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     }
@@ -180,25 +198,20 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                     else
                     {
                         var implementorKey = InternalImplementorKey.WithType(
-                            baseResolver.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
+                            baseResolver is OpenGenericRangeDependencyResolverFactory
+                                ? memberType
+                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
 
-                        if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
+                        if ( @params.ResolverFactories.TryGetValue( implementorKey, out var memberFactory ) )
                         {
-                            MemberResolutions[i] = KeyValuePair.Create( member, ( object? )parameterFactory );
-                            captiveDependencies = ValidateCaptiveDependency(
-                                captiveDependencies,
-                                member,
-                                implementorKey,
-                                parameterFactory );
-
+                            MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
+                            captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                             continue;
                         }
 
-                        var genericParameterFactory = ReinterpretCast.To<OpenGenericDependencyResolverFactory>( baseResolver );
-                        parameterFactory = genericParameterFactory.Close( implementorKey, @params, dynamicResolverFactories );
-
-                        MemberResolutions[i] = KeyValuePair.Create( member, ( object? )parameterFactory );
-                        captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, parameterFactory );
+                        memberFactory = baseResolver.Close( implementorKey, @params, dynamicResolverFactories );
+                        MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
+                        captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     }
                 }
             }

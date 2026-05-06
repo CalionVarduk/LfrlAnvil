@@ -1,4 +1,4 @@
-﻿// Copyright 2024-2026 Łukasz Furlepa
+// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,29 +15,23 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
+internal abstract class RangeDependencyResolverFactory : DependencyResolverFactory
 {
     internal RangeDependencyResolverFactory(
         ImplementorKey implementorKey,
         Action<Type, IDependencyScope>? onResolvingCallback,
-        DependencyResolverFactory[]? factories)
-        : base( implementorKey, DependencyLifetime.Transient, isOpenGeneric: false )
+        DependencyResolverFactory[]? factories,
+        bool isOpenGeneric)
+        : base( implementorKey, DependencyLifetime.Transient, isOpenGeneric )
     {
         Assume.True( implementorKey.Value.Type.IsGenericType );
-        Assume.Equals(
-            implementorKey.Value.Type.GetGenericTypeDefinition(),
-            typeof( IEnumerable<> ),
-            nameof( implementorKey.Value.Type.GetGenericTypeDefinition ) );
-
+        Assume.Equals( implementorKey.Value.Type.GetGenericTypeDefinition(), typeof( IEnumerable<> ) );
         ElementType = implementorKey.Value.Type.GetGenericArguments()[0];
         OnResolvingCallback = onResolvingCallback;
         Factories = factories;
@@ -145,59 +139,5 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
             path[^1] = new DependencyGraphNode( reachedFrom, f );
             DetectCircularDependencies( f, path );
         }
-    }
-
-    protected override DependencyResolver CreateResolver(
-        UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
-    {
-        Assume.Conditional(
-            Factories is not null,
-            () => Assume.True( Factories!.All( f => ! f.HasState( DependencyResolverFactoryState.Invalid ) ) ) );
-
-        var expression = CreateExpression( idGenerator, configuration );
-
-        return OnResolvingCallback is null
-            ? new TransientDependencyResolver(
-                idGenerator.Generate(),
-                ImplementorKey.Value.Type,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
-                expression )
-            : new CycleTrackingTransientDependencyResolver(
-                idGenerator.Generate(),
-                ImplementorKey.Value.Type,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
-                OnResolvingCallback,
-                expression );
-    }
-
-    [Pure]
-    private Expression<Func<DependencyScope, object>> CreateExpression(
-        UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
-    {
-        var (expressionBuilder, factoryCount) = CreateExpressionBuilder();
-        for ( var i = 0; i < factoryCount; ++i )
-        {
-            Assume.IsNotNull( Factories );
-            expressionBuilder.AddDependencyResolverFactoryResolution( ElementType, $"e{i}", Factories[i], idGenerator, configuration );
-        }
-
-        var arrayInit = factoryCount > 0
-            ? Expression.NewArrayInit( ElementType, expressionBuilder.GetVariableRange( factoryCount ) )
-            : ExpressionBuilder.CreateArrayEmptyCallExpression( ElementType );
-
-        var result = expressionBuilder.Build( arrayInit );
-        return result;
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private (ExpressionBuilder Builder, int FactoryCount) CreateExpressionBuilder()
-    {
-        var factoryCount = Factories?.Length ?? 0;
-        var hasRequiredValueTypeDependency = ElementType.IsValueType && Nullable.GetUnderlyingType( ElementType ) is null;
-        var builder = new ExpressionBuilder( factoryCount, 0, hasRequiredValueTypeDependency, ImplementorKey.Value.Type );
-        return (builder, factoryCount);
     }
 }

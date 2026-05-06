@@ -30,15 +30,19 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
     internal OpenGenericDependencyResolverFactory(
         ImplementorKey implementorKey,
         DependencyLifetime lifetime,
-        IOpenGenericDependencyImplementorBuilder implementorBuilder)
+        IOpenGenericDependencyImplementorBuilder implementorBuilder,
+        bool isLastRangeElement)
         : base( implementorKey, lifetime, isOpenGeneric: true )
     {
+        Assume.True( ! isLastRangeElement || implementorKey.RangeIndex is null );
         ImplementorBuilder = implementorBuilder;
+        IsLastRangeElement = isLastRangeElement;
     }
 
     internal IOpenGenericDependencyImplementorBuilder ImplementorBuilder { get; }
+    internal bool IsLastRangeElement { get; }
 
-    internal DependencyResolverFactory Close(
+    internal override DependencyResolverFactory Close(
         IInternalDependencyKey dependencyKey,
         DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
@@ -48,19 +52,22 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         if ( ImplementorKey.IsShared )
         {
             var sharedResolverFactory = CloseShared( dependencyKey, @params );
-            dynamicResolverFactories.Add( dependencyKey, sharedResolverFactory );
+            if ( IsLastRangeElement )
+                dynamicResolverFactories.Add( dependencyKey, sharedResolverFactory );
+
             return sharedResolverFactory;
         }
 
-        ref var parameterFactory
-            = ref CollectionsMarshal.GetValueRefOrAddDefault( dynamicResolverFactories, dependencyKey, out var exists )!;
-
-        if ( ! exists )
-            parameterFactory = RegisteredClosedGenericDependencyResolverFactory.Create(
+        if ( ImplementorKey.RangeIndex is not null )
+            return RegisteredClosedGenericDependencyResolverFactory.Create(
                 this,
                 ImplementorKey.Create( dependencyKey, ImplementorKey.RangeIndex ) );
 
-        return parameterFactory;
+        ref var closedFactory = ref CollectionsMarshal.GetValueRefOrAddDefault( dynamicResolverFactories, dependencyKey, out var exists )!;
+        if ( ! exists )
+            closedFactory = RegisteredClosedGenericDependencyResolverFactory.Create( this, ImplementorKey.Create( dependencyKey ) );
+
+        return closedFactory;
     }
 
     internal DependencyResolverFactory CloseShared(
@@ -178,14 +185,14 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 continue;
             }
 
-            if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+            var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+            if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( internalKey.Type.GetGenericTypeDefinition() );
-                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory )
-                    && parameterFactory is OpenGenericDependencyResolverFactory genericParameterFactory )
+                var openGenericKey = internalKey.WithType( openImplementorType );
+                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory ) && parameterFactory.IsOpenGeneric )
                 {
                     if ( ! implementorKey.Type.ContainsGenericParameters )
-                        parameterFactory = genericParameterFactory.Close( internalKey, @params, dynamicResolverFactories );
+                        parameterFactory = parameterFactory.Close( internalKey, @params, dynamicResolverFactories );
 
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
@@ -238,14 +245,14 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 continue;
             }
 
-            if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+            var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+            if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
             {
-                var openGenericKey = internalKey.WithType( internalKey.Type.GetGenericTypeDefinition() );
-                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory )
-                    && memberFactory is OpenGenericDependencyResolverFactory genericMemberFactory )
+                var openGenericKey = internalKey.WithType( openImplementorType );
+                if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory ) && memberFactory.IsOpenGeneric )
                 {
                     if ( ! implementorKey.Type.ContainsGenericParameters )
-                        memberFactory = genericMemberFactory.Close( internalKey, @params, dynamicResolverFactories );
+                        memberFactory = memberFactory.Close( internalKey, @params, dynamicResolverFactories );
 
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
@@ -322,6 +329,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
             configuration.InjectablePropertyType,
             ImplementorKey.IsShared ? ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value ) : null,
+            ! IsLastRangeElement,
             Lifetime );
     }
 
@@ -444,10 +452,11 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                     continue;
                 }
 
-                if ( implementorKey.Type.IsGenericType && implementorKey is IInternalDependencyKey internalKey )
+                var openImplementorType = implementorKey.Type.GetOpenGenericDependencyType();
+                if ( openImplementorType is not null && implementorKey is IInternalDependencyKey internalKey )
                 {
-                    var openGenericKey = internalKey.WithType( implementorKey.Type.GetGenericTypeDefinition() );
-                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory ) )
+                    var openGenericKey = internalKey.WithType( openImplementorType );
+                    if ( availableDependencies.TryGetValue( openGenericKey, out parameterFactory ) && parameterFactory.IsOpenGeneric )
                     {
                         if ( ! parameterFactory.IsCaptiveDependencyOf( Lifetime ) )
                             score += defaultScore * 2;

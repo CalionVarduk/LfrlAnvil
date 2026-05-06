@@ -248,27 +248,31 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         }
     }
 
-    private object? TryResolveDynamicDependency(DependencyLocator locator, Type dependencyType)
+    private static object? TryResolveDynamicDependency(DependencyLocator locator, Type dependencyType)
     {
         if ( ! dependencyType.IsGenericType || dependencyType.ContainsGenericParameters )
             return null;
 
         var openDependencyType = dependencyType.GetGenericTypeDefinition();
         return openDependencyType == typeof( IEnumerable<> )
-            ? ResolveEmptyRangeDependency( locator, dependencyType )
+            ? ResolveRangeDependency( locator, dependencyType )
             : TryResolveOpenGenericDependency( locator, dependencyType, openDependencyType );
     }
 
-    private static object ResolveEmptyRangeDependency(DependencyLocator locator, Type dependencyType)
+    private static object ResolveRangeDependency(DependencyLocator locator, Type dependencyType)
     {
         var underlyingType = dependencyType.GetGenericArguments()[0];
+        var result = TryResolveOpenGenericRangeDependency( locator, dependencyType, underlyingType );
+        if ( result is not null )
+            return result;
+
         var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
-        var emptyArray = emptyArrayMethod.Invoke( null, null );
-        Assume.IsNotNull( emptyArray );
+        result = emptyArrayMethod.Invoke( null, null );
+        Assume.IsNotNull( result );
 
         var container = locator.InternalAttachedScope.InternalContainer;
         var id = container.GenerateResolverId();
-        var resolver = new EmptyRangeResolver( id, dependencyType, emptyArray );
+        var resolver = new EmptyRangeResolver( id, dependencyType, result );
         using ( WriteLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
         {
             if ( ! entered )
@@ -277,7 +281,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
             locator.Resolvers.GetOrAddResolver( dependencyType, resolver );
         }
 
-        return emptyArray;
+        return result;
     }
 
     private static object? TryResolveOpenGenericDependency(DependencyLocator locator, Type dependencyType, Type openDependencyType)
@@ -295,6 +299,32 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         }
 
         if ( baseResolver is not OpenGenericDependencyResolver openGenericResolver )
+            return null;
+
+        var resolver = openGenericResolver.Close( locator, dependencyType );
+        return resolver.Create( locator.InternalAttachedScope, dependencyType );
+    }
+
+    private static object? TryResolveOpenGenericRangeDependency(DependencyLocator locator, Type dependencyType, Type elementType)
+    {
+        if ( ! elementType.IsGenericType )
+            return null;
+
+        var openDependencyType = typeof( IEnumerable<> ).MakeGenericType( elementType.GetGenericTypeDefinition() );
+
+        DependencyResolver? baseResolver;
+        using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
+        {
+            if ( ! entered )
+                ExceptionThrower.Throw(
+                    new ObjectDisposedException(
+                        null,
+                        Resources.ScopeIsDisposed( locator.InternalAttachedScope.InternalContainer.InternalRootScope ) ) );
+
+            baseResolver = locator.Resolvers.TryGetResolver( openDependencyType );
+        }
+
+        if ( baseResolver is not OpenGenericRangeDependencyResolver openGenericResolver )
             return null;
 
         var resolver = openGenericResolver.Close( locator, dependencyType );

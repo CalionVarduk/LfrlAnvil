@@ -141,6 +141,26 @@ internal class DependencyResolverFactory
         Finish( resolver );
     }
 
+    internal virtual void RegisterResolver(
+        IDependencyKey dependencyKey,
+        in DependencyResolversStore globalResolvers,
+        in KeyedDependencyResolversStore keyedResolversStore)
+    {
+        var dependencyStore = ReinterpretCast.To<IInternalDependencyKey>( dependencyKey )
+            .GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
+
+        var resolver = GetResolver();
+        dependencyStore.Resolvers.TryAdd( dependencyKey.Type, resolver );
+    }
+
+    internal virtual DependencyResolverFactory Close(
+        IInternalDependencyKey dependencyKey,
+        DependencyLocatorBuilderExtractionParams @params,
+        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
+    {
+        throw new NotSupportedException( nameof( Close ) + " method is not supported." );
+    }
+
     [Pure]
     internal virtual Chain<DependencyResolverFactory> GetCaptiveDependencyFactories(DependencyLifetime lifetime)
     {

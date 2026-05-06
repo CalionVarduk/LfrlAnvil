@@ -816,6 +816,25 @@ public partial class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependency_WithSharedImplementor_ShouldWorkCorrectlyForRangeElements()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.AddSharedImplementor<Implementor>();
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<Implementor>();
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>();
+        builder.Add<IBar>().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<Implementor>();
+
+        var sut = builder.Build();
+
+        var result1 = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var result2 = sut.RootScope.Locator.Resolve<IBar>();
+
+        result1.TestCount( count => count.TestEquals( 2 ) )
+            .Then( foo => Assertion.All( foo[0].TestRefEquals( result2 ), foo[1].TestNotRefEquals( result2 ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void ResolvingDependency_ThroughNonGenericMethod_ShouldBeEquivalentToResolvingThroughGenericMethod()
     {
         var builder = new DependencyContainerBuilder();
@@ -2035,7 +2054,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
     public void ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorRequiresEmptyRegisteredRange()
     {
         var builder = new DependencyContainerBuilder();
-        builder.GetDependencyRange<string>();
+        _ = builder.GetDependencyRange<string>();
         builder.Add<RangeFoo>();
         var sut = builder.Build();
 
@@ -2060,7 +2079,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
     public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeDoesNotContainsAnyElements()
     {
         var builder = new DependencyContainerBuilder();
-        builder.GetDependencyRange<IFoo>();
+        _ = builder.GetDependencyRange<IFoo>();
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
