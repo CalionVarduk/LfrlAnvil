@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 
 namespace LfrlAnvil.Dependencies;
@@ -53,11 +54,40 @@ public interface IOpenGenericDependencyBuilder
     bool IsIncludedInRange { get; }
 
     /// <summary>
+    /// Specifies whether this dependency is last in the related <see cref="RangeBuilder"/>.
+    /// </summary>
+    bool IsLastInRange { get; }
+
+    /// <summary>
+    /// Specifies 0-based index of this dependency in the related <see cref="RangeBuilder"/>.
+    /// </summary>
+    int RangeIndex { get; }
+
+    /// <summary>
     /// Sets <see cref="IsIncludedInRange"/> of this instance.
     /// </summary>
     /// <param name="included">Value to set. Equal to <b>true</b> by default.</param>
     /// <returns><b>this</b>.</returns>
     IOpenGenericDependencyBuilder IncludeInRange(bool included = true);
+
+    /// <summary>
+    /// Specifies whether this dependency is last in the provided closed type <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Closed type range builder to check.</param>
+    /// <returns><b>true</b> when this builder is last in the provided range <paramref name="builder"/>, otherwise <b>false</b>.</returns>
+    [Pure]
+    bool IsLastInClosedRange(IDependencyRangeBuilder builder);
+
+    /// <summary>
+    /// Specifies 0-based index of this dependency in the provided closed type <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Closed type range builder to check.</param>
+    /// <returns>
+    /// 0-based index of this dependency in the provided range <paramref name="builder"/>,
+    /// or <b>-1</b> when this dependency doesn't exist in the <paramref name="builder"/>.
+    /// </returns>
+    [Pure]
+    int GetClosedRangeIndex(IDependencyRangeBuilder builder);
 
     /// <summary>
     /// Sets <see cref="Lifetime"/> of this instance.

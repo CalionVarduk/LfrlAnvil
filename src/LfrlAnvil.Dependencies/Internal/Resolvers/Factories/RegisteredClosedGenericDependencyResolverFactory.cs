@@ -74,8 +74,8 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
 
     protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration,
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
     {
         resolver = null;
@@ -85,8 +85,8 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
 
     [Pure]
     protected sealed override ConstructorInfo? FindValidConstructor(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         var openCtor = Base.ConstructorInfo;
         Assume.IsNotNull( openCtor );
@@ -99,12 +99,12 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
     }
 
     protected sealed override bool ValidateDependencies(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration,
+        DependencyContainerConfigurationBuilder configuration,
         ref Chain<string> captiveDependencies)
     {
-        Base.ValidateRequiredDependencies( @params, dynamicResolverFactories, configuration );
+        Base.ValidateRequiredDependencies( in @params, dynamicResolverFactories, configuration );
         if ( Base.HasState( DependencyResolverFactoryState.Invalid ) )
             return false;
 
@@ -157,7 +157,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                             continue;
                         }
 
-                        parameterFactory = baseResolver.Close( implementorKey, @params, dynamicResolverFactories );
+                        parameterFactory = baseResolver.Close( implementorKey, in @params, dynamicResolverFactories );
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     }
@@ -209,7 +209,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                             continue;
                         }
 
-                        memberFactory = baseResolver.Close( implementorKey, @params, dynamicResolverFactories );
+                        memberFactory = baseResolver.Close( implementorKey, in @params, dynamicResolverFactories );
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     }

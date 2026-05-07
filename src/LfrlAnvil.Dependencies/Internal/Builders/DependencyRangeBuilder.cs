@@ -15,25 +15,33 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class DependencyRangeBuilder : IDependencyRangeBuilder, IInternalDependencyRangeBuilder
 {
-    internal DependencyRangeBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType)
+    internal DependencyRangeBuilder(
+        DependencyLocatorBuilder locatorBuilder,
+        Type dependencyType,
+        OpenGenericDependencyRangeBuilder? openGenericBuilder)
     {
-        InternalElements = new List<DependencyBuilder>();
+        InternalElements = new List<IInternalDependencyBuilder>();
         DependencyType = dependencyType;
         LocatorBuilder = locatorBuilder;
+        InternalOpenGenericBuilder = openGenericBuilder;
         OnResolvingCallback = null;
+        InternalOpenGenericBuilder?.AddClosedBuilder( this );
     }
 
     public Type DependencyType { get; }
     public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
     public bool IsOpenGeneric => false;
-    public IReadOnlyList<IDependencyBuilder> Elements => InternalElements;
-    internal List<DependencyBuilder> InternalElements { get; }
+    public IEnumerable<IDependencyBuilder> Elements => InternalElements.OfType<IDependencyBuilder>();
+    public IOpenGenericDependencyRangeBuilder? OpenGenericBuilder => InternalOpenGenericBuilder;
+    internal List<IInternalDependencyBuilder> InternalElements { get; }
     internal DependencyLocatorBuilder LocatorBuilder { get; }
+    internal OpenGenericDependencyRangeBuilder? InternalOpenGenericBuilder { get; }
 
     public IDependencyBuilder Add()
     {
@@ -45,7 +53,10 @@ internal sealed class DependencyRangeBuilder : IDependencyRangeBuilder, IInterna
     [Pure]
     public IDependencyBuilder? TryGetLast()
     {
-        return InternalElements.Count > 0 ? InternalElements[^1] : null;
+        if ( InternalOpenGenericBuilder is null )
+            return InternalElements.Count > 0 ? ReinterpretCast.To<IDependencyBuilder>( InternalElements[^1] ) : null;
+
+        return InternalElements.OfType<IDependencyBuilder>().LastOrDefault();
     }
 
     public IDependencyRangeBuilder SetOnResolvingCallback(Action<Type, IDependencyScope>? callback)

@@ -33,7 +33,7 @@ internal sealed class OpenGenericRangeDependencyResolverFactory : RangeDependenc
 
     internal override DependencyResolverFactory Close(
         IInternalDependencyKey dependencyKey,
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
     {
         Assume.False( dependencyKey.Type.ContainsGenericParameters );
@@ -50,7 +50,7 @@ internal sealed class OpenGenericRangeDependencyResolverFactory : RangeDependenc
                 {
                     var baseFactory = Factories[i];
                     factories[i] = baseFactory is OpenGenericDependencyResolverFactory openFactory
-                        ? openFactory.Close( elementKey, @params, dynamicResolverFactories )
+                        ? openFactory.Close( elementKey, in @params, dynamicResolverFactories )
                         : CreateInvalid( ImplementorKey.Create( elementKey, baseFactory.ImplementorKey.RangeIndex ), Lifetime );
                 }
             }
@@ -68,7 +68,7 @@ internal sealed class OpenGenericRangeDependencyResolverFactory : RangeDependenc
 
     protected override DependencyResolver CreateResolver(
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         Assume.Conditional(
             Factories is not null,

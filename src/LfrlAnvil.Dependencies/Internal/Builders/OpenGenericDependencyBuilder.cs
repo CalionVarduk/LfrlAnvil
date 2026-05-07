@@ -13,11 +13,12 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
-internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuilder
+internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuilder, IInternalDependencyBuilder
 {
     internal OpenGenericDependencyBuilder(OpenGenericDependencyRangeBuilder rangeBuilder)
     {
@@ -31,6 +32,9 @@ internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuild
     public DependencyLifetime Lifetime { get; private set; }
     public IOpenGenericDependencyImplementorBuilder? Implementor { get; private set; }
     public bool IsIncludedInRange { get; private set; }
+    public bool IsLastInRange => ReferenceEquals( this, InternalRangeBuilder.TryGetLast() );
+    public int RangeIndex => InternalRangeBuilder.InternalElements.IndexOf( this );
+    public bool IsOpenGeneric => true;
     public Type DependencyType => InternalRangeBuilder.DependencyType;
     public IDependencyKey? SharedImplementorKey => InternalSharedImplementorKey;
     public IOpenGenericDependencyRangeBuilder RangeBuilder => InternalRangeBuilder;
@@ -41,6 +45,18 @@ internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuild
     {
         IsIncludedInRange = included;
         return this;
+    }
+
+    [Pure]
+    public bool IsLastInClosedRange(IDependencyRangeBuilder builder)
+    {
+        return builder is DependencyRangeBuilder b && b.InternalElements.Count > 0 && ReferenceEquals( this, b.InternalElements[^1] );
+    }
+
+    [Pure]
+    public int GetClosedRangeIndex(IDependencyRangeBuilder builder)
+    {
+        return builder is DependencyRangeBuilder b ? b.InternalElements.IndexOf( this ) : -1;
     }
 
     public IOpenGenericDependencyBuilder SetLifetime(DependencyLifetime lifetime)

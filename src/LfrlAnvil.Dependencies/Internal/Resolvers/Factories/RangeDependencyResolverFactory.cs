@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -84,8 +83,8 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
 
     protected override bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         if ( Factories is null )
             return true;
@@ -97,22 +96,22 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
     }
 
     protected override bool AreRequiredDependenciesValid(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         if ( Factories is null )
             return true;
 
         foreach ( var f in Factories )
-            f.ValidateRequiredDependencies( @params, dynamicResolverFactories, configuration );
+            f.ValidateRequiredDependencies( in @params, dynamicResolverFactories, configuration );
 
         return true;
     }
 
-    protected override void OnCircularDependencyDetected(List<DependencyGraphNode> path)
+    protected override void OnCircularDependencyDetected(ref ListSlim<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 1 );
+        Assume.IsGreaterThanOrEqualTo( path.Count, 1 );
         Assume.IsNotNull( Factories );
 
         var reachedFrom = path[^1].ReachedFrom;
@@ -121,15 +120,15 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
         foreach ( var f in Factories )
         {
             path[^1] = new DependencyGraphNode( reachedFrom, f );
-            DetectCircularDependencies( f, path );
+            DetectCircularDependencies( f, ref path );
         }
 
         path.RemoveLast();
     }
 
-    protected override void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path)
+    protected override void DetectCircularDependenciesInChildren(ref ListSlim<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 2 );
+        Assume.IsGreaterThanOrEqualTo( path.Count, 2 );
         if ( Factories is null )
             return;
 
@@ -137,7 +136,7 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
         foreach ( var f in Factories )
         {
             path[^1] = new DependencyGraphNode( reachedFrom, f );
-            DetectCircularDependencies( f, path );
+            DetectCircularDependencies( f, ref path );
         }
     }
 }

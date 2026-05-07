@@ -43,7 +43,8 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.TestRefEquals( sut ),
                 sut.DefaultLifetime.TestEquals( lifetime ),
-                dependency.Lifetime.TestEquals( sut.DefaultLifetime ) )
+                dependency.Lifetime.TestEquals( sut.DefaultLifetime ),
+                dependency.RangeBuilder.OpenGenericBuilder.TestNull() )
             .Go();
     }
 

@@ -1689,6 +1689,80 @@ public partial class DependencyContainerBuilderTests
                         } ) )
                 .Go();
         }
+
+        [Fact]
+        public void GetDependencyRange_ForGenericType_ShouldRegisterOpenGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.GetDependencyRange<IGenericFoo<string>>();
+            var openBuilder = builder.OpenGenericBuilder;
+
+            Assertion.All(
+                    openBuilder.TestRefEquals( sut.GetGenericDependencyRange( typeof( IGenericFoo<> ) ) ),
+                    openBuilder.TestNotNull( b => Assertion.All(
+                        "openBuilder",
+                        b.Elements.TestEmpty(),
+                        b.DependencyType.TestEquals( typeof( IGenericFoo<> ) ),
+                        b.ClosedBuilders.TestSequence( [ builder ] ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void GetDependencyRange_ForGenericType_ShouldUpdateOpenGeneric_WhenItExists()
+        {
+            var sut = new DependencyContainerBuilder();
+            var stringBuilder = sut.GetDependencyRange<IGenericFoo<string>>();
+            var intBuilder = sut.GetDependencyRange<IGenericFoo<int>>();
+
+            Assertion.All(
+                    stringBuilder.OpenGenericBuilder.TestRefEquals( sut.GetGenericDependencyRange( typeof( IGenericFoo<> ) ) ),
+                    intBuilder.OpenGenericBuilder.TestRefEquals( stringBuilder.OpenGenericBuilder ),
+                    stringBuilder.OpenGenericBuilder.TestNotNull( b => Assertion.All(
+                        "openBuilder",
+                        b.Elements.TestEmpty(),
+                        b.DependencyType.TestEquals( typeof( IGenericFoo<> ) ),
+                        b.ClosedBuilders.TestSequence( [ stringBuilder, intBuilder ] ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void GetDependencyRange_ForClosedIEnumerable_ShouldNotRegisterOpenGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            var builder = sut.GetDependencyRange<IEnumerable<IFoo>>();
+            builder.OpenGenericBuilder.TestNull().Go();
+        }
+
+        [Fact]
+        public void OpenGenericBuilders_ShouldBePropagatedToClosedBuildersInCorrectOrder()
+        {
+            var sut = new DependencyContainerBuilder();
+            var bar = sut.Add<IGenericBar<string>>();
+            var stringBuilder = sut.Add<IGenericFoo<string>>();
+            var openBuilder = sut.AddGeneric( typeof( IGenericFoo<> ) );
+            var intBuilder = sut.Add<IGenericFoo<int>>();
+
+            Assertion.All(
+                    stringBuilder.IsLastInRange.TestFalse(),
+                    stringBuilder.RangeIndex.TestEquals( 0 ),
+                    stringBuilder.RangeBuilder.TryGetLast().TestRefEquals( stringBuilder ),
+                    stringBuilder.RangeBuilder.Elements.TestSequence( [ stringBuilder ] ),
+                    intBuilder.IsLastInRange.TestTrue(),
+                    intBuilder.RangeIndex.TestEquals( 1 ),
+                    intBuilder.RangeBuilder.TryGetLast().TestRefEquals( intBuilder ),
+                    intBuilder.RangeBuilder.Elements.TestSequence( [ intBuilder ] ),
+                    openBuilder.IsLastInRange.TestTrue(),
+                    openBuilder.RangeIndex.TestEquals( 0 ),
+                    openBuilder.RangeBuilder.TryGetLast().TestRefEquals( openBuilder ),
+                    openBuilder.RangeBuilder.Elements.TestSequence( [ openBuilder ] ),
+                    openBuilder.IsLastInClosedRange( stringBuilder.RangeBuilder ).TestTrue(),
+                    openBuilder.GetClosedRangeIndex( stringBuilder.RangeBuilder ).TestEquals( 1 ),
+                    openBuilder.IsLastInClosedRange( intBuilder.RangeBuilder ).TestFalse(),
+                    openBuilder.GetClosedRangeIndex( intBuilder.RangeBuilder ).TestEquals( 0 ),
+                    openBuilder.IsLastInClosedRange( bar.RangeBuilder ).TestFalse(),
+                    openBuilder.GetClosedRangeIndex( bar.RangeBuilder ).TestEquals( -1 ) )
+                .Go();
+        }
     }
 }
 

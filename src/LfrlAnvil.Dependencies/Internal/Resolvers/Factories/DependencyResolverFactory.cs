@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -55,7 +54,7 @@ internal class DependencyResolverFactory
     internal static DependencyResolverFactory Create(
         ImplementorKey implementorKey,
         DependencyLifetime lifetime,
-        IDependencyImplementorBuilder implementorBuilder)
+        DependencyImplementorBuilder implementorBuilder)
     {
         DependencyResolverFactory result = lifetime switch
         {
@@ -92,8 +91,8 @@ internal class DependencyResolverFactory
 
     internal void PrepareCreationMethod(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         if ( State != DependencyResolverFactoryState.Created )
             return;
@@ -105,34 +104,34 @@ internal class DependencyResolverFactory
     }
 
     internal void ValidateRequiredDependencies(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         if ( State != DependencyResolverFactoryState.Validatable )
             return;
 
-        if ( AreRequiredDependenciesValid( @params, dynamicResolverFactories, configuration ) )
+        if ( AreRequiredDependenciesValid( in @params, dynamicResolverFactories, configuration ) )
             SetState( DependencyResolverFactoryState.ValidatedRequiredDependencies );
         else
             FinishAsInvalid();
     }
 
-    internal void ValidateCircularDependencies(List<DependencyGraphNode> pathBuffer)
+    internal void ValidateCircularDependencies(ref ListSlim<DependencyGraphNode> pathBuffer)
     {
         if ( State != DependencyResolverFactoryState.ValidatedRequiredDependencies )
             return;
 
-        Assume.IsEmpty( pathBuffer );
+        Assume.Equals( pathBuffer.Count, 0 );
 
         pathBuffer.Add( new DependencyGraphNode( null, this ) );
-        DetectCircularDependencies( pathBuffer );
+        DetectCircularDependencies( ref pathBuffer );
 
-        Assume.ContainsExactly( pathBuffer, 1 );
+        Assume.Equals( pathBuffer.Count, 1 );
         pathBuffer.Clear();
     }
 
-    internal void Build(UlongSequenceGenerator idGenerator, IDependencyContainerConfigurationBuilder configuration)
+    internal void Build(UlongSequenceGenerator idGenerator, DependencyContainerConfigurationBuilder configuration)
     {
         if ( IsFinished )
             return;
@@ -153,9 +152,17 @@ internal class DependencyResolverFactory
         dependencyStore.Resolvers.TryAdd( dependencyKey.Type, resolver );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DependencyResolverFactory Close(
+        IInternalDependencyKey dependencyKey,
+        in DependencyLocatorBuilderExtractionParams @params)
+    {
+        return Close( dependencyKey, in @params, @params.ResolverFactories );
+    }
+
     internal virtual DependencyResolverFactory Close(
         IInternalDependencyKey dependencyKey,
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
     {
         throw new NotSupportedException( nameof( Close ) + " method is not supported." );
@@ -212,10 +219,10 @@ internal class DependencyResolverFactory
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    protected static void DetectCircularDependencies(DependencyResolverFactory other, List<DependencyGraphNode> path)
+    protected static void DetectCircularDependencies(DependencyResolverFactory other, ref ListSlim<DependencyGraphNode> path)
     {
         if ( ! other.HasAnyState( DependencyResolverFactoryState.Validated | DependencyResolverFactoryState.Finished ) )
-            other.DetectCircularDependencies( path );
+            other.DetectCircularDependencies( ref path );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -253,13 +260,13 @@ internal class DependencyResolverFactory
             | DependencyResolverFactoryState.CircularDependenciesDetected );
     }
 
-    protected void DetectCircularDependencies(List<DependencyGraphNode> path)
+    protected void DetectCircularDependencies(ref ListSlim<DependencyGraphNode> path)
     {
         if ( HasAnyState( DependencyResolverFactoryState.CanRegisterCircularDependency ) )
         {
-            Assume.ContainsAtLeast( path, 2 );
+            Assume.IsGreaterThanOrEqualTo( path.Count, 2 );
             Assume.True( ReferenceEquals( this, path[^1].Factory ) );
-            OnCircularDependencyDetected( path );
+            OnCircularDependencyDetected( ref path );
             return;
         }
 
@@ -267,7 +274,7 @@ internal class DependencyResolverFactory
         SetState( DependencyResolverFactoryState.ValidatingCircularDependencies );
 
         path.Add( default );
-        DetectCircularDependenciesInChildren( path );
+        DetectCircularDependenciesInChildren( ref path );
         path.RemoveLast();
 
         if ( HasState( DependencyResolverFactoryState.CircularDependenciesDetected ) )
@@ -284,27 +291,27 @@ internal class DependencyResolverFactory
 
     protected virtual bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         return true;
     }
 
     protected virtual bool AreRequiredDependenciesValid(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         return true;
     }
 
-    protected virtual void OnCircularDependencyDetected(List<DependencyGraphNode> path) { }
+    protected virtual void OnCircularDependencyDetected(ref ListSlim<DependencyGraphNode> path) { }
 
-    protected virtual void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path) { }
+    protected virtual void DetectCircularDependenciesInChildren(ref ListSlim<DependencyGraphNode> path) { }
 
     protected virtual DependencyResolver CreateResolver(
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         throw new InvalidOperationException( nameof( CreateResolver ) + " method must be overriden." );
     }

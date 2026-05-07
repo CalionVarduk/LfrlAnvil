@@ -20,6 +20,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Exceptions;
+using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 using LfrlAnvil.Extensions;
@@ -181,7 +182,7 @@ internal sealed class ExpressionBuilder
         string variableName,
         DependencyResolverFactory factory,
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         var variable = AddVariable( variableType, variableName );
         var rawValue = GetDependencyResolverFactoryResolutionRawValue( variableType, factory, idGenerator, configuration );
@@ -278,7 +279,7 @@ internal sealed class ExpressionBuilder
         Type variableType,
         DependencyResolverFactory factory,
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         factory.Build( idGenerator, configuration );
         var resolver = factory.GetResolver();

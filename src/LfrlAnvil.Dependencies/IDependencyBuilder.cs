@@ -53,6 +53,16 @@ public interface IDependencyBuilder
     bool IsIncludedInRange { get; }
 
     /// <summary>
+    /// Specifies whether this dependency is last in the related <see cref="RangeBuilder"/>.
+    /// </summary>
+    bool IsLastInRange { get; }
+
+    /// <summary>
+    /// Specifies 0-based index of this dependency in the related <see cref="RangeBuilder"/>.
+    /// </summary>
+    int RangeIndex { get; }
+
+    /// <summary>
     /// Sets <see cref="IsIncludedInRange"/> of this instance.
     /// </summary>
     /// <param name="included">Value to set. Equal to <b>true</b> by default.</param>

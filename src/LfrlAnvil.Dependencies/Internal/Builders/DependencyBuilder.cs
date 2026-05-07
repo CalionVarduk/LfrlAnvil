@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ using System.Reflection;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
-internal sealed class DependencyBuilder : IDependencyBuilder
+internal sealed class DependencyBuilder : IDependencyBuilder, IInternalDependencyBuilder
 {
     internal DependencyBuilder(DependencyRangeBuilder rangeBuilder)
     {
@@ -31,6 +31,12 @@ internal sealed class DependencyBuilder : IDependencyBuilder
     public DependencyLifetime Lifetime { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
     public bool IsIncludedInRange { get; private set; }
+
+    public bool IsLastInRange => InternalRangeBuilder.InternalElements.Count > 0
+        && ReferenceEquals( this, InternalRangeBuilder.InternalElements[^1] );
+
+    public int RangeIndex => InternalRangeBuilder.InternalElements.IndexOf( this );
+    public bool IsOpenGeneric => false;
     public Type DependencyType => InternalRangeBuilder.DependencyType;
     public IDependencyKey? SharedImplementorKey => InternalSharedImplementorKey;
     public IDependencyRangeBuilder RangeBuilder => InternalRangeBuilder;

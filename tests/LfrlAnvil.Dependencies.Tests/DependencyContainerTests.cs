@@ -2457,7 +2457,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
     [Fact]
     public async Task LockDisposal_WhenAnotherThreadWaitsToAcquireLock_ShouldNotThrowAndShouldWaitForAnotherThreadToAcquireLock()
     {
-        var taskSource = new TaskCompletionSource();
+        var taskSource = new SafeTaskCompletionSource();
         var context1 = new DedicatedThreadSynchronizationContext();
         var context2 = new DedicatedThreadSynchronizationContext();
         var context3 = new DedicatedThreadSynchronizationContext();
@@ -2473,7 +2473,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         _ = taskFactory1.StartNew( () =>
         {
             sut.DisposeGracefully();
-            taskSource.SetResult();
+            taskSource.Complete();
         } );
 
         await Task.Delay( 50 );

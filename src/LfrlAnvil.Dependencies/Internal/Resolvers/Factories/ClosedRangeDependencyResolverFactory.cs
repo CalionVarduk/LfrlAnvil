@@ -17,6 +17,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -58,7 +59,7 @@ internal sealed class ClosedRangeDependencyResolverFactory : RangeDependencyReso
 
     protected override DependencyResolver CreateResolver(
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         Assume.Conditional(
             Factories is not null,
@@ -83,7 +84,7 @@ internal sealed class ClosedRangeDependencyResolverFactory : RangeDependencyReso
     [Pure]
     private Expression<Func<DependencyScope, object>> CreateExpression(
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         var (expressionBuilder, factoryCount) = CreateExpressionBuilder();
         for ( var i = 0; i < factoryCount; ++i )

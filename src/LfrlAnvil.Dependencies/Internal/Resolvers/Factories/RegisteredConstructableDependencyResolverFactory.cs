@@ -16,6 +16,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -32,7 +33,7 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
 
     protected override DependencyResolver CreateResolver(
         UlongSequenceGenerator idGenerator,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         Assume.IsNotNull( ConstructorInfo );
         var (expressionBuilder, parameterCount, memberCount) = CreateExpressionBuilder();

@@ -41,6 +41,11 @@ public interface IOpenGenericDependencyRangeBuilder
     IReadOnlyList<IOpenGenericDependencyBuilder> Elements { get; }
 
     /// <summary>
+    /// Collection of all closed type <see cref="IDependencyRangeBuilder"/> instances associated with this range.
+    /// </summary>
+    IReadOnlyList<IDependencyRangeBuilder> ClosedBuilders { get; }
+
+    /// <summary>
     /// Creates a new <see cref="IOpenGenericDependencyBuilder"/> instance and registers it in this range.
     /// </summary>
     /// <returns>New <see cref="IOpenGenericDependencyBuilder"/> instance.</returns>

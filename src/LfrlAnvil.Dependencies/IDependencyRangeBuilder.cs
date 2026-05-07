@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,13 @@ public interface IDependencyRangeBuilder
     /// <summary>
     /// Collection of all <see cref="IDependencyBuilder"/> instances associated with this range.
     /// </summary>
-    IReadOnlyList<IDependencyBuilder> Elements { get; }
+    IEnumerable<IDependencyBuilder> Elements { get; }
+
+    /// <summary>
+    /// Related open generic dependency range builder instance.
+    /// </summary>
+    /// <remarks>Won't be <b>null</b> only for dependencies of generic type.</remarks>
+    IOpenGenericDependencyRangeBuilder? OpenGenericBuilder { get; }
 
     /// <summary>
     /// Creates a new <see cref="IDependencyBuilder"/> instance and registers it in this range.
@@ -49,7 +55,10 @@ public interface IDependencyRangeBuilder
     /// <summary>
     /// Gets the last <see cref="IDependencyBuilder"/> instance registered in this range.
     /// </summary>
-    /// <returns><see cref="IDependencyBuilder"/> instance of the last registered element or null when this range is empty.</returns>
+    /// <returns>
+    /// <see cref="IDependencyBuilder"/> instance of the last registered element
+    /// or null when this range is empty or when the last element comes from <see cref="OpenGenericBuilder"/>.
+    /// </returns>
     [Pure]
     IDependencyBuilder? TryGetLast();
 

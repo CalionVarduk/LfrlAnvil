@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Generators;
@@ -64,8 +63,8 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
     protected sealed override bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         if ( ! TryResolveCreationMethodImmediately( idGenerator, availableDependencies, configuration, out var resolver ) )
             return false;
@@ -81,12 +80,12 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
     }
 
     protected sealed override bool AreRequiredDependenciesValid(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration)
+        DependencyContainerConfigurationBuilder configuration)
     {
         var captiveDependencies = Chain<string>.Empty;
-        if ( ! ValidateDependencies( @params, dynamicResolverFactories, configuration, ref captiveDependencies ) )
+        if ( ! ValidateDependencies( in @params, dynamicResolverFactories, configuration, ref captiveDependencies ) )
             return false;
 
         if ( configuration.TreatCaptiveDependenciesAsErrors )
@@ -104,9 +103,9 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         return true;
     }
 
-    protected sealed override void OnCircularDependencyDetected(List<DependencyGraphNode> path)
+    protected sealed override void OnCircularDependencyDetected(ref ListSlim<DependencyGraphNode> path)
     {
-        var pathSpan = CollectionsMarshal.AsSpan( path );
+        var pathSpan = path.AsSpan();
 
         var startIndex = pathSpan.Length - 2;
         while ( ! ReferenceEquals( pathSpan[startIndex].Factory, this ) )
@@ -120,9 +119,9 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         Errors = Errors.Extend( Resources.CircularDependenciesDetected( pathSpan ) );
     }
 
-    protected sealed override void DetectCircularDependenciesInChildren(List<DependencyGraphNode> path)
+    protected sealed override void DetectCircularDependenciesInChildren(ref ListSlim<DependencyGraphNode> path)
     {
-        Assume.ContainsAtLeast( path, 1 );
+        Assume.IsGreaterThanOrEqualTo( path.Count, 1 );
 
         if ( ParameterResolutions is not null )
         {
@@ -132,7 +131,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                     continue;
 
                 path[^1] = new DependencyGraphNode( parameter, factory );
-                DetectCircularDependencies( factory, path );
+                DetectCircularDependencies( factory, ref path );
             }
         }
 
@@ -144,26 +143,26 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                     continue;
 
                 path[^1] = new DependencyGraphNode( member.GetActualMember(), factory );
-                DetectCircularDependencies( factory, path );
+                DetectCircularDependencies( factory, ref path );
             }
         }
     }
 
     protected abstract bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration,
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver);
 
     [Pure]
     protected abstract ConstructorInfo? FindValidConstructor(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration);
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration);
 
     protected abstract bool ValidateDependencies(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration,
+        DependencyContainerConfigurationBuilder configuration,
         ref Chain<string> captiveDependencies);
 
     [Pure]

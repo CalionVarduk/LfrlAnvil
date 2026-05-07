@@ -43,8 +43,8 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
     protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration,
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
     {
         resolver = ImplementorBuilder.Factory is not null ? CreateFromFactory( idGenerator ) : null;
@@ -54,8 +54,8 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected sealed override ConstructorInfo? FindValidConstructor(
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         Assume.IsNull( ImplementorBuilder.Factory );
 
@@ -96,9 +96,9 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
     }
 
     protected sealed override bool ValidateDependencies(
-        DependencyLocatorBuilderExtractionParams @params,
+        in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
-        IDependencyContainerConfigurationBuilder configuration,
+        DependencyContainerConfigurationBuilder configuration,
         ref Chain<string> captiveDependencies)
     {
         Assume.IsNotNull( ConstructorInfo );
@@ -147,7 +147,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 var openGenericKey = internalKey.WithType( openImplementorType );
                 if ( @params.ResolverFactories.TryGetValue( openGenericKey, out parameterFactory ) && parameterFactory.IsOpenGeneric )
                 {
-                    parameterFactory = parameterFactory.Close( internalKey, @params, dynamicResolverFactories );
+                    parameterFactory = parameterFactory.Close( internalKey, in @params, dynamicResolverFactories );
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     continue;
@@ -211,7 +211,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
                 var openGenericKey = internalKey.WithType( openImplementorType );
                 if ( @params.ResolverFactories.TryGetValue( openGenericKey, out memberFactory ) && memberFactory.IsOpenGeneric )
                 {
-                    memberFactory = memberFactory.Close( internalKey, @params, dynamicResolverFactories );
+                    memberFactory = memberFactory.Close( internalKey, in @params, dynamicResolverFactories );
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     continue;
@@ -304,8 +304,8 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
     private ConstructorInfo? FindBestSuitedCtor(
         Type type,
-        IReadOnlyDictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
-        IDependencyContainerConfigurationBuilder configuration)
+        Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
+        DependencyContainerConfigurationBuilder configuration)
     {
         const int notEligibleScore = -1;
         const int defaultScore = 1;

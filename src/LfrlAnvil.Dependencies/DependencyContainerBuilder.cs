@@ -27,6 +27,7 @@ namespace LfrlAnvil.Dependencies;
 public class DependencyContainerBuilder : IDependencyContainerBuilder
 {
     private readonly DependencyLocatorBuilderStore _locatorBuilderStore;
+    private readonly DependencyContainerConfigurationBuilder _configuration;
 
     /// <summary>
     /// Creates a new empty <see cref="DependencyContainerBuilder"/> instance.
@@ -34,11 +35,11 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuilder()
     {
         _locatorBuilderStore = DependencyLocatorBuilderStore.Create();
-        Configuration = new DependencyContainerConfigurationBuilder();
+        _configuration = new DependencyContainerConfigurationBuilder();
     }
 
     /// <inheritdoc />
-    public IDependencyContainerConfigurationBuilder Configuration { get; }
+    public IDependencyContainerConfigurationBuilder Configuration => _configuration;
 
     /// <inheritdoc />
     public DependencyLifetime DefaultLifetime => _locatorBuilderStore.Global.DefaultLifetime;
@@ -140,10 +141,10 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         {
             var dynamicResolverFactories = new Dictionary<IDependencyKey, DependencyResolverFactory>();
             foreach ( var factory in resolverFactoriesToScan )
-                factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, Configuration );
+                factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, _configuration );
 
             foreach ( var factory in resolverFactoriesToScan )
-                factory.ValidateRequiredDependencies( extractionParams, dynamicResolverFactories, Configuration );
+                factory.ValidateRequiredDependencies( in extractionParams, dynamicResolverFactories, _configuration );
 
             foreach ( var (key, factory) in dynamicResolverFactories )
                 extractionParams.ResolverFactories.Add( key, factory );
@@ -151,9 +152,9 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
             resolverFactoriesToScan = dynamicResolverFactories.Values;
         }
 
-        var pathBuffer = new List<DependencyGraphNode>();
+        var pathBuffer = ListSlim<DependencyGraphNode>.Create();
         foreach ( var factory in resolverFactories )
-            factory.ValidateCircularDependencies( pathBuffer );
+            factory.ValidateCircularDependencies( ref pathBuffer );
 
         foreach ( var factory in resolverFactories )
         {
@@ -168,7 +169,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         }
 
         foreach ( var factory in resolverFactories )
-            factory.Build( idGenerator, Configuration );
+            factory.Build( idGenerator, _configuration );
 
         var defaultResolvers = extractionParams.GetDefaultResolvers();
         var globalResolvers = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( defaultResolvers ) );

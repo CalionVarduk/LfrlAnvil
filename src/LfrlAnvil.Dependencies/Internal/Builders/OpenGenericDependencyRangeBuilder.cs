@@ -15,11 +15,14 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Dependencies.Internal.Builders;
 
 internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependencyRangeBuilder, IInternalDependencyRangeBuilder
 {
+    private readonly List<DependencyRangeBuilder> _closedBuilders = new List<DependencyRangeBuilder>();
+
     internal OpenGenericDependencyRangeBuilder(DependencyLocatorBuilder locatorBuilder, Type dependencyType)
     {
         InternalElements = new List<OpenGenericDependencyBuilder>();
@@ -32,6 +35,7 @@ internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependency
     public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
     public bool IsOpenGeneric => true;
     public IReadOnlyList<IOpenGenericDependencyBuilder> Elements => InternalElements;
+    public IReadOnlyList<IDependencyRangeBuilder> ClosedBuilders => _closedBuilders;
     internal List<OpenGenericDependencyBuilder> InternalElements { get; }
     internal DependencyLocatorBuilder LocatorBuilder { get; }
 
@@ -39,6 +43,10 @@ internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependency
     {
         var result = new OpenGenericDependencyBuilder( this );
         InternalElements.Add( result );
+
+        foreach ( var b in _closedBuilders )
+            b.InternalElements.Add( result );
+
         return result;
     }
 
@@ -52,5 +60,16 @@ internal sealed class OpenGenericDependencyRangeBuilder : IOpenGenericDependency
     {
         OnResolvingCallback = callback;
         return this;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void AddClosedBuilder(DependencyRangeBuilder builder)
+    {
+        Assume.True( builder.DependencyType.IsGenericType && builder.DependencyType.GetGenericTypeDefinition() == DependencyType );
+        Assume.False( _closedBuilders.Contains( builder ) );
+
+        _closedBuilders.Add( builder );
+        foreach ( var b in InternalElements )
+            builder.InternalElements.Add( b );
     }
 }
