@@ -280,6 +280,36 @@ public static class TypeExtensions
     }
 
     /// <summary>
+    /// Replaces generic type arguments of the specified <paramref name="type"/> with the given substitutions.
+    /// </summary>
+    /// <param name="type">Type whose arguments are to be substituted.</param>
+    /// <param name="args">
+    /// Generic argument types to replace original argument types with.
+    /// <b>null</b> elements will cause the original argument type at their position to be preserved.
+    /// </param>
+    /// <returns><paramref name="type"/> with substituted generic arguments.</returns>
+    [Pure]
+    public static Type SubstituteGenericArguments(this Type type, params Type?[] args)
+    {
+        if ( ! type.IsGenericType )
+            return type;
+
+        var newArgs = type.GetGenericArguments();
+        for ( var i = 0; i < newArgs.Length; ++i )
+        {
+            if ( i >= args.Length )
+                break;
+
+            var arg = args[i];
+            if ( arg is not null )
+                newArgs[i] = arg;
+        }
+
+        var openType = type.GetGenericTypeDefinition();
+        return openType.MakeGenericType( newArgs );
+    }
+
+    /// <summary>
     /// Creates a string representation of the provided <paramref name="type"/>.
     /// </summary>
     /// <param name="type">Source type.</param>

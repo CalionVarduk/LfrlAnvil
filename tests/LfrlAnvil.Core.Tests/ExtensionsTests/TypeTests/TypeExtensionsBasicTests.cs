@@ -131,6 +131,61 @@ public class TypeExtensionsBasicTests : TestsBase
         result.TestEquals( "System.Func`2[T [in] is System.Int32, TResult [out] is System.String]" ).Go();
     }
 
+    [Fact]
+    public void SubstituteGenericArguments_ShouldDoNothing_WhenTypeIsNotGeneric()
+    {
+        var type = typeof( string );
+        var result = type.SubstituteGenericArguments( typeof( int ) );
+        result.TestRefEquals( type ).Go();
+    }
+
+    [Fact]
+    public void SubstituteGenericArguments_ShouldDoNothing_WhenProvidedArgsAreEmpty()
+    {
+        var type = typeof( Func<int, string> );
+        var result = type.SubstituteGenericArguments();
+        result.TestEquals( type ).Go();
+    }
+
+    [Fact]
+    public void SubstituteGenericArguments_ShouldDoNothing_WhenProvidedArgsAreAllNull()
+    {
+        var type = typeof( Func<int, string> );
+        var result = type.SubstituteGenericArguments( null, null );
+        result.TestEquals( type ).Go();
+    }
+
+    [Theory]
+    [InlineData( typeof( Guid ), null, typeof( Func<Guid, string> ) )]
+    [InlineData( null, typeof( Guid ), typeof( Func<int, Guid> ) )]
+    [InlineData( typeof( int ), typeof( string ), typeof( Func<int, string> ) )]
+    [InlineData( typeof( Guid ), typeof( double ), typeof( Func<Guid, double> ) )]
+    public void SubstituteGenericArguments_ShouldReturnSubstitutedType_WhenSomeArgumentsAreSubstituted(
+        Type? first,
+        Type? second,
+        Type expected)
+    {
+        var type = typeof( Func<int, string> );
+        var result = type.SubstituteGenericArguments( first, second );
+        result.TestEquals( expected ).Go();
+    }
+
+    [Fact]
+    public void SubstituteGenericArguments_ShouldReturnSubstitutedType_WhenProvidedArgsAreShorterThanActualArgs()
+    {
+        var type = typeof( Func<int, string> );
+        var result = type.SubstituteGenericArguments( typeof( Guid ) );
+        result.TestEquals( typeof( Func<Guid, string> ) ).Go();
+    }
+
+    [Fact]
+    public void SubstituteGenericArguments_ShouldReturnSubstitutedType_WhenProvidedArgsAreLongerThanActualArgs()
+    {
+        var type = typeof( Func<int, string> );
+        var result = type.SubstituteGenericArguments( typeof( Guid ), typeof( double ), typeof( long ) );
+        result.TestEquals( typeof( Func<Guid, double> ) ).Go();
+    }
+
     private sealed class Foo
     {
         internal sealed class Bar { }
