@@ -16,6 +16,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -180,6 +181,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             else
             {
                 var resolution = GetResolution( explicitParameterResolutions, usedExplicitResolutions, customResolutionIndex );
+                if ( resolution.Factory is not null )
+                {
+                    ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )resolution.Factory );
+                    continue;
+                }
+
                 implementorKey = ValidateDependencyImplementorType( parameter, parameter.ParameterType, resolution.ImplementorKey );
             }
 
@@ -240,6 +247,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             else
             {
                 var resolution = GetResolution( explicitMemberResolutions, usedExplicitResolutions, customResolutionIndex );
+                if ( resolution.Factory is not null )
+                {
+                    MemberResolutions[i] = KeyValuePair.Create( member, ( object? )resolution.Factory );
+                    continue;
+                }
+
                 implementorKey = ValidateDependencyImplementorType( member, memberType, resolution.ImplementorKey );
             }
 
@@ -284,18 +297,18 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
     {
         Assume.IsNotNull( ConstructorInfo );
 
-        DependencyResolver?[]? parameterResolvers = null;
-        KeyValuePair<MemberInfo, DependencyResolver?>[]? memberResolvers = null;
+        object?[]? parameterResolvers = null;
+        KeyValuePair<MemberInfo, object?>[]? memberResolvers = null;
 
         if ( ParameterResolutions is not null )
         {
             Assume.ContainsAtLeast( ParameterResolutions, 1 );
-            parameterResolvers = new DependencyResolver?[ParameterResolutions.Length];
+            parameterResolvers = new object?[ParameterResolutions.Length];
             for ( var i = 0; i < parameterResolvers.Length; ++i )
             {
                 var resolution = ParameterResolutions[i].Value;
-                if ( resolution is null )
-                    parameterResolvers[i] = null;
+                if ( resolution is null or LambdaExpression )
+                    parameterResolvers[i] = resolution;
                 else
                 {
                     var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
@@ -308,17 +321,17 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         if ( MemberResolutions is not null )
         {
             Assume.ContainsAtLeast( MemberResolutions, 1 );
-            memberResolvers = new KeyValuePair<MemberInfo, DependencyResolver?>[MemberResolutions.Length];
+            memberResolvers = new KeyValuePair<MemberInfo, object?>[MemberResolutions.Length];
             for ( var i = 0; i < memberResolvers.Length; ++i )
             {
                 var resolution = MemberResolutions[i];
-                if ( resolution.Value is null )
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( DependencyResolver? )null );
+                if ( resolution.Value is null or LambdaExpression )
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, resolution.Value );
                 else
                 {
                     var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution.Value );
                     factory.Build( idGenerator, configuration );
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( DependencyResolver? )factory.GetResolver() );
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( object? )factory.GetResolver() );
                 }
             }
         }
@@ -338,37 +351,6 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             Lifetime );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static int FindCustomResolutionIndex<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
-        int resolutionsLength,
-        T target)
-        where T : class, ICustomAttributeProvider
-    {
-        for ( var i = 0; i < resolutionsLength; ++i )
-        {
-            Assume.IsNotNull( resolutions );
-            if ( resolutions[i].Predicate( target ) )
-                return i;
-        }
-
-        return -1;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static OpenGenericInjectableDependencyResolution<T> GetResolution<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
-        BitArray? usedResolutions,
-        int index)
-        where T : class, ICustomAttributeProvider
-    {
-        Assume.IsNotNull( resolutions );
-        Assume.IsNotNull( usedResolutions );
-        usedResolutions[index] = true;
-        return resolutions[index];
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IDependencyKey ValidateDependencyImplementorType<T>(T target, Type dependencyType, IDependencyKey? implementorKey)
         where T : notnull
@@ -382,29 +364,6 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         }
 
         return implementorKey;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ValidateUnusedResolutions<T>(
-        IReadOnlyList<OpenGenericInjectableDependencyResolution<T>>? resolutions,
-        BitArray? usedResolutions,
-        int resolutionsLength)
-        where T : class, ICustomAttributeProvider
-    {
-        Assume.IsNotNull( ConstructorInfo );
-
-        for ( var i = 0; i < resolutionsLength; ++i )
-        {
-            Assume.IsNotNull( resolutions );
-            Assume.IsNotNull( usedResolutions );
-
-            if ( usedResolutions[i] )
-                continue;
-
-            var resolution = resolutions[i];
-            var message = Resources.UnusedResolution<T>( ConstructorInfo, i, resolution.ImplementorKey, factory: null );
-            Warnings = Warnings.Extend( message );
-        }
     }
 
     private ConstructorInfo? FindBestSuitedCtor(
@@ -439,6 +398,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                 {
                     Assume.IsNotNull( explicitParameterResolutions );
                     var resolution = explicitParameterResolutions[customResolutionIndex];
+                    if ( resolution.Factory is not null )
+                    {
+                        score += defaultScore * 3;
+                        continue;
+                    }
+
+                    Assume.IsNotNull( resolution.ImplementorKey );
                     if ( ! parameter.ParameterType.IsAnyResolvableBy( resolution.ImplementorKey.Type ) )
                     {
                         score = notEligibleScore;

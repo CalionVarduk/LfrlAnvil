@@ -30,7 +30,7 @@ public interface IOpenGenericDependencyImplementorBuilder
     /// <summary>
     /// Explicit constructor definition of this implementor's instances.
     /// </summary>
-    IOpenGenericDependencyConstructor? Constructor { get; }
+    IDependencyConstructor? Constructor { get; }
 
     /// <summary>
     /// Disposal strategy of this implementor's instances. See <see cref="DependencyImplementorDisposalStrategy"/> for more information.
@@ -49,8 +49,7 @@ public interface IOpenGenericDependencyImplementorBuilder
     /// </summary>
     /// <param name="configuration">Optional configurator of the constructor invocation.</param>
     /// <returns><b>this</b>.</returns>
-    IOpenGenericDependencyImplementorBuilder FromConstructor(
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+    IOpenGenericDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this implementor's instances should be created by the provided constructor.
@@ -60,7 +59,7 @@ public interface IOpenGenericDependencyImplementorBuilder
     /// <returns><b>this</b>.</returns>
     IOpenGenericDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+        Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this implementor's instances should be created
@@ -71,7 +70,7 @@ public interface IOpenGenericDependencyImplementorBuilder
     /// <returns><b>this</b>.</returns>
     IOpenGenericDependencyImplementorBuilder FromType(
         Type type,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+        Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Sets the <see cref="DisposalStrategy"/> of this instance.

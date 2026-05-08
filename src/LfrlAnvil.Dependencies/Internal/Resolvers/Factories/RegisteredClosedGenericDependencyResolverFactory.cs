@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using System.Reflection;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal.Builders;
@@ -133,6 +134,8 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
 
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )null );
                 }
+                else if ( baseResolution.Value is LambdaExpression factory )
+                    ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )factory );
                 else
                 {
                     var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
@@ -190,6 +193,8 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
 
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )null );
                 }
+                else if ( baseResolution is LambdaExpression factory )
+                    MemberResolutions[i] = KeyValuePair.Create( member, ( object? )factory );
                 else
                 {
                     var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution );

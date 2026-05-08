@@ -28,8 +28,8 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 internal sealed class OpenGenericDependencyResolver : DependencyResolver
 {
     private readonly ConstructorInfo _ctor;
-    private readonly DependencyResolver?[]? _parameterResolvers;
-    private readonly KeyValuePair<MemberInfo, DependencyResolver?>[]? _memberResolvers;
+    private readonly object?[]? _parameterResolvers;
+    private readonly KeyValuePair<MemberInfo, object?>[]? _memberResolvers;
     private readonly Action<Type, IDependencyScope>? _onResolvingCallback;
     private readonly Action<object, Type, IDependencyScope>? _onCreatedCallback;
     private readonly Type _injectablePropertyType;
@@ -41,8 +41,8 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         Type implementorType,
         DependencyImplementorDisposalStrategy disposalStrategy,
         ConstructorInfo ctor,
-        DependencyResolver?[]? parameterResolvers,
-        KeyValuePair<MemberInfo, DependencyResolver?>[]? memberResolvers,
+        object?[]? parameterResolvers,
+        KeyValuePair<MemberInfo, object?>[]? memberResolvers,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Action<object, Type, IDependencyScope>? onCreatedCallback,
         Type injectablePropertyType,
@@ -205,18 +205,24 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         for ( var i = 0; i < parameters.Length; ++i )
         {
             Assume.IsNotNull( _parameterResolvers );
-            var resolver = _parameterResolvers[i];
+            var resolution = _parameterResolvers[i];
             var parameter = parameters[i];
             var (instanceType, name) = (parameter.ParameterType, $"p{i}");
 
-            if ( resolver is null )
+            if ( resolution is null )
                 AddDefaultResolution( builder, locator, instanceType, name, parameter.HasDefaultValue, parameter.DefaultValue );
-            else if ( resolver is OpenGenericDependencyResolver openGenericResolver )
-                AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
-            else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
-                AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+            else if ( resolution is Expression<Func<IDependencyScope, ParameterInfo, object>> factory )
+                builder.AddExpressionResolution( instanceType, name, parameter, factory );
             else
-                builder.AddDependencyResolverResolution( instanceType, name, resolver );
+            {
+                var resolver = ReinterpretCast.To<DependencyResolver>( resolution );
+                if ( resolver is OpenGenericDependencyResolver openGenericResolver )
+                    AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
+                else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
+                    AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+                else
+                    builder.AddDependencyResolverResolution( instanceType, name, resolver );
+            }
         }
 
         MemberBinding[]? memberBindings = null;
@@ -231,17 +237,23 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
             {
                 var member = injectableMembers[i];
                 var memberType = member.GetInjectableMemberType();
-                var resolver = member.FindCorrespondingOpenTypeMemberResolution<DependencyResolver>( _memberResolvers );
+                var resolution = member.FindCorrespondingOpenTypeMemberResolution<object>( _memberResolvers );
                 var (instanceType, name) = (memberType.GetGenericArguments()[0], $"m{i}");
 
-                if ( resolver is null )
+                if ( resolution is null )
                     AddDefaultResolution( builder, locator, instanceType, name );
-                else if ( resolver is OpenGenericDependencyResolver openGenericResolver )
-                    AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
-                else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
-                    AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+                else if ( resolution is Expression<Func<IDependencyScope, MemberInfo, object>> factory )
+                    builder.AddExpressionResolution( instanceType, name, member, factory );
                 else
-                    builder.AddDependencyResolverResolution( instanceType, name, resolver );
+                {
+                    var resolver = ReinterpretCast.To<DependencyResolver>( resolution );
+                    if ( resolver is OpenGenericDependencyResolver openGenericResolver )
+                        AddOpenGenericResolution( builder, locator, openGenericResolver, instanceType, name );
+                    else if ( resolver is OpenGenericRangeDependencyResolver openGenericRangeResolver )
+                        AddOpenGenericRangeResolution( builder, locator, openGenericRangeResolver, instanceType, name );
+                    else
+                        builder.AddDependencyResolverResolution( instanceType, name, resolver );
+                }
 
                 var memberCtor = memberType.FindInjectableMemberCtor( instanceType );
                 memberBindings[i] = builder.CreateMemberBindingForLastVariable( member, memberCtor );
@@ -334,15 +346,15 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
         for ( var i = 0; i < parameterCount; ++i )
         {
             Assume.IsNotNull( _parameterResolvers );
-            var resolver = _parameterResolvers[i];
+            var resolution = _parameterResolvers[i];
             var parameter = parameters[i];
 
-            if ( resolver is null )
+            if ( resolution is null )
             {
                 using ( AcquireActiveReadLock( locator ) )
-                    resolver = locator.Resolvers.TryGetResolver( parameter.ParameterType );
+                    resolution = locator.Resolvers.TryGetResolver( parameter.ParameterType );
 
-                if ( resolver is null )
+                if ( resolution is null )
                 {
                     ++defaultResolutionCount;
                     continue;
@@ -366,16 +378,16 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
             for ( var i = 0; i < memberCount; ++i )
             {
                 var closedMember = injectableMembers[i];
-                var resolver = closedMember.FindCorrespondingOpenTypeMemberResolution<DependencyResolver>( _memberResolvers );
+                var resolution = closedMember.FindCorrespondingOpenTypeMemberResolution<object>( _memberResolvers );
                 Type? closedMemberType = null;
 
-                if ( resolver is null )
+                if ( resolution is null )
                 {
                     closedMemberType = closedMember.GetInjectableMemberType().GetGenericArguments()[0];
                     using ( AcquireActiveReadLock( locator ) )
-                        resolver = locator.Resolvers.TryGetResolver( closedMemberType );
+                        resolution = locator.Resolvers.TryGetResolver( closedMemberType );
 
-                    if ( resolver is null )
+                    if ( resolution is null )
                     {
                         ++defaultResolutionCount;
                         continue;

@@ -31,29 +31,28 @@ internal sealed class OpenGenericDependencyImplementorBuilder : IOpenGenericDepe
     public Type ImplementorType { get; }
     public DependencyImplementorDisposalStrategy DisposalStrategy { get; private set; }
     public Action<Type, IDependencyScope>? OnResolvingCallback { get; private set; }
-    public IOpenGenericDependencyConstructor? Constructor => InternalConstructor;
+    public IDependencyConstructor? Constructor => InternalConstructor;
 
     internal DependencyLocatorBuilder LocatorBuilder { get; }
-    internal OpenGenericDependencyConstructor? InternalConstructor { get; private set; }
+    internal DependencyConstructor? InternalConstructor { get; private set; }
 
-    public IOpenGenericDependencyImplementorBuilder FromConstructor(
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+    public IOpenGenericDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
         return FromConstructorCore( null, configuration );
     }
 
     public IOpenGenericDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+        Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
         return FromConstructorCore( info, configuration );
     }
 
     public IOpenGenericDependencyImplementorBuilder FromType(
         Type type,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+        Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
-        InternalConstructor = new OpenGenericDependencyConstructor( LocatorBuilder, type );
+        InternalConstructor = new DependencyConstructor( LocatorBuilder, type );
         configuration?.Invoke( InternalConstructor.InternalInvocationOptions );
         return this;
     }
@@ -72,9 +71,9 @@ internal sealed class OpenGenericDependencyImplementorBuilder : IOpenGenericDepe
 
     private OpenGenericDependencyImplementorBuilder FromConstructorCore(
         ConstructorInfo? info,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration)
+        Action<IDependencyConstructorInvocationOptions>? configuration)
     {
-        InternalConstructor = new OpenGenericDependencyConstructor( LocatorBuilder, info );
+        InternalConstructor = new DependencyConstructor( LocatorBuilder, info );
         configuration?.Invoke( InternalConstructor.InternalInvocationOptions );
         return this;
     }

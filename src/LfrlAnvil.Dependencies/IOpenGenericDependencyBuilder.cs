@@ -111,8 +111,7 @@ public interface IOpenGenericDependencyBuilder
     /// <param name="configuration">Optional configurator of the constructor invocation.</param>
     /// <returns><see cref="Implementor"/>.</returns>
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
-    IOpenGenericDependencyImplementorBuilder FromConstructor(
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+    IOpenGenericDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this dependency should be implemented by the provided constructor.
@@ -123,7 +122,7 @@ public interface IOpenGenericDependencyBuilder
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
     IOpenGenericDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+        Action<IDependencyConstructorInvocationOptions>? configuration = null);
 
     /// <summary>
     /// Specifies that this dependency should be implemented by the best suited constructor of the provided <paramref name="type"/>.
@@ -134,5 +133,5 @@ public interface IOpenGenericDependencyBuilder
     /// <remarks>Resets <see cref="SharedImplementorKey"/> to null.</remarks>
     IOpenGenericDependencyImplementorBuilder FromType(
         Type type,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null);
+        Action<IDependencyConstructorInvocationOptions>? configuration = null);
 }

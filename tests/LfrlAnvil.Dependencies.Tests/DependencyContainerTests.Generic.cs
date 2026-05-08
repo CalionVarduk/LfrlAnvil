@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Extensions;
@@ -290,6 +291,28 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterHasExplicitResolutionFromFactory()
+        {
+            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter(
+                        p => p.Name == "foo",
+                        (_, p) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType( p.ParameterType.GetGenericArguments()[0] ) )! ) );
+
+            builder.Add<Parameterized<IGenericQux<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericQux<string>>>();
+
+            result.Inner.TestType().Exact<ChainableGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ).Go();
+        }
+
+        [Fact]
         public void ResolvingDependency_WithCtorAndOptionalParameter_ShouldReturnCorrectInstance_WhenParameterIsNotResolvable()
         {
             var ctor = typeof( OptionalCtorParamGenericImplementor<> ).GetConstructors().First();
@@ -388,6 +411,31 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromFactory()
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveMember(
+                        m => m.Name.Contains( "_foo" ),
+                        (_, m) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType(
+                                (( FieldInfo )m).FieldType.GetGenericArguments()[0].GetGenericArguments()[0] ) )! ) );
+
+            builder.Add<Parameterized<IGenericQux<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericQux<string>>>();
+
+            result.Inner.TestType()
+                .Exact<ChainableFieldGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingDependency_WithCtor_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromImplementorType()
         {
             var ctor = typeof( ChainablePropertyGenericFoo<> ).GetConstructors().First();
@@ -426,6 +474,30 @@ public partial class DependencyContainerTests
 
             result.Inner.Instance.TestType()
                 .Exact<ChainablePropertyGenericFoo<string>>( e => e.Bar.TestType().Exact<GenericImplementor<string>>() )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingDependency_ShouldReturnCorrectInstance_WhenCtorWithExplicitFactoryIsChosenOverCtorWithNormallyInjectedDependency()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( MultiCtorGenericImplementor<> ) )
+                .FromConstructor( o => o.ResolveParameter(
+                    p => p.ParameterType.IsGenericType && p.ParameterType.GetGenericTypeDefinition() == typeof( IGenericBar<> ),
+                    (_, p) => Activator.CreateInstance(
+                        typeof( GenericImplementor<> ).MakeGenericType( p.ParameterType.GetGenericArguments()[0] ) )! ) );
+
+            builder.Add<ParameterizedMember<MultiCtorGenericImplementor<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<ParameterizedMember<MultiCtorGenericImplementor<string>>>();
+
+            result.Inner.Instance.TestType()
+                .Exact<MultiCtorGenericImplementor<string>>( e => Assertion.All(
+                    e.Bar.TestType().Exact<GenericImplementor<string>>(),
+                    e.Qux.TestNull() ) )
                 .Go();
         }
 
@@ -1386,6 +1458,27 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingOpenDependency_WithCtor_ShouldReturnCorrectInstance_WhenParameterHasExplicitResolutionFromFactory()
+        {
+            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter(
+                        p => p.Name == "foo",
+                        (_, p) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType( p.ParameterType.GetGenericArguments()[0] ) )! ) );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericQux<string>>();
+
+            result.TestType().Exact<ChainableGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ).Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependency_WithCtorAndOptionalParameter_ShouldReturnCorrectInstance_WhenParameterIsNotResolvable()
         {
             var ctor = typeof( OptionalCtorParamGenericImplementor<> ).GetConstructors().First();
@@ -1479,6 +1572,28 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingOpenDependency_WithCtorAndMember_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromFactory()
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveMember(
+                        m => m.Name.Contains( "_foo" ),
+                        (_, m) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType(
+                                (( FieldInfo )m).FieldType.GetGenericArguments()[0].GetGenericArguments()[0] ) )! ) );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericQux<string>>();
+
+            result.TestType().Exact<ChainableFieldGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ).Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependency_WithCtor_ShouldReturnCorrectInstance_WhenMemberHasExplicitResolutionFromImplementorType()
         {
             var ctor = typeof( ChainablePropertyGenericFoo<> ).GetConstructors().First();
@@ -1515,6 +1630,29 @@ public partial class DependencyContainerTests
 
             result.TestType()
                 .Exact<ChainablePropertyGenericFoo<string>>( e => e.Bar.TestType().Exact<GenericImplementor<string>>() )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenCtorWithExplicitFactoryIsChosenOverCtorWithNormallyInjectedDependency()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( MultiCtorGenericImplementor<> ) )
+                .FromConstructor( o => o.ResolveParameter(
+                    p => p.ParameterType.IsGenericType && p.ParameterType.GetGenericTypeDefinition() == typeof( IGenericBar<> ),
+                    (_, p) => Activator.CreateInstance(
+                        typeof( GenericImplementor<> ).MakeGenericType( p.ParameterType.GetGenericArguments()[0] ) )! ) );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<MultiCtorGenericImplementor<string>>();
+
+            result.TestType()
+                .Exact<MultiCtorGenericImplementor<string>>( e => Assertion.All(
+                    e.Bar.TestType().Exact<GenericImplementor<string>>(),
+                    e.Qux.TestNull() ) )
                 .Go();
         }
 

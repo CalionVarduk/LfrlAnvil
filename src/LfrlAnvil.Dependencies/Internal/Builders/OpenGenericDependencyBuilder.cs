@@ -76,22 +76,21 @@ internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuild
         return this;
     }
 
-    public IOpenGenericDependencyImplementorBuilder FromConstructor(
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+    public IOpenGenericDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
         return GetOrCreateImplementor().FromConstructor( configuration );
     }
 
     public IOpenGenericDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+        Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
         return GetOrCreateImplementor().FromConstructor( info, configuration );
     }
 
     public IOpenGenericDependencyImplementorBuilder FromType(
         Type type,
-        Action<IOpenGenericDependencyConstructorInvocationOptions>? configuration = null)
+        Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
         return GetOrCreateImplementor().FromType( type, configuration );
     }

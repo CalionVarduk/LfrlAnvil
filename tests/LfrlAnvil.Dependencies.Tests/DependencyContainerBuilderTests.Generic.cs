@@ -448,11 +448,16 @@ public partial class DependencyContainerBuilderTests
         public void
             AddSharedGenericImplementor_FromConstructor_WithParameterResolutions_ShouldAddConstructorParameterResolutionsAsCreationDetail()
         {
-            var predicate = Substitute.For<Func<ParameterInfo, bool>>();
+            var predicate1 = Substitute.For<Func<ParameterInfo, bool>>();
+            var predicate2 = Substitute.For<Func<ParameterInfo, bool>>();
+            var factory = Lambda.ExpressionOf( (IDependencyScope s, ParameterInfo p) =>
+                Substitute.For<Func<IDependencyScope, ParameterInfo, object>>()( s, p ) );
+
             var sut = new DependencyContainerBuilder();
             var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
 
-            var result = builder.FromConstructor( o => o.ResolveParameter( predicate, typeof( IFoo ), i => i.Keyed( 1 ) ) );
+            var result = builder.FromConstructor( o =>
+                o.ResolveParameter( predicate1, factory ).ResolveParameter( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
             Assertion.All(
                     result.TestRefEquals( builder ),
@@ -464,8 +469,9 @@ public partial class DependencyContainerBuilderTests
                         c.InvocationOptions.MemberResolutions.TestEmpty(),
                         c.InvocationOptions.ParameterResolutions.TestSequence(
                         [
-                            OpenGenericInjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
-                                predicate,
+                            InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ),
+                            InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
+                                predicate2,
                                 new DependencyKey<int>( typeof( IFoo ), 1 ) )
                         ] ) ) ) )
                 .Go();
@@ -475,11 +481,16 @@ public partial class DependencyContainerBuilderTests
         public void
             AddSharedGenericImplementor_FromConstructor_WithMemberResolutions_ShouldAddConstructorMemberResolutionsAsCreationDetail()
         {
-            var predicate = Substitute.For<Func<MemberInfo, bool>>();
+            var predicate1 = Substitute.For<Func<MemberInfo, bool>>();
+            var predicate2 = Substitute.For<Func<MemberInfo, bool>>();
+            var factory = Lambda.ExpressionOf( (IDependencyScope s, MemberInfo m) =>
+                Substitute.For<Func<IDependencyScope, MemberInfo, object>>()( s, m ) );
+
             var sut = new DependencyContainerBuilder();
             var builder = sut.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
 
-            var result = builder.FromConstructor( o => o.ResolveMember( predicate, typeof( IFoo ), i => i.Keyed( 1 ) ) );
+            var result = builder.FromConstructor( o =>
+                o.ResolveMember( predicate1, factory ).ResolveMember( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
             Assertion.All(
                     result.TestRefEquals( builder ),
@@ -491,8 +502,9 @@ public partial class DependencyContainerBuilderTests
                         c.InvocationOptions.ParameterResolutions.TestEmpty(),
                         c.InvocationOptions.MemberResolutions.TestSequence(
                         [
-                            OpenGenericInjectableDependencyResolution<MemberInfo>.FromImplementorKey(
-                                predicate,
+                            InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ),
+                            InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
+                                predicate2,
                                 new DependencyKey<int>( typeof( IFoo ), 1 ) )
                         ] ) ) ) )
                 .Go();
@@ -841,7 +853,7 @@ public partial class DependencyContainerBuilderTests
                 .FromConstructor(
                     ctor,
                     o => o.ResolveParameter( _ => false, typeof( int ) )
-                        .ResolveMember( _ => false, typeof( string ) ) );
+                        .ResolveMember( _ => false, (_, _) => new object() ) );
 
             var result = sut.TryBuild();
 

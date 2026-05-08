@@ -233,37 +233,6 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
     protected abstract DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator);
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static int FindCustomResolutionIndex<T>(
-        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
-        int resolutionsLength,
-        T target)
-        where T : class, ICustomAttributeProvider
-    {
-        for ( var i = 0; i < resolutionsLength; ++i )
-        {
-            Assume.IsNotNull( resolutions );
-            if ( resolutions[i].Predicate( target ) )
-                return i;
-        }
-
-        return -1;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static InjectableDependencyResolution<T> GetResolution<T>(
-        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
-        BitArray? usedResolutions,
-        int index)
-        where T : class, ICustomAttributeProvider
-    {
-        Assume.IsNotNull( resolutions );
-        Assume.IsNotNull( usedResolutions );
-        usedResolutions[index] = true;
-        return resolutions[index];
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private IDependencyKey ValidateDependencyImplementorType<T>(T target, Type dependencyType, IDependencyKey? implementorKey)
         where T : notnull
@@ -277,29 +246,6 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
         }
 
         return implementorKey;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ValidateUnusedResolutions<T>(
-        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
-        BitArray? usedResolutions,
-        int resolutionsLength)
-        where T : class, ICustomAttributeProvider
-    {
-        Assume.IsNotNull( ConstructorInfo );
-
-        for ( var i = 0; i < resolutionsLength; ++i )
-        {
-            Assume.IsNotNull( resolutions );
-            Assume.IsNotNull( usedResolutions );
-
-            if ( usedResolutions[i] )
-                continue;
-
-            var resolution = resolutions[i];
-            var message = Resources.UnusedResolution<T>( ConstructorInfo, i, resolution.ImplementorKey, resolution.Factory );
-            Warnings = Warnings.Extend( message );
-        }
     }
 
     private ConstructorInfo? FindBestSuitedCtor(

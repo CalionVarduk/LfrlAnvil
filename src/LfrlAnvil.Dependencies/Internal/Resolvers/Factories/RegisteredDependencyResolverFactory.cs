@@ -184,6 +184,60 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
         return currentMessages;
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static int FindCustomResolutionIndex<T>(
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
+        int resolutionsLength,
+        T target)
+        where T : class, ICustomAttributeProvider
+    {
+        for ( var i = 0; i < resolutionsLength; ++i )
+        {
+            Assume.IsNotNull( resolutions );
+            if ( resolutions[i].Predicate( target ) )
+                return i;
+        }
+
+        return -1;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static InjectableDependencyResolution<T> GetResolution<T>(
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
+        BitArray? usedResolutions,
+        int index)
+        where T : class, ICustomAttributeProvider
+    {
+        Assume.IsNotNull( resolutions );
+        Assume.IsNotNull( usedResolutions );
+        usedResolutions[index] = true;
+        return resolutions[index];
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected void ValidateUnusedResolutions<T>(
+        IReadOnlyList<InjectableDependencyResolution<T>>? resolutions,
+        BitArray? usedResolutions,
+        int resolutionsLength)
+        where T : class, ICustomAttributeProvider
+    {
+        Assume.IsNotNull( ConstructorInfo );
+
+        for ( var i = 0; i < resolutionsLength; ++i )
+        {
+            Assume.IsNotNull( resolutions );
+            Assume.IsNotNull( usedResolutions );
+
+            if ( usedResolutions[i] )
+                continue;
+
+            var resolution = resolutions[i];
+            var message = Resources.UnusedResolution( ConstructorInfo, i, resolution.ImplementorKey, resolution.Factory );
+            Warnings = Warnings.Extend( message );
+        }
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static BitArray? ReuseBitArray(BitArray? current, int expectedLength)
     {
