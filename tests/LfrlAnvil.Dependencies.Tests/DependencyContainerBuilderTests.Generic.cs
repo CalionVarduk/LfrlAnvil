@@ -4,6 +4,7 @@ using System.Reflection;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Dependencies.Tests;
@@ -928,6 +929,154 @@ public partial class DependencyContainerBuilderTests
         }
 
         [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeParameterIsExplicitlyResolvedWithTypeWithFreeGenericArgs()
+        {
+            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor( ctor, o => o.ResolveParameter( _ => true, typeof( GenericFreeFoo<,> ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeParameterIsExplicitlyResolvedWithTypeWithWronglySubstitutedGenericArgs()
+        {
+            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( typeof( string ) ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeParameterIsExplicitlyResolvedWithTypeThatIsNotFullyOpen()
+        {
+            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveParameter( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeMemberIsExplicitlyResolvedWithTypeWithFreeGenericArgs()
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor( ctor, o => o.ResolveMember( _ => true, typeof( GenericFreeFoo<,> ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeMemberIsExplicitlyResolvedWithTypeWithWronglySubstitutedGenericArgs()
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveMember( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( typeof( string ) ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeMemberIsExplicitlyResolvedWithTypeThatIsNotFullyOpen()
+        {
+            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
+
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericQux<> ) )
+                .FromConstructor(
+                    ctor,
+                    o => o.ResolveMember( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void TryBuild_ShouldReturnFailureResult_WhenExplicitCtorDoesNotCreateInstancesOfCorrectType()
         {
             var ctor = typeof( ExplicitCtorGenericImplementor<> ).GetConstructors().First();
@@ -1014,6 +1163,26 @@ public partial class DependencyContainerBuilderTests
         {
             var sut = new DependencyContainerBuilder();
             sut.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericFreeFoo<,> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeHasWronglySubstitutedGenericArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddGeneric( typeof( IGenericBar<> ) )
+                .FromType( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( typeof( string ) ) );
 
             var result = sut.TryBuild();
 
@@ -1236,6 +1405,87 @@ public partial class DependencyContainerBuilderTests
                             messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericBar<> ) ) ) ),
                             messages[0].Warnings.TestEmpty(),
                             messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorWithFreeGenericArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddSharedGenericImplementor( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( GenericFreeFoo<,> ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorWithWronglySubstitutedGenericArgs()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddSharedGenericImplementor( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( typeof( string ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorThatIsNotFullyOpen()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddSharedGenericImplementor( typeof( GenericFreeFoo<,> ) );
+            sut.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( string ) ) );
+
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void TryBuild_ShouldReturnFailureResult_WhenSharedImplementorIsNotGeneric()
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.AddSharedImplementor<Implementor>();
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromSharedImplementor( typeof( Implementor ) );
+            var result = sut.TryBuild();
+
+            Assertion.All(
+                    result.IsOk.TestFalse(),
+                    result.Container.TestNull(),
+                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                        .Then( messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
                 .Go();
         }
 

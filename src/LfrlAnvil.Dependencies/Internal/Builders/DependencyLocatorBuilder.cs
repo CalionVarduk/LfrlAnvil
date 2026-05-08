@@ -463,27 +463,28 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
     private static OpenGenericDependencyResolverFactory? TryGetSharedGenericResolverFactory(
         DependencyLocatorBuilderStore locatorBuilderStore,
         in DependencyLocatorBuilderExtractionParams @params,
-        IInternalDependencyKey openDependencyKey,
+        IInternalDependencyKey dependencyKey,
         DependencyLifetime lifetime,
         bool isLastInRange)
     {
-        Assume.True( openDependencyKey.Type.IsGenericTypeDefinition );
+        if ( ! dependencyKey.Type.IsGenericTypeDefinition )
+            return null;
 
-        var factory = @params.GetSharedResolverFactory( openDependencyKey, lifetime );
+        var factory = @params.GetSharedResolverFactory( dependencyKey, lifetime );
         if ( factory is not null )
             return ReinterpretCast.To<OpenGenericDependencyResolverFactory>( factory );
 
-        var sharedImplementorBuilder = openDependencyKey.GetSharedGenericImplementor( locatorBuilderStore );
+        var sharedImplementorBuilder = dependencyKey.GetSharedGenericImplementor( locatorBuilderStore );
         if ( sharedImplementorBuilder is null )
             return null;
 
         factory = new OpenGenericDependencyResolverFactory(
-            ImplementorKey.CreateShared( openDependencyKey ),
+            ImplementorKey.CreateShared( dependencyKey ),
             lifetime,
             sharedImplementorBuilder,
             isLastInRange );
 
-        @params.AddSharedResolverFactory( openDependencyKey, lifetime, factory );
+        @params.AddSharedResolverFactory( dependencyKey, lifetime, factory );
         return ReinterpretCast.To<OpenGenericDependencyResolverFactory>( factory );
     }
 

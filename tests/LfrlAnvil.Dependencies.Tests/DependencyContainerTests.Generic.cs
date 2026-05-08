@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Dependencies.Tests;
@@ -1152,6 +1153,35 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithPartiallyClosedImplementorCtor()
+        {
+            var ctor = typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ).GetConstructors().First();
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+
+            result.Inner.TestType().Exact<GenericFreeFoo<string, int>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithPartiallyClosedImplementorType()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromType( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+
+            result.Inner.TestType().Exact<GenericFreeFoo<string, int>>().Go();
+        }
+
+        [Fact]
         public void ResolvingTransientOpenDependency_WithSharedImplementor_ShouldReturnNewInstanceEachTimeForAllSharingDependencies()
         {
             var builder = new DependencyContainerBuilder();
@@ -2130,6 +2160,33 @@ public partial class DependencyContainerTests
             var result = sut.RootScope.Locator.Resolve<ChainableGenericFooMemberRange<string>>();
 
             result.Bars.Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithPartiallyClosedImplementorCtor()
+        {
+            var ctor = typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ).GetConstructors().First();
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).FromConstructor( ctor );
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericFoo<string>>();
+
+            result.TestType().Exact<GenericFreeFoo<string, int>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithPartiallyClosedImplementorType()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromType( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IGenericFoo<string>>();
+
+            result.TestType().Exact<GenericFreeFoo<string, int>>().Go();
         }
 
         [Theory]
