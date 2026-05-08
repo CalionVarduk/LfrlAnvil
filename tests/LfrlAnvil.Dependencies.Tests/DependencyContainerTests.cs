@@ -1380,7 +1380,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         var value = Fixture.Create<string>();
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", _ => value ) );
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", (_, _) => value ) );
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
@@ -1510,7 +1510,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         var value = Fixture.Create<string>();
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), _ => value ) );
+        builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), (_, _) => value ) );
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
@@ -1661,8 +1661,8 @@ public partial class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>()
             .FromConstructor(
                 ctor,
-                o => o.ResolveParameter( p => p.Name == "value", _ => intValue )
-                    .ResolveMember( m => m.Name == "_member", _ => stringValue ) );
+                o => o.ResolveParameter( p => p.Name == "value", (_, _) => intValue )
+                    .ResolveMember( m => m.Name == "_member", (_, _) => stringValue ) );
 
         var sut = builder.Build();
 
@@ -1808,7 +1808,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>().FromType<Implementor>();
         builder.Add<MultiCtorImplementor>()
-            .FromConstructor( o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), _ => new Implementor() ) );
+            .FromConstructor( o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), (_, _) => new Implementor() ) );
 
         var sut = builder.Build();
 

@@ -29,7 +29,7 @@ public readonly struct InjectableDependencyResolution<T>
 {
     private InjectableDependencyResolution(
         Func<T, bool> predicate,
-        Expression<Func<IDependencyScope, object>>? factory,
+        Expression<Func<IDependencyScope, T, object>>? factory,
         IDependencyKey? implementorKey)
     {
         Predicate = predicate;
@@ -45,7 +45,7 @@ public readonly struct InjectableDependencyResolution<T>
     /// <summary>
     /// Custom resolution factory.
     /// </summary>
-    public Expression<Func<IDependencyScope, object>>? Factory { get; }
+    public Expression<Func<IDependencyScope, T, object>>? Factory { get; }
 
     /// <summary>
     /// Custom implementor key.
@@ -62,7 +62,9 @@ public readonly struct InjectableDependencyResolution<T>
     /// <returns>New <see cref="InjectableDependencyResolution{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static InjectableDependencyResolution<T> FromFactory(Func<T, bool> predicate, Expression<Func<IDependencyScope, object>> factory)
+    public static InjectableDependencyResolution<T> FromFactory(
+        Func<T, bool> predicate,
+        Expression<Func<IDependencyScope, T, object>> factory)
     {
         return new InjectableDependencyResolution<T>( predicate, factory, null );
     }

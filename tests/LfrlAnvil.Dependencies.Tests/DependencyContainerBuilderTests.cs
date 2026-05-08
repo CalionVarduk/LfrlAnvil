@@ -706,7 +706,9 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var predicate1 = Substitute.For<Func<ParameterInfo, bool>>();
         var predicate2 = Substitute.For<Func<ParameterInfo, bool>>();
-        var factory = Lambda.ExpressionOf( (IDependencyScope s) => Substitute.For<Func<IDependencyScope, object>>()( s ) );
+        var factory = Lambda.ExpressionOf( (IDependencyScope s, ParameterInfo p) =>
+            Substitute.For<Func<IDependencyScope, ParameterInfo, object>>()( s, p ) );
+
         var sut = new DependencyContainerBuilder();
         var builder = sut.AddSharedImplementor( typeof( Implementor ) );
 
@@ -737,7 +739,9 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var predicate1 = Substitute.For<Func<MemberInfo, bool>>();
         var predicate2 = Substitute.For<Func<MemberInfo, bool>>();
-        var factory = Lambda.ExpressionOf( (IDependencyScope s) => Substitute.For<Func<IDependencyScope, object>>()( s ) );
+        var factory = Lambda.ExpressionOf( (IDependencyScope s, MemberInfo m) =>
+            Substitute.For<Func<IDependencyScope, MemberInfo, object>>()( s, m ) );
+
         var sut = new DependencyContainerBuilder();
         var builder = sut.AddSharedImplementor( typeof( Implementor ) );
 
@@ -1106,7 +1110,7 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
             .FromConstructor(
                 ctor,
                 o => o.ResolveParameter( _ => false, typeof( int ) )
-                    .ResolveMember( _ => false, _ => new object() ) );
+                    .ResolveMember( _ => false, (_, _) => new object() ) );
 
         var result = sut.TryBuild();
 

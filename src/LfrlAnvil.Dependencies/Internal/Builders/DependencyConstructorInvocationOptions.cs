@@ -45,7 +45,7 @@ internal sealed class DependencyConstructorInvocationOptions : IDependencyConstr
 
     public IDependencyConstructorInvocationOptions ResolveParameter(
         Func<ParameterInfo, bool> predicate,
-        Expression<Func<IDependencyScope, object>> factory)
+        Expression<Func<IDependencyScope, ParameterInfo, object>> factory)
     {
         var resolution = InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate, factory );
         _parameterResolutions.Add( resolution );
@@ -68,7 +68,7 @@ internal sealed class DependencyConstructorInvocationOptions : IDependencyConstr
 
     public IDependencyConstructorInvocationOptions ResolveMember(
         Func<MemberInfo, bool> predicate,
-        Expression<Func<IDependencyScope, object>> factory)
+        Expression<Func<IDependencyScope, MemberInfo, object>> factory)
     {
         var resolution = InjectableDependencyResolution<MemberInfo>.FromFactory( predicate, factory );
         _memberResolutions.Add( resolution );

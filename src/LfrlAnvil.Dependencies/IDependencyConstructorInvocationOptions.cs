@@ -58,7 +58,7 @@ public interface IDependencyConstructorInvocationOptions
     /// <returns><b>this</b>.</returns>
     IDependencyConstructorInvocationOptions ResolveParameter(
         Func<ParameterInfo, bool> predicate,
-        Expression<Func<IDependencyScope, object>> factory);
+        Expression<Func<IDependencyScope, ParameterInfo, object>> factory);
 
     /// <summary>
     /// Registers a custom constructor parameter resolution based on an explicit implementor type.
@@ -84,7 +84,7 @@ public interface IDependencyConstructorInvocationOptions
     /// <returns><b>this</b>.</returns>
     IDependencyConstructorInvocationOptions ResolveMember(
         Func<MemberInfo, bool> predicate,
-        Expression<Func<IDependencyScope, object>> factory);
+        Expression<Func<IDependencyScope, MemberInfo, object>> factory);
 
     /// <summary>
     /// Registers a custom injectable member resolution based on an explicit implementor type.

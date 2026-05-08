@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Generators;
@@ -46,8 +47,8 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
 
             if ( resolution is null )
                 expressionBuilder.AddDefaultResolution( instanceType, name, parameter.HasDefaultValue, parameter.DefaultValue );
-            else if ( resolution is Expression<Func<IDependencyScope, object>> expression )
-                expressionBuilder.AddExpressionResolution( instanceType, name, expression );
+            else if ( resolution is Expression<Func<IDependencyScope, ParameterInfo, object>> expression )
+                expressionBuilder.AddExpressionResolution( instanceType, name, parameter, expression );
             else
             {
                 var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
@@ -67,8 +68,8 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
 
             if ( resolution is null )
                 expressionBuilder.AddDefaultResolution( instanceType, name );
-            else if ( resolution is Expression<Func<IDependencyScope, object>> expression )
-                expressionBuilder.AddExpressionResolution( instanceType, name, expression );
+            else if ( resolution is Expression<Func<IDependencyScope, MemberInfo, object>> expression )
+                expressionBuilder.AddExpressionResolution( instanceType, name, member, expression );
             else
             {
                 var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );

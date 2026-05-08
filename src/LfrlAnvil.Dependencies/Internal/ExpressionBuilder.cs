@@ -166,13 +166,15 @@ internal sealed class ExpressionBuilder
         return variable;
     }
 
-    internal ParameterExpression AddExpressionResolution(
+    internal ParameterExpression AddExpressionResolution<T>(
         Type variableType,
         string variableName,
-        Expression<Func<IDependencyScope, object>> expression)
+        T source,
+        Expression<Func<IDependencyScope, T, object>> expression)
+        where T : class, ICustomAttributeProvider
     {
         var variable = AddVariable( variableType, variableName );
-        var rawValue = GetExpressionResolutionRawValue( expression );
+        var rawValue = GetExpressionResolutionRawValue( source, expression );
         AddRawValueAssignment( variable, rawValue );
         return variable;
     }
@@ -267,9 +269,13 @@ internal sealed class ExpressionBuilder
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Expression GetExpressionResolutionRawValue(Expression<Func<IDependencyScope, object>> expression)
+    private Expression GetExpressionResolutionRawValue<T>(T source, Expression<Func<IDependencyScope, T, object>> expression)
+        where T : class, ICustomAttributeProvider
     {
-        var result = expression.Body.ReplaceParameter( expression.Parameters[0], AbstractScopeParameter );
+        var result = expression.Body.ReplaceParameters(
+            [ expression.Parameters[0], expression.Parameters[1] ],
+            [ AbstractScopeParameter, Expression.Constant( source ) ] );
+
         return result;
     }
 

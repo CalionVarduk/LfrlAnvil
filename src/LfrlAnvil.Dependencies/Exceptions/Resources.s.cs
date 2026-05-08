@@ -234,7 +234,7 @@ internal static class Resources
         ConstructorInfo ctor,
         int index,
         IDependencyKey? implementorKey,
-        Expression<Func<IDependencyScope, object>>? factory)
+        Expression<Func<IDependencyScope, T, object>>? factory)
         where T : class, ICustomAttributeProvider
     {
         var resolutionText = factory is not null ? "from factory" : $"from implementor {implementorKey}";
