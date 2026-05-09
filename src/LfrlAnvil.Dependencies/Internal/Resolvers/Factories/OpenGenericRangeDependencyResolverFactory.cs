@@ -49,8 +49,8 @@ internal sealed class OpenGenericRangeDependencyResolverFactory : RangeDependenc
                 for ( var i = 0; i < factories.Length; ++i )
                 {
                     var baseFactory = Factories[i];
-                    factories[i] = baseFactory is OpenGenericDependencyResolverFactory openFactory
-                        ? openFactory.Close( elementKey, in @params, dynamicResolverFactories )
+                    factories[i] = baseFactory.IsOpenGeneric
+                        ? baseFactory.Close( elementKey, in @params, dynamicResolverFactories )
                         : CreateInvalid( ImplementorKey.Create( elementKey, baseFactory.ImplementorKey.RangeIndex ), Lifetime );
                 }
             }

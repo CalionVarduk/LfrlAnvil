@@ -439,10 +439,16 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         if ( ! builder.InternalSharedImplementorKey.Type.IsOpenGenericAssignableTo( key.Value.Type ) )
             errors = errors.Extend( Resources.ProvidedSharedImplementorTypeIsIncorrect( builder.InternalSharedImplementorKey.Type ) );
 
+        var openDependencyKey = builder.InternalSharedImplementorKey;
+        if ( ! builder.InternalSharedImplementorKey.Type.IsGenericTypeDefinition
+            && builder.InternalSharedImplementorKey.Type.IsGenericType )
+            openDependencyKey = builder.InternalSharedImplementorKey.WithType(
+                builder.InternalSharedImplementorKey.Type.GetGenericTypeDefinition() );
+
         var sharedFactory = TryGetSharedGenericResolverFactory(
             locatorBuilderStore,
             in @params,
-            builder.InternalSharedImplementorKey,
+            openDependencyKey,
             builder.Lifetime,
             isLastInRange );
 
@@ -457,7 +463,9 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             ? Chain.Create( DependencyContainerBuildMessages.CreateErrors( key, errors ) )
             : Chain<DependencyContainerBuildMessages>.Empty;
 
-        return sharedFactory;
+        return ReferenceEquals( openDependencyKey, builder.InternalSharedImplementorKey )
+            ? sharedFactory
+            : new PartiallyOpenGenericSharedDependencyResolverFactory( builder.InternalSharedImplementorKey, sharedFactory );
     }
 
     private static OpenGenericDependencyResolverFactory? TryGetSharedGenericResolverFactory(

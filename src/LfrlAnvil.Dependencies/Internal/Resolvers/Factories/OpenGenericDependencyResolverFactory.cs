@@ -80,10 +80,18 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         IInternalDependencyKey dependencyKey,
         in DependencyLocatorBuilderExtractionParams @params)
     {
+        return CloseShared( dependencyKey, ImplementorKey.Value.Type, in @params );
+    }
+
+    internal DependencyResolverFactory CloseShared(
+        IInternalDependencyKey dependencyKey,
+        Type implementorType,
+        in DependencyLocatorBuilderExtractionParams @params)
+    {
         Assume.False( dependencyKey.Type.ContainsGenericParameters );
         Assume.True( ImplementorKey.IsShared );
 
-        var sharedImplementorType = ImplementorKey.Value.Type.CloseImplementorType( dependencyKey.Type );
+        var sharedImplementorType = implementorType.CloseImplementorType( dependencyKey.Type );
         var sharedImplementorKey = InternalImplementorKey.WithType( sharedImplementorType );
         var sharedResolverFactory = @params.GetSharedResolverFactory( sharedImplementorKey, Lifetime );
         if ( sharedResolverFactory is null )

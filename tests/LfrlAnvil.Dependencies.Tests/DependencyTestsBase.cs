@@ -197,6 +197,8 @@ public abstract class DependencyTestsBase : TestsBase
 
     public class GenericFreeFoo<T1, T2> : IGenericFoo<T1> { }
 
+    public class GenericFreeImplementor<T1, T2> : IGenericFoo<T1>, IGenericBar<T1>, IGenericQux<T2> { }
+
     public class MultiCtorGenericImplementor<T> : IGenericFoo<T>
     {
         public MultiCtorGenericImplementor(IGenericBar<T> bar)

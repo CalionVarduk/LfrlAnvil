@@ -254,10 +254,9 @@ internal static class Helpers
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static T? FindCorrespondingOpenTypeMemberResolution<T>(
+    internal static object? FindCorrespondingOpenTypeMemberResolution(
         this MemberInfo closedTypeMember,
-        ReadOnlyArray<KeyValuePair<MemberInfo, T?>> openMemberResolutions)
-        where T : class
+        ReadOnlyArray<KeyValuePair<MemberInfo, object?>> openMemberResolutions)
     {
         Assume.True( closedTypeMember.MemberType is MemberTypes.Field or MemberTypes.Property );
 
@@ -385,12 +384,12 @@ internal static class Helpers
         Assume.True( ! closedType.ContainsGenericParameters && closedType.IsGenericType );
 
         var openType = closedType.GetGenericTypeDefinition();
-        Assume.True( openType.IsOpenGenericAssignableTo( closedType.GetGenericTypeDefinition() ) );
         Assume.True( implementorType.ContainsGenericParameters );
         Assume.True( implementorType.IsOpenGenericAssignableTo( openType ) );
 
         var matchedOpenType = openType;
-        if ( implementorType != openType )
+        var openImplementorType = implementorType.GetGenericTypeDefinition();
+        if ( openImplementorType != openType )
         {
             matchedOpenType = openType.IsInterface
                 ? implementorType.GetOpenGenericImplementations( openType ).FirstOrDefault()
@@ -399,20 +398,19 @@ internal static class Helpers
             Assume.IsNotNull( matchedOpenType );
         }
 
-        var implementorArgs = implementorType.GetGenericArguments();
+        var openImplementorArgs = openImplementorType.GetGenericArguments();
         var matchedOpenArgs = matchedOpenType.GetGenericArguments();
         var closedTypeArgs = closedType.GetGenericArguments();
 
-        var concreteImplementorArgs = implementorArgs.ToArray();
+        var concreteImplementorArgs = implementorType.GetGenericArguments();
         for ( var i = 0; i < matchedOpenArgs.Length; ++i )
         {
             var implementorArg = matchedOpenArgs[i];
-            var implementorIndex = Array.IndexOf( implementorArgs, implementorArg );
+            var implementorIndex = Array.IndexOf( openImplementorArgs, implementorArg );
             Assume.IsGreaterThanOrEqualTo( implementorIndex, 0 );
             concreteImplementorArgs[implementorIndex] = closedTypeArgs[i];
         }
 
-        var openImplementorType = implementorType.GetGenericTypeDefinition();
         return openImplementorType.MakeGenericType( concreteImplementorArgs );
     }
 
@@ -420,16 +418,16 @@ internal static class Helpers
     internal static ConstructorInfo? TryCloseGenericCtor(this ConstructorInfo openCtor, Type openType, Type closedType)
     {
         Assume.True( openType.IsGenericTypeDefinition );
-        Assume.True( ! closedType.ContainsGenericParameters && closedType.IsGenericType );
-        Assume.True( openType.IsOpenGenericAssignableTo( closedType.GetGenericTypeDefinition() ) );
+        Assume.True( closedType.IsGenericType );
+        Assume.Equals( closedType.GetGenericTypeDefinition(), openType );
 
         var implementorType = openCtor.DeclaringType;
         Assume.True( implementorType is not null && implementorType.ContainsGenericParameters );
         Assume.True( implementorType.IsOpenGenericAssignableTo( openType ) );
-        var openImplementorType = implementorType.GetGenericTypeDefinition();
 
         var matchedOpenType = openType;
-        if ( implementorType != openType )
+        var openImplementorType = implementorType.GetGenericTypeDefinition();
+        if ( openImplementorType != openType )
         {
             matchedOpenType = openType.IsInterface
                 ? implementorType.GetOpenGenericImplementations( openType ).FirstOrDefault()
@@ -439,22 +437,21 @@ internal static class Helpers
                 return null;
         }
 
-        var implementorArgs = implementorType.GetGenericArguments();
+        var openImplementorArgs = openImplementorType.GetGenericArguments();
         var matchedOpenArgs = matchedOpenType.GetGenericArguments();
         var closedTypeArgs = closedType.GetGenericArguments();
 
-        var concreteImplementorArgs = implementorArgs.ToArray();
+        var concreteImplementorArgs = implementorType.GetGenericArguments();
         for ( var i = 0; i < matchedOpenArgs.Length; ++i )
         {
             var implementorArg = matchedOpenArgs[i];
-            var implementorIndex = Array.IndexOf( implementorArgs, implementorArg );
+            var implementorIndex = Array.IndexOf( openImplementorArgs, implementorArg );
             if ( implementorIndex < 0 )
                 return null;
 
             concreteImplementorArgs[implementorIndex] = closedTypeArgs[i];
         }
 
-        var openImplementorArgs = openImplementorType == implementorType ? implementorArgs : openImplementorType.GetGenericArguments();
         var substitutionMap = new Dictionary<Type, Type>( openImplementorArgs.Length );
         for ( var i = 0; i < openImplementorArgs.Length; ++i )
             substitutionMap[openImplementorArgs[i]] = concreteImplementorArgs[i];

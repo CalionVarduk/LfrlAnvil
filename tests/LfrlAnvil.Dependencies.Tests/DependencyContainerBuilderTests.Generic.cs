@@ -1457,27 +1457,6 @@ public partial class DependencyContainerBuilderTests
                         .Then( messages => Assertion.All(
                             messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
                             messages[0].Warnings.TestEmpty(),
-                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
-                .Go();
-        }
-
-        [Fact]
-        public void TryBuild_ShouldReturnFailureResult_WhenDependencyUsesSharedImplementorThatIsNotFullyOpen()
-        {
-            var sut = new DependencyContainerBuilder();
-            sut.AddSharedGenericImplementor( typeof( GenericFreeFoo<,> ) );
-            sut.AddGeneric( typeof( IGenericFoo<> ) )
-                .FromSharedImplementor( typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( string ) ) );
-
-            var result = sut.TryBuild();
-
-            Assertion.All(
-                    result.IsOk.TestFalse(),
-                    result.Container.TestNull(),
-                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
-                        .Then( messages => Assertion.All(
-                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericFoo<> ) ) ) ),
-                            messages[0].Warnings.TestEmpty(),
                             messages[0].Errors.Count.TestEquals( 1 ) ) ) )
                 .Go();
         }

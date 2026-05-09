@@ -77,17 +77,21 @@ internal readonly struct DependencyResolversStore : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyResolver? TryGetSharedGenericResolver(Type openType, Type closedType)
+    internal DependencyResolver? TryGetSharedGenericResolver(Type openType, Type closedType, DependencyLifetime lifetime)
     {
-        return SharedGenericResolvers.TryGetValue( new SharedGenericKey( openType, closedType ), out var value ) ? value : null;
+        return SharedGenericResolvers.TryGetValue( new SharedGenericKey( openType, closedType, lifetime ), out var value ) ? value : null;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyResolver GetOrAddSharedGenericResolver(Type openType, Type closedType, DependencyResolver resolver)
+    internal DependencyResolver GetOrAddSharedGenericResolver(
+        Type openType,
+        Type closedType,
+        DependencyLifetime lifetime,
+        DependencyResolver resolver)
     {
         ref var current = ref CollectionsMarshal.GetValueRefOrAddDefault(
             SharedGenericResolvers,
-            new SharedGenericKey( openType, closedType ),
+            new SharedGenericKey( openType, closedType, lifetime ),
             out var exists )!;
 
         if ( ! exists )

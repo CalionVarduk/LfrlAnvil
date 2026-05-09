@@ -173,6 +173,17 @@ internal sealed class ExpressionBuilder
         Expression<Func<IDependencyScope, T, object>> expression)
         where T : class, ICustomAttributeProvider
     {
+        if ( typeof( T ) == typeof( MemberInfo ) )
+        {
+            var member = ReinterpretCast.To<MemberInfo>( source );
+            if ( member.MemberType == MemberTypes.Field )
+            {
+                var backedProperty = ReinterpretCast.To<FieldInfo>( member ).GetBackedProperty();
+                if ( backedProperty is not null )
+                    source = ( T )( object )backedProperty;
+            }
+        }
+
         var variable = AddVariable( variableType, variableName );
         var rawValue = GetExpressionResolutionRawValue( source, expression );
         AddRawValueAssignment( variable, rawValue );

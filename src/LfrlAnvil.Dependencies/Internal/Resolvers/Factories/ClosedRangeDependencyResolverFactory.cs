@@ -51,7 +51,10 @@ internal sealed class ClosedRangeDependencyResolverFactory : RangeDependencyReso
 
                 var resolver = genericFactory.GetResolver();
                 implementorStore.SharedGenericResolvers.TryAdd(
-                    new SharedGenericKey( genericFactory.Base.ImplementorKey.Value.Type, genericFactory.ImplementorKey.Value.Type ),
+                    new SharedGenericKey(
+                        genericFactory.Base.ImplementorKey.Value.Type,
+                        genericFactory.ImplementorKey.Value.Type,
+                        genericFactory.Lifetime ),
                     resolver );
             }
         }

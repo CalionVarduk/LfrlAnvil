@@ -193,6 +193,139 @@ public partial class DependencyContainerTests
             new object[] { result1.Inner, result2.Inner }.Distinct().Count().TestEquals( 2 ).Go();
         }
 
+        [Fact]
+        public void
+            ResolvingTransientDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstanceEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Transient );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Transient );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>().SetLifetime( DependencyLifetime.Transient );
+            builder.Add<Parameterized<IGenericBar<string>>>().SetLifetime( DependencyLifetime.Transient );
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+
+            new object[] { result1.Inner, result2.Inner }.Distinct().Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingSingletonDependency_WithPartiallyClosedSharedImplementor_ShouldReturnSameInstanceEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>().SetLifetime( DependencyLifetime.Singleton );
+            builder.Add<Parameterized<IGenericBar<string>>>().SetLifetime( DependencyLifetime.Singleton );
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+
+            result1.Inner.TestRefEquals( result2.Inner ).Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingScopedSingletonDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstancePerScopeAndItsChildrenForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.ScopedSingleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.ScopedSingleton );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>().SetLifetime( DependencyLifetime.ScopedSingleton );
+            builder.Add<Parameterized<IGenericBar<string>>>().SetLifetime( DependencyLifetime.ScopedSingleton );
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.BeginScope().Locator.Resolve<Parameterized<IGenericBar<string>>>();
+            var result3 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+
+            Assertion.All(
+                    result1.Inner.TestRefEquals( result2.Inner ),
+                    result1.Inner.TestRefEquals( result3.Inner ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingScopedDependency_WithPartiallyClosedSharedImplementor_ShouldReturnSameInstancePerScopeEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>().SetLifetime( DependencyLifetime.Scoped );
+            builder.Add<Parameterized<IGenericBar<string>>>().SetLifetime( DependencyLifetime.Scoped );
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+
+            result1.Inner.TestRefEquals( result2.Inner ).Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Singleton )]
+        public void ResolvingDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstanceEachTimeForDifferentGenericArgs(
+            DependencyLifetime lifetime)
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( lifetime );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( lifetime );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>().SetLifetime( lifetime );
+            builder.Add<Parameterized<IGenericBar<int>>>().SetLifetime( lifetime );
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<int>>>();
+
+            new object[] { result1.Inner, result2.Inner }.Distinct().Count().TestEquals( 2 ).Go();
+        }
+
         [Theory]
         [InlineData( DependencyLifetime.Transient )]
         [InlineData( DependencyLifetime.Scoped )]
@@ -220,6 +353,39 @@ public partial class DependencyContainerTests
                     onResolvingCallback.CallCount().TestEquals( 2 ),
                     onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IGenericFoo<string> ), scope ] ),
                     onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IGenericFoo<int> ), scope ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithSharedImplementor_ShouldGroupSharedImplementorsByDependencyLifetimes()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            builder.Add<Parameterized<IGenericBar<string>>>();
+            builder.Add<Parameterized<IGenericQux<string>>>();
+            var sut = builder.Build();
+            var scope = sut.RootScope.BeginScope();
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+            var result3 = scope.Locator.Resolve<Parameterized<IGenericQux<string>>>();
+
+            Assertion.All(
+                    result1.Inner.TestRefEquals( result2.Inner ),
+                    result1.Inner.TestNotRefEquals( result3.Inner ) )
                 .Go();
         }
 
@@ -253,6 +419,80 @@ public partial class DependencyContainerTests
             var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
             var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<Parameterized<IGenericFoo<string>>>();
             var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<Parameterized<IGenericQux<string>>>();
+
+            Assertion.All(
+                    result1.Inner.TestRefEquals( result2.Inner ),
+                    result2.Inner.TestRefEquals( result3.Inner ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithPartiallyClosedSharedImplementor_ShouldGroupSharedImplementorsByDependencyLifetimes()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            builder.Add<Parameterized<IGenericBar<string>>>();
+            builder.Add<Parameterized<IGenericQux<int>>>();
+            var sut = builder.Build();
+            var scope = sut.RootScope.BeginScope();
+
+            var result1 = scope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = scope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+            var result3 = scope.Locator.Resolve<Parameterized<IGenericQux<int>>>();
+
+            Assertion.All(
+                    result1.Inner.TestRefEquals( result2.Inner ),
+                    result1.Inner.TestNotRefEquals( result3.Inner ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithPartiallyClosedSharedKeyedImplementor_ShouldReturnCorrectInstances()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.GetKeyedLocator( 1 )
+                .AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) )
+                .FromType( typeof( GenericFreeImplementor<,> ) );
+
+            builder.GetKeyedLocator( 1 )
+                .AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ),
+                    o => o.Keyed( 1 ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.GetKeyedLocator( "foo" )
+                .AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ),
+                    o => o.Keyed( 1 ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.Add<Parameterized<IGenericBar<string>>>();
+            builder.GetKeyedLocator( 1 ).Add<Parameterized<IGenericFoo<string>>>();
+            builder.GetKeyedLocator( "foo" ).Add<Parameterized<IGenericQux<int>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericBar<string>>>();
+            var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<Parameterized<IGenericFoo<string>>>();
+            var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<Parameterized<IGenericQux<int>>>();
 
             Assertion.All(
                     result1.Inner.TestRefEquals( result2.Inner ),
@@ -1061,6 +1301,37 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithPartiallyClosedSharedImplementor_ShouldWorkCorrectlyForRangeElements()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            builder.Add<ParameterizedMember<IGenericBar<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<ParameterizedMember<IEnumerable<IGenericFoo<string>>>>();
+            var result2 = sut.RootScope.Locator.Resolve<ParameterizedMember<IGenericBar<string>>>();
+
+            result1.Inner.Instance.TestCount( count => count.TestEquals( 2 ) )
+                .Then( foo => Assertion.All(
+                    foo[0].TestRefEquals( result2.Inner.Instance ),
+                    foo[1].TestNotRefEquals( result2.Inner.Instance ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaCtor()
         {
             var builder = new DependencyContainerBuilder();
@@ -1191,6 +1462,38 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_ShouldReturnPartiallyClosedSharedOpenGenericInstance_WhenItIsLastInClosedRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ) );
+
+            builder.Add<IGenericFoo<string>>().FromType<DefaultCtorParamGenericImplementor<string>>();
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<Parameterized<IGenericQux<int>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
+            var result3 = sut.RootScope.Locator.Resolve<Parameterized<IGenericQux<int>>>();
+
+            Assertion.All(
+                    result1.TestType().Exact<GenericFreeImplementor<string, int>>(),
+                    result1.TestRefEquals( result2 ),
+                    result2.TestRefEquals( result3.Inner ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingRangeDependency_ShouldIncludeSharedOpenGenericInstance_WhenItIsNotLastInClosedRange()
         {
             var builder = new DependencyContainerBuilder();
@@ -1225,6 +1528,40 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingRangeDependency_ShouldIncludePartiallyClosedSharedOpenGenericInstance_WhenItIsNotLastInClosedRange()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<IGenericFoo<string>>().FromType<DefaultCtorParamGenericImplementor<string>>();
+            builder.Add<Parameterized<IGenericQux<int>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
+            var result3 = sut.RootScope.Locator.Resolve<Parameterized<IGenericQux<int>>>();
+
+            result1.TestCount( count => count.TestEquals( 2 ) )
+                .Then( foo => Assertion.All(
+                    foo[0].TestType().Exact<GenericFreeImplementor<string, int>>(),
+                    foo[1].TestType().Exact<DefaultCtorParamGenericImplementor<string>>(),
+                    foo[0].TestRefEquals( result2 ),
+                    result2.TestRefEquals( result3.Inner ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingDependency_WithPartiallyClosedImplementorCtor()
         {
             var ctor = typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ).GetConstructors().First();
@@ -1251,6 +1588,30 @@ public partial class DependencyContainerTests
             var result = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
 
             result.Inner.TestType().Exact<GenericFreeFoo<string, int>>().Go();
+        }
+
+        [Fact]
+        public void ResolvingDependency_WithPartiallyOpenGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( GenericFreeFooWithClosedSources<,> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( long ) ) );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( long ) ) );
+
+            builder.Add<Parameterized<GenericFreeFooWithClosedSources<string, int>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<GenericFreeFooWithClosedSources<string, int>>>();
+
+            Assertion.All(
+                    result.Inner.Bar.TestType().Exact<GenericFreeImplementor<int, long>>(),
+                    result.Inner.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() )
+                .Go();
         }
 
         [Fact]
@@ -1367,6 +1728,129 @@ public partial class DependencyContainerTests
             new object[] { result1, result2 }.Distinct().Count().TestEquals( 2 ).Go();
         }
 
+        [Fact]
+        public void
+            ResolvingTransientOpenDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstanceEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Transient );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Transient );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<string>>();
+
+            new object[] { result1, result2 }.Distinct().Count().TestEquals( 2 ).Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingSingletonOpenDependency_WithPartiallyClosedSharedImplementor_ShouldReturnSameInstanceEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<string>>();
+
+            result1.TestRefEquals( result2 ).Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingScopedSingletonOpenDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstancePerScopeAndItsChildrenForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.ScopedSingleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.ScopedSingleton );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.BeginScope().Locator.Resolve<IGenericBar<string>>();
+            var result3 = scope.Locator.Resolve<IGenericFoo<string>>();
+
+            Assertion.All(
+                    result1.TestRefEquals( result2 ),
+                    result1.TestRefEquals( result3 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void
+            ResolvingScopedOpenDependency_WithPartiallyClosedSharedImplementor_ShouldReturnSameInstancePerScopeEachTimeForAllSharingDependencies()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<string>>();
+
+            result1.TestRefEquals( result2 ).Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Singleton )]
+        public void ResolvingOpenDependency_WithPartiallyClosedSharedImplementor_ShouldReturnNewInstanceEachTimeForDifferentGenericArgs(
+            DependencyLifetime lifetime)
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( lifetime );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( lifetime );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope;
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<int>>();
+
+            new object[] { result1, result2 }.Distinct().Count().TestEquals( 2 ).Go();
+        }
+
         [Theory]
         [InlineData( DependencyLifetime.Transient )]
         [InlineData( DependencyLifetime.Scoped )]
@@ -1392,6 +1876,36 @@ public partial class DependencyContainerTests
                     onResolvingCallback.CallCount().TestEquals( 2 ),
                     onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IGenericFoo<string> ), scope ] ),
                     onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IGenericFoo<int> ), scope ] ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithSharedImplementor_ShouldGroupSharedImplementorsByDependencyLifetimes()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericImplementor<> ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope.BeginScope();
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<string>>();
+            var result3 = scope.Locator.Resolve<IGenericQux<string>>();
+
+            Assertion.All(
+                    result1.TestRefEquals( result2 ),
+                    result1.TestNotRefEquals( result3 ) )
                 .Go();
         }
 
@@ -1422,6 +1936,74 @@ public partial class DependencyContainerTests
             var result1 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
             var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IGenericFoo<string>>();
             var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<IGenericQux<string>>();
+
+            Assertion.All(
+                    result1.TestRefEquals( result2 ),
+                    result2.TestRefEquals( result3 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithPartiallyClosedSharedImplementor_ShouldGroupSharedImplementorsByDependencyLifetimes()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ) )
+                .SetLifetime( DependencyLifetime.Scoped );
+
+            var sut = builder.Build();
+            var scope = sut.RootScope.BeginScope();
+
+            var result1 = scope.Locator.Resolve<IGenericFoo<string>>();
+            var result2 = scope.Locator.Resolve<IGenericBar<string>>();
+            var result3 = scope.Locator.Resolve<IGenericQux<int>>();
+
+            Assertion.All(
+                    result1.TestRefEquals( result2 ),
+                    result1.TestNotRefEquals( result3 ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingOpenDependency_WithPartiallyClosedSharedKeyedImplementor_ShouldReturnCorrectInstances()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.GetKeyedLocator( 1 )
+                .AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) )
+                .FromType( typeof( GenericFreeImplementor<,> ) );
+
+            builder.GetKeyedLocator( 1 )
+                .AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ),
+                    o => o.Keyed( 1 ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            builder.GetKeyedLocator( "foo" )
+                .AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( string ) ),
+                    o => o.Keyed( 1 ) )
+                .SetLifetime( DependencyLifetime.Singleton );
+
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
+            var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IGenericFoo<string>>();
+            var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<IGenericQux<int>>();
 
             Assertion.All(
                     result1.TestRefEquals( result2 ),
@@ -2273,6 +2855,35 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingOpenDependency_WithPartiallyClosedSharedImplementor_ShouldWorkCorrectlyForRangeElements()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromType( typeof( GenericImplementor<> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .SetLifetime( DependencyLifetime.Singleton )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<IEnumerable<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericBar<string>>();
+
+            result1.TestCount( count => count.TestEquals( 2 ) )
+                .Then( foo => Assertion.All(
+                    foo[0].TestRefEquals( result2 ),
+                    foo[1].TestNotRefEquals( result2 ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependency_ShouldReturnCorrectInstance_WhenClosedGenericRangeIsResolvedViaCtor()
         {
             var builder = new DependencyContainerBuilder();
@@ -2327,6 +2938,29 @@ public partial class DependencyContainerTests
             result.TestType().Exact<GenericFreeFoo<string, int>>().Go();
         }
 
+        [Fact]
+        public void ResolvingOpenDependency_WithPartiallyOpenGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( GenericFreeFooWithClosedSources<,> ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( long ) ) );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( long ) ) );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<GenericFreeFooWithClosedSources<double, int>>();
+
+            Assertion.All(
+                    result.Bar.TestType().Exact<GenericFreeImplementor<int, long>>(),
+                    result.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() )
+                .Go();
+        }
+
         [Theory]
         [InlineData( DependencyLifetime.Transient )]
         [InlineData( DependencyLifetime.Scoped )]
@@ -2356,6 +2990,325 @@ public partial class DependencyContainerTests
             var result = container.RootScope.Locator.TryGetLifetime( typeof( IEnumerable<> ).MakeGenericType( typeof( IGenericFoo<> ) ) );
 
             result.TestEquals( DependencyLifetime.Transient ).Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithOpenGenericParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithOpenSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithOpenSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithOpenSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericImplementor<string>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<string>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithOpenSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericImplementor<double>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<double>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithPartiallyOpenGenericParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithPartiallyOpenSources<,> ) );
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithOpenSources<,> ) );
+            builder.AddGeneric( typeof( GenericFreeFooWithOpenSources<,> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithOpenSources<,> ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeFooWithPartiallyOpenSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithPartiallyOpenSources<string, int>>( e =>
+                            Assertion.All(
+                                "result1",
+                                e.CtorFoo.TestType().Exact<GenericFreeFooWithOpenSources<string, int>>(),
+                                e.MemberFoo.Instance.TestType().Exact<GenericFreeFooWithOpenSources<int, string>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithPartiallyOpenSources<double, int>>( e =>
+                            Assertion.All(
+                                "result2",
+                                e.CtorFoo.TestType().Exact<GenericFreeFooWithOpenSources<double, int>>(),
+                                e.MemberFoo.Instance.TestType().Exact<GenericFreeFooWithOpenSources<int, double>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithOptionalClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestNull(),
+                            e.Qux.Instance.TestNull() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestNull(),
+                            e.Qux.Instance.TestNull() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithOptionalSpecializedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<IGenericBar<int>>().FromType<GenericImplementor<int>>();
+            builder.Add<IGenericQux<int>>().FromType<GenericImplementor<int>>();
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithFactoryBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) )
+                .FromConstructor( o => o.ResolveParameter(
+                        _ => true,
+                        (_, p) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType( p.ParameterType.GetGenericArguments()[0] ) )! )
+                    .ResolveMember(
+                        _ => true,
+                        (_, m) => Activator.CreateInstance(
+                            typeof( GenericImplementor<> ).MakeGenericType(
+                                (( PropertyInfo )m).PropertyType.GetGenericArguments()[0].GetGenericArguments()[0] ) )! ) );
+
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithNonGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithNonGenericSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor(
+                    typeof( GenericFreeFooWithNonGenericSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.Add<IFoo>().FromType<Implementor>();
+            builder.Add<IBar>().FromType<Implementor>();
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithNonGenericSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Foo.TestType().Exact<Implementor>(),
+                            e.Bar.Instance.TestType().Exact<Implementor>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithNonGenericSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Foo.TestType().Exact<Implementor>(),
+                            e.Bar.Instance.TestType().Exact<Implementor>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithGenericRangeResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithRangeSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithRangeSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithRangeSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestAll( (x, _) => x.TestType().Exact<GenericImplementor<int>>() ),
+                            e.Qux.Instance.TestAll( (x, _) => x.TestType().Exact<GenericImplementor<int>>() ) ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithRangeSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestAll( (x, _) => x.TestType().Exact<GenericImplementor<int>>() ),
+                            e.Qux.Instance.TestAll( (x, _) => x.TestType().Exact<GenericImplementor<int>>() ) ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericImplementor<int>>(),
+                            e.Qux.Instance.TestType().Exact<GenericImplementor<int>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithSpecializedGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.Add<IGenericBar<int>>().FromType<GenericFreeImplementor<int, string>>();
+            builder.Add<IGenericQux<int>>().FromType<GenericFreeImplementor<long, int>>();
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericFreeImplementor<int, string>>(),
+                            e.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericFreeImplementor<int, string>>(),
+                            e.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
+        public void ResolvingPartiallyClosedDependency_WithPartiallyOpenGenericResolverBasedClosedParameterAndMember()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddSharedGenericImplementor( typeof( GenericFreeFooWithClosedSources<,> ) );
+            builder.AddSharedGenericImplementor( typeof( GenericFreeImplementor<,> ) );
+            builder.AddGeneric( typeof( IGenericFoo<> ) )
+                .FromSharedImplementor( typeof( GenericFreeFooWithClosedSources<,> ).SubstituteGenericArguments( null, typeof( int ) ) );
+
+            builder.AddGeneric( typeof( IGenericBar<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( null, typeof( long ) ) );
+
+            builder.AddGeneric( typeof( IGenericQux<> ) )
+                .FromSharedImplementor( typeof( GenericFreeImplementor<,> ).SubstituteGenericArguments( typeof( long ) ) );
+
+            builder.Add<Parameterized<IGenericFoo<string>>>();
+            var sut = builder.Build();
+
+            var result1 = sut.RootScope.Locator.Resolve<Parameterized<IGenericFoo<string>>>();
+            var result2 = sut.RootScope.Locator.Resolve<IGenericFoo<double>>();
+
+            Assertion.All(
+                    result1.Inner.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<string, int>>( e => Assertion.All(
+                            "result1",
+                            e.Bar.TestType().Exact<GenericFreeImplementor<int, long>>(),
+                            e.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() ) ),
+                    result2.TestType()
+                        .Exact<GenericFreeFooWithClosedSources<double, int>>( e => Assertion.All(
+                            "result2",
+                            e.Bar.TestType().Exact<GenericFreeImplementor<int, long>>(),
+                            e.Qux.Instance.TestType().Exact<GenericFreeImplementor<long, int>>() ) ) )
+                .Go();
         }
     }
 }
@@ -2408,6 +3361,69 @@ public class ComplexGenericImplementor<T> : DependencyTestsBase.IGenericFoo<T>
     public DependencyTestsBase.IGenericBar<T> Bar { get; }
     public List<T> List { get; }
     public Dictionary<string, List<T>> Dict { get; }
+}
+
+public class GenericFreeFooWithOpenSources<T1, T2> : DependencyTestsBase.IGenericFoo<T1>
+{
+    public GenericFreeFooWithOpenSources(DependencyTestsBase.IGenericBar<T1>? bar = null)
+    {
+        Bar = bar;
+    }
+
+    public DependencyTestsBase.IGenericBar<T1>? Bar { get; }
+
+    [OptionalDependency]
+    public Injected<DependencyTestsBase.IGenericQux<T1>?> Qux { get; }
+}
+
+public class GenericFreeFooWithPartiallyOpenSources<T1, T2> : DependencyTestsBase.IGenericFoo<T1>
+{
+    public GenericFreeFooWithPartiallyOpenSources(GenericFreeFooWithOpenSources<T1, T2>? ctorFoo = null)
+    {
+        CtorFoo = ctorFoo;
+    }
+
+    public GenericFreeFooWithOpenSources<T1, T2>? CtorFoo { get; }
+
+    [OptionalDependency]
+    public Injected<GenericFreeFooWithOpenSources<T2, T1>?> MemberFoo { get; }
+}
+
+public class GenericFreeFooWithNonGenericSources<T1, T2> : DependencyTestsBase.IGenericFoo<T1>
+{
+    public GenericFreeFooWithNonGenericSources(DependencyTestsBase.IFoo? foo = null)
+    {
+        Foo = foo;
+    }
+
+    public DependencyTestsBase.IFoo? Foo { get; }
+
+    [OptionalDependency]
+    public Injected<DependencyTestsBase.IBar?> Bar { get; }
+}
+
+public class GenericFreeFooWithClosedSources<T1, T2> : DependencyTestsBase.IGenericFoo<T1>
+{
+    public GenericFreeFooWithClosedSources(DependencyTestsBase.IGenericBar<T2>? bar = null)
+    {
+        Bar = bar;
+    }
+
+    public DependencyTestsBase.IGenericBar<T2>? Bar { get; }
+
+    [OptionalDependency]
+    public Injected<DependencyTestsBase.IGenericQux<T2>?> Qux { get; }
+}
+
+public class GenericFreeFooWithRangeSources<T1, T2> : DependencyTestsBase.IGenericFoo<T1>
+{
+    public GenericFreeFooWithRangeSources(IEnumerable<DependencyTestsBase.IGenericBar<T2>> bar)
+    {
+        Bar = bar;
+    }
+
+    public IEnumerable<DependencyTestsBase.IGenericBar<T2>> Bar { get; }
+    public Injected<IEnumerable<DependencyTestsBase.IGenericQux<T2>>> Qux { get; }
 }
 
 public interface IGenericConstrained<T>

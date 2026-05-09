@@ -16,4 +16,4 @@ using System;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
-internal readonly record struct SharedGenericKey(Type OpenType, Type ClosedType);
+internal readonly record struct SharedGenericKey(Type OpenType, Type ClosedType, DependencyLifetime Lifetime);

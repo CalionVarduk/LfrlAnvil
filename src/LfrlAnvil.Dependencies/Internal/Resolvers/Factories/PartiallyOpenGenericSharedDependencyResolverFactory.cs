@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
@@ -23,57 +22,42 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
 
-internal abstract class RegisteredClosedGenericDependencyResolverFactory : RegisteredConstructableDependencyResolverFactory
+internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : RegisteredDependencyResolverFactory
 {
-    protected RegisteredClosedGenericDependencyResolverFactory(ImplementorKey implementorKey, OpenGenericDependencyResolverFactory @base)
-        : base( implementorKey, @base.Lifetime )
+    internal PartiallyOpenGenericSharedDependencyResolverFactory(
+        IDependencyKey implementorKey,
+        OpenGenericDependencyResolverFactory @base)
+        : base( ImplementorKey.CreateShared( implementorKey ), @base.Lifetime, isOpenGeneric: true )
     {
+        Assume.True( @base.ImplementorKey.IsShared );
+        Assume.True(
+            implementorKey.Type.IsGenericType && implementorKey.Type.GetGenericTypeDefinition() == @base.ImplementorKey.Value.Type );
+
         Base = @base;
     }
 
     internal OpenGenericDependencyResolverFactory Base { get; }
 
-    protected override Action<object, Type, IDependencyScope>? OnCreatedCallback =>
-        Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback;
-
-    [Pure]
-    internal static RegisteredClosedGenericDependencyResolverFactory Create(
-        OpenGenericDependencyResolverFactory @base,
-        ImplementorKey implementorKey)
+    internal override DependencyResolverFactory Close(
+        IInternalDependencyKey dependencyKey,
+        in DependencyLocatorBuilderExtractionParams @params,
+        Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories)
     {
-        Assume.True( implementorKey.Value.Type.IsGenericType && ! implementorKey.Value.Type.IsGenericTypeDefinition );
-        Assume.True( @base.ImplementorKey.Value.Type.IsOpenGenericAssignableTo( implementorKey.Value.Type.GetGenericTypeDefinition() ) );
+        Assume.False( dependencyKey.Type.ContainsGenericParameters );
 
-        RegisteredClosedGenericDependencyResolverFactory result = @base.Lifetime switch
+        var sharedResolverFactory = Base.CloseShared( dependencyKey, ImplementorKey.Value.Type, in @params );
+        if ( Base.IsLastRangeElement )
         {
-            DependencyLifetime.Singleton => new ClosedGenericSingletonDependencyResolverFactory( implementorKey, @base ),
-            DependencyLifetime.ScopedSingleton => new ClosedGenericScopedSingletonDependencyResolverFactory( implementorKey, @base ),
-            DependencyLifetime.Scoped => new ClosedGenericScopedDependencyResolverFactory( implementorKey, @base ),
-            _ => new ClosedGenericTransientDependencyResolverFactory( implementorKey, @base )
-        };
+            if ( ReferenceEquals( dynamicResolverFactories, @params.ResolverFactories ) )
+                dynamicResolverFactories[dependencyKey] = sharedResolverFactory;
+            else
+                dynamicResolverFactories.Add( dependencyKey, sharedResolverFactory );
+        }
 
-        return result;
+        return sharedResolverFactory;
     }
 
-    internal sealed override void RegisterResolver(
-        IDependencyKey dependencyKey,
-        in DependencyResolversStore globalResolvers,
-        in KeyedDependencyResolversStore keyedResolversStore)
-    {
-        base.RegisterResolver( dependencyKey, in globalResolvers, in keyedResolversStore );
-        if ( ! ImplementorKey.IsShared )
-            return;
-
-        var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value )
-            .GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
-
-        var resolver = GetResolver();
-        implementorStore.SharedGenericResolvers.TryAdd(
-            new SharedGenericKey( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type, Lifetime ),
-            resolver );
-    }
-
-    protected sealed override bool TryResolveCreationMethodImmediately(
+    protected override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration,
@@ -85,7 +69,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
     }
 
     [Pure]
-    protected sealed override ConstructorInfo? FindValidConstructor(
+    protected override ConstructorInfo? FindValidConstructor(
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -99,7 +83,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
         return result;
     }
 
-    protected sealed override bool ValidateDependencies(
+    protected override bool ValidateDependencies(
         in DependencyLocatorBuilderExtractionParams @params,
         Dictionary<IDependencyKey, DependencyResolverFactory> dynamicResolverFactories,
         DependencyContainerConfigurationBuilder configuration,
@@ -122,6 +106,12 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
             {
                 var parameter = parameters[i];
                 var baseResolution = Base.ParameterResolutions[i];
+                if ( parameter.ParameterType.ContainsGenericParameters )
+                {
+                    ParameterResolutions[i] = KeyValuePair.Create( parameter, baseResolution.Value );
+                    continue;
+                }
+
                 if ( baseResolution.Value is null )
                 {
                     var implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
@@ -180,6 +170,11 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                 var memberInjectableType = member.GetInjectableMemberType();
                 var memberType = memberInjectableType.GetGenericArguments()[0];
                 var baseResolution = member.FindCorrespondingOpenTypeMemberResolution( Base.MemberResolutions );
+                if ( memberType.ContainsGenericParameters )
+                {
+                    MemberResolutions[i] = KeyValuePair.Create( member, baseResolution );
+                    continue;
+                }
 
                 if ( baseResolution is null )
                 {
@@ -223,5 +218,65 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
         }
 
         return true;
+    }
+
+    protected override DependencyResolver CreateResolver(
+        UlongSequenceGenerator idGenerator,
+        DependencyContainerConfigurationBuilder configuration)
+    {
+        Assume.IsNotNull( ConstructorInfo );
+
+        object?[]? parameterResolvers = null;
+        KeyValuePair<MemberInfo, object?>[]? memberResolvers = null;
+
+        if ( ParameterResolutions is not null )
+        {
+            Assume.ContainsAtLeast( ParameterResolutions, 1 );
+            parameterResolvers = new object?[ParameterResolutions.Length];
+            for ( var i = 0; i < parameterResolvers.Length; ++i )
+            {
+                var resolution = ParameterResolutions[i].Value;
+                if ( resolution is null or LambdaExpression )
+                    parameterResolvers[i] = resolution;
+                else
+                {
+                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
+                    factory.Build( idGenerator, configuration );
+                    parameterResolvers[i] = factory.GetResolver();
+                }
+            }
+        }
+
+        if ( MemberResolutions is not null )
+        {
+            Assume.ContainsAtLeast( MemberResolutions, 1 );
+            memberResolvers = new KeyValuePair<MemberInfo, object?>[MemberResolutions.Length];
+            for ( var i = 0; i < memberResolvers.Length; ++i )
+            {
+                var resolution = MemberResolutions[i];
+                if ( resolution.Value is null or LambdaExpression )
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, resolution.Value );
+                else
+                {
+                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution.Value );
+                    factory.Build( idGenerator, configuration );
+                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( object? )factory.GetResolver() );
+                }
+            }
+        }
+
+        return new OpenGenericDependencyResolver(
+            idGenerator.Generate(),
+            ImplementorKey.Value.Type,
+            Base.ImplementorBuilder.DisposalStrategy,
+            ConstructorInfo,
+            parameterResolvers,
+            memberResolvers,
+            Base.ImplementorBuilder.OnResolvingCallback,
+            Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
+            configuration.InjectablePropertyType,
+            ReinterpretCast.To<IInternalDependencyKey>( Base.ImplementorKey.Value ),
+            ! Base.IsLastRangeElement,
+            Lifetime );
     }
 }

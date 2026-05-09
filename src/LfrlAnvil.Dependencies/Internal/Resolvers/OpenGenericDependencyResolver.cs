@@ -87,7 +87,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
 
             DependencyResolver? sharedResolver;
             using ( AcquireActiveSharedContainersReadLock( container ) )
-                sharedResolver = implementorResolvers.TryGetSharedGenericResolver( ImplementorType, implementorType );
+                sharedResolver = implementorResolvers.TryGetSharedGenericResolver( _sharedImplementorKey.Type, implementorType, Lifetime );
 
             if ( sharedResolver is not null )
             {
@@ -107,14 +107,23 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
                     using ( AcquireActiveSharedContainersWriteLock( container ) )
                     using ( AcquireActiveWriteLock( dependencyLocator ) )
                     {
-                        result = implementorResolvers.GetOrAddSharedGenericResolver( ImplementorType, implementorType, result );
+                        result = implementorResolvers.GetOrAddSharedGenericResolver(
+                            _sharedImplementorKey.Type,
+                            implementorType,
+                            Lifetime,
+                            result );
+
                         dependencyLocator.Resolvers.SetResolver( dependencyType, result );
                     }
                 }
                 else
                 {
                     using ( AcquireActiveSharedContainersWriteLock( container ) )
-                        result = implementorResolvers.GetOrAddSharedGenericResolver( ImplementorType, implementorType, result );
+                        result = implementorResolvers.GetOrAddSharedGenericResolver(
+                            _sharedImplementorKey.Type,
+                            implementorType,
+                            Lifetime,
+                            result );
                 }
             }
         }
@@ -237,7 +246,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
             {
                 var member = injectableMembers[i];
                 var memberType = member.GetInjectableMemberType();
-                var resolution = member.FindCorrespondingOpenTypeMemberResolution<object>( _memberResolvers );
+                var resolution = member.FindCorrespondingOpenTypeMemberResolution( _memberResolvers );
                 var (instanceType, name) = (memberType.GetGenericArguments()[0], $"m{i}");
 
                 if ( resolution is null )
@@ -378,7 +387,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
             for ( var i = 0; i < memberCount; ++i )
             {
                 var closedMember = injectableMembers[i];
-                var resolution = closedMember.FindCorrespondingOpenTypeMemberResolution<object>( _memberResolvers );
+                var resolution = closedMember.FindCorrespondingOpenTypeMemberResolution( _memberResolvers );
                 Type? closedMemberType = null;
 
                 if ( resolution is null )
