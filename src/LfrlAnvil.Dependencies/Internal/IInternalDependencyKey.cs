@@ -32,7 +32,7 @@ internal interface IInternalDependencyKey : IDependencyKey
         in KeyedDependencyResolversStore keyedResolversStore);
 
     [Pure]
-    DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator);
+    DependencyLocator GetLocator(DependencyLocator dependencyLocator);
 
     [Pure]
     IInternalDependencyKey WithType(Type type);

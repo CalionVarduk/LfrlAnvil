@@ -2,18 +2,18 @@
 
 |        Project         |              Title               |                        Details                         |
 |:----------------------:|:--------------------------------:|:------------------------------------------------------:|
-|      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |
-|      Dependencies      |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |
 |     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |
 | Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |
 |      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |
 |           -            |             Terminal             |                   [link](#terminal)                    |
 |  Computable.Automata   |     Add Context-free grammar     |                           -                            |
+|    DistributedCache    |      Add distributed cache       |               [link](#distributed-cache)               |
 |         Sql.*          |           Refinements            |                [link](#sql-refinements)                |
 |       Reactive.*       |           Refinements            |             [link](#reactive-refinements)              |
 |         Sql.*          |    Add Microsoft SQL support     |                           -                            |
 |      Collections       |           Add SkipList           |                           -                            |
+|      Dependencies      |           Refinements            |           [link](#dependencies-refinements)            |
 |     Reactive.State     | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |
 |         Sql.*          |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |
 |        Sql.Core        |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |
@@ -98,9 +98,6 @@ Might do:
 
 ### Dependencies: Refinements
 
-- hosted services registration?
-- options registration?
-
 Low priority/probably won't do:
 - better decorator registration support
   - currently, the goto way is to define a keyed locator and register base implementations there
@@ -114,9 +111,8 @@ Low priority/probably won't do:
   - this only impacts dynamic parameter/member generic specializations
   - alternative is to do it during container building, since generic dependency builders will know about their open versions etc.
 - open generics:
-  - support factory-based resolution and ctor-param/member custom resolution
+  - support factory-based resolution
     - would require an additional 'Type requestedType' parameter
-    - ctor-param/member custom resolution would be quite easy to implement due to resolver factory structure
   - add validation of additional notnull generic constrains on implementors
     - complex, requires working with compiler-generated attributes
 
@@ -168,15 +164,22 @@ Low priority/probably won't do:
   - all listeners will have to respond for the requestor to continue, with timeouts
   - always ephemeral
 
-### Dependencies: Generic dependency types
+### Distributed Cache:
 
-- add support for open generic constructable dependency types
-- can use only auto-discovered ctor or explicit ctor from that open generic type or shared open generic implementor
-- each generic dependency could provide partial generic parameters resolution
-- e.g. Implementor\<T, U\> : IDependency\<T\>, T will be filled in automatically, but U cannot be resolved based on the interface alone
-- the functionality could allow to provide a concrete type to use as a substitution for the U type
-- also, add methods to get type-erased keyed locators (important for ServiceProviders project)
-- also, check if open generics based on factories should be allowed
+- simple, TCP-socket-based distributed cache implementation
+- stores byte-array entries by string keys
+- allows to configure entry lifetime and if it should be sliding or not
+- allows to add/query/check-if-exists/remove/exchange entries
+  - compare-exchange, where entry's version is compared?
+- supports distributed locks, with timeout
+- supports signed int64 counters
+- no permanent storage
+- probably async/await? or single-threaded processor?
+- static configuration which allows to configure default entry lifetime and max cache size
+  - probably LRU + TTL cache type
+- probably needs to support request/response batching and ping scheduler (see message broker)
+- key-related notifications (key-removed, added, etc)
+  - probably as the last feature
 
 ### Computable: Math/Physics structs
 

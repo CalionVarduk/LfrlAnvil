@@ -24,6 +24,10 @@ public abstract class DependencyTestsBase : TestsBase
 
     public interface IGenericQux<T> { }
 
+    public interface IGenericFreeFoo<T1, T2> : IGenericFoo<T1> { }
+
+    public class GenericFreeFooDirect<T1, T2> : IGenericFreeFoo<T1, T2> { }
+
     public interface IGenericMulti<T1, T2, T3> { }
 
     public interface IBuiltIn
@@ -198,6 +202,8 @@ public abstract class DependencyTestsBase : TestsBase
     public class GenericFreeFoo<T1, T2> : IGenericFoo<T1> { }
 
     public class GenericFreeImplementor<T1, T2> : IGenericFoo<T1>, IGenericBar<T1>, IGenericQux<T2> { }
+
+    public class GenericDistinctFreeImplementor<T1, T2, T3> : IGenericFreeFoo<T1, T2>, IGenericBar<T2>, IGenericQux<T3> { }
 
     public class MultiCtorGenericImplementor<T> : IGenericFoo<T>
     {

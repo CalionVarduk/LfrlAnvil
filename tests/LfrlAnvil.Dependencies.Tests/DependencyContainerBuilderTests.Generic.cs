@@ -990,31 +990,6 @@ public partial class DependencyContainerBuilderTests
         }
 
         [Fact]
-        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeParameterIsExplicitlyResolvedWithTypeThatIsNotFullyOpen()
-        {
-            var ctor = typeof( ChainableGenericQux<> ).GetConstructors().First();
-
-            var sut = new DependencyContainerBuilder();
-            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
-            sut.AddGeneric( typeof( IGenericQux<> ) )
-                .FromConstructor(
-                    ctor,
-                    o => o.ResolveParameter( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) ) );
-
-            var result = sut.TryBuild();
-
-            Assertion.All(
-                    result.IsOk.TestFalse(),
-                    result.Container.TestNull(),
-                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
-                        .Then( messages => Assertion.All(
-                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
-                            messages[0].Warnings.TestEmpty(),
-                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
-                .Go();
-        }
-
-        [Fact]
         public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeMemberIsExplicitlyResolvedWithTypeWithFreeGenericArgs()
         {
             var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
@@ -1049,31 +1024,6 @@ public partial class DependencyContainerBuilderTests
                 .FromConstructor(
                     ctor,
                     o => o.ResolveMember( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( typeof( string ) ) ) );
-
-            var result = sut.TryBuild();
-
-            Assertion.All(
-                    result.IsOk.TestFalse(),
-                    result.Container.TestNull(),
-                    result.Messages.TestCount( count => count.TestEquals( 1 ) )
-                        .Then( messages => Assertion.All(
-                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IGenericQux<> ) ) ) ),
-                            messages[0].Warnings.TestEmpty(),
-                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
-                .Go();
-        }
-
-        [Fact]
-        public void TryBuild_ShouldReturnFailureResult_WhenOpenGenericTypeMemberIsExplicitlyResolvedWithTypeThatIsNotFullyOpen()
-        {
-            var ctor = typeof( ChainableFieldGenericQux<> ).GetConstructors().First();
-
-            var sut = new DependencyContainerBuilder();
-            sut.AddGeneric( typeof( GenericFreeFoo<,> ) );
-            sut.AddGeneric( typeof( IGenericQux<> ) )
-                .FromConstructor(
-                    ctor,
-                    o => o.ResolveMember( _ => true, typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ) ) );
 
             var result = sut.TryBuild();
 

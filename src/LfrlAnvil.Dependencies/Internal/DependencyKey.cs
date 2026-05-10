@@ -78,9 +78,9 @@ internal sealed class DependencyKey : IInternalDependencyKey
     }
 
     [Pure]
-    public DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator)
+    public DependencyLocator GetLocator(DependencyLocator dependencyLocator)
     {
-        return dependencyLocator.InternalAttachedScope.InternalContainer.GlobalResolvers;
+        return ReinterpretCast.To<DependencyLocator>( dependencyLocator.InternalAttachedScope.Locator );
     }
 
     [Pure]
@@ -162,15 +162,14 @@ internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyK
     }
 
     [Pure]
-    public DependencyResolversStore GetResolversStore(DependencyLocator dependencyLocator)
+    public DependencyLocator GetLocator(DependencyLocator dependencyLocator)
     {
         if ( (( IDependencyLocator )dependencyLocator).IsKeyed
             && dependencyLocator is DependencyLocator<TKey> keyedLocator
             && EqualityComparer<TKey>.Default.Equals( Key, keyedLocator.Key ) )
-            return dependencyLocator.Resolvers;
+            return dependencyLocator;
 
-        var container = dependencyLocator.InternalAttachedScope.InternalContainer;
-        return container.KeyedResolversStore.GetResolversStore( Key, container );
+        return dependencyLocator.InternalAttachedScope.GetKeyedLocator( Key );
     }
 
     [Pure]

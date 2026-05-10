@@ -310,10 +310,10 @@ internal static class Helpers
 
         IEnumerable<Type> candidates;
         if ( targetType.IsInterface )
-            candidates = type.GetOpenGenericImplementations( targetType );
+            candidates = openType.GetOpenGenericImplementations( targetType );
         else
         {
-            var baseType = type.GetOpenGenericExtension( targetType );
+            var baseType = openType.GetOpenGenericExtension( targetType );
             candidates = baseType is not null ? [ baseType ] : [ ];
         }
 
@@ -381,7 +381,7 @@ internal static class Helpers
     [Pure]
     internal static Type CloseImplementorType(this Type implementorType, Type closedType)
     {
-        Assume.True( ! closedType.ContainsGenericParameters && closedType.IsGenericType );
+        Assume.True( ! closedType.IsGenericTypeDefinition && closedType.IsGenericType );
 
         var openType = closedType.GetGenericTypeDefinition();
         Assume.True( implementorType.ContainsGenericParameters );
@@ -389,11 +389,12 @@ internal static class Helpers
 
         var matchedOpenType = openType;
         var openImplementorType = implementorType.GetGenericTypeDefinition();
+
         if ( openImplementorType != openType )
         {
             matchedOpenType = openType.IsInterface
-                ? implementorType.GetOpenGenericImplementations( openType ).FirstOrDefault()
-                : implementorType.GetOpenGenericExtension( openType );
+                ? openImplementorType.GetOpenGenericImplementations( openType ).FirstOrDefault()
+                : openImplementorType.GetOpenGenericExtension( openType );
 
             Assume.IsNotNull( matchedOpenType );
         }
@@ -417,21 +418,23 @@ internal static class Helpers
     [Pure]
     internal static ConstructorInfo? TryCloseGenericCtor(this ConstructorInfo openCtor, Type openType, Type closedType)
     {
-        Assume.True( openType.IsGenericTypeDefinition );
-        Assume.True( closedType.IsGenericType );
-        Assume.Equals( closedType.GetGenericTypeDefinition(), openType );
+        Assume.True( openType.ContainsGenericParameters );
+        Assume.True( ! closedType.IsGenericTypeDefinition && closedType.IsGenericType );
 
         var implementorType = openCtor.DeclaringType;
         Assume.True( implementorType is not null && implementorType.ContainsGenericParameters );
-        Assume.True( implementorType.IsOpenGenericAssignableTo( openType ) );
 
-        var matchedOpenType = openType;
+        var openTypeDefinition = openType.GetGenericTypeDefinition();
+        Assume.Equals( closedType.GetGenericTypeDefinition(), openTypeDefinition );
+        Assume.True( implementorType.IsOpenGenericAssignableTo( openTypeDefinition ) );
+
+        var matchedOpenType = openTypeDefinition;
         var openImplementorType = implementorType.GetGenericTypeDefinition();
-        if ( openImplementorType != openType )
+        if ( openImplementorType != openTypeDefinition )
         {
-            matchedOpenType = openType.IsInterface
-                ? implementorType.GetOpenGenericImplementations( openType ).FirstOrDefault()
-                : implementorType.GetOpenGenericExtension( openType );
+            matchedOpenType = openTypeDefinition.IsInterface
+                ? openImplementorType.GetOpenGenericImplementations( openTypeDefinition ).FirstOrDefault()
+                : openImplementorType.GetOpenGenericExtension( openTypeDefinition );
 
             if ( matchedOpenType is null )
                 return null;
@@ -512,7 +515,7 @@ internal static class Helpers
         if ( ! isOpen && ! isResolverOpen )
             return resolverType.IsAssignableTo( type );
 
-        if ( isOpen != isResolverOpen || ! type.IsGenericType || ! resolverType.IsGenericTypeDefinition )
+        if ( isOpen != isResolverOpen || ! type.IsGenericType )
             return false;
 
         return resolverType.IsOpenGenericAssignableTo( type.GetGenericTypeDefinition() );

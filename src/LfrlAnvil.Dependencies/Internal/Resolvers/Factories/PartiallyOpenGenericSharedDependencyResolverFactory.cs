@@ -128,7 +128,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )factory );
                 else
                 {
-                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
+                    var (baseResolver, implementorType) = CustomOpenGenericResolutionFactory.Extract( baseResolution.Value );
                     if ( ! baseResolver.IsOpenGeneric )
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )baseResolver );
                     else
@@ -136,7 +136,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                         var implementorKey = InternalImplementorKey.WithType(
                             baseResolver is OpenGenericRangeDependencyResolverFactory
                                 ? parameter.ParameterType
-                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
+                                : implementorType.CloseImplementorType( parameter.ParameterType ) );
 
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                         {
@@ -192,7 +192,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )factory );
                 else
                 {
-                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution );
+                    var (baseResolver, implementorType) = CustomOpenGenericResolutionFactory.Extract( baseResolution );
                     if ( ! baseResolver.IsOpenGeneric )
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )baseResolver );
                     else
@@ -200,7 +200,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                         var implementorKey = InternalImplementorKey.WithType(
                             baseResolver is OpenGenericRangeDependencyResolverFactory
                                 ? memberType
-                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
+                                : implementorType.CloseImplementorType( memberType ) );
 
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var memberFactory ) )
                         {
@@ -236,14 +236,9 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
             for ( var i = 0; i < parameterResolvers.Length; ++i )
             {
                 var resolution = ParameterResolutions[i].Value;
-                if ( resolution is null or LambdaExpression )
-                    parameterResolvers[i] = resolution;
-                else
-                {
-                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
-                    factory.Build( idGenerator, configuration );
-                    parameterResolvers[i] = factory.GetResolver();
-                }
+                parameterResolvers[i] = resolution is null or LambdaExpression
+                    ? resolution
+                    : CustomOpenGenericResolution.TryCreate( idGenerator, configuration, resolution );
             }
         }
 
@@ -254,14 +249,11 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
             for ( var i = 0; i < memberResolvers.Length; ++i )
             {
                 var resolution = MemberResolutions[i];
-                if ( resolution.Value is null or LambdaExpression )
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, resolution.Value );
-                else
-                {
-                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution.Value );
-                    factory.Build( idGenerator, configuration );
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( object? )factory.GetResolver() );
-                }
+                memberResolvers[i] = KeyValuePair.Create(
+                    resolution.Key,
+                    resolution.Value is null or LambdaExpression
+                        ? resolution.Value
+                        : CustomOpenGenericResolution.TryCreate( idGenerator, configuration, resolution.Value ) );
             }
         }
 
@@ -276,6 +268,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
             Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
             configuration.InjectablePropertyType,
             ReinterpretCast.To<IInternalDependencyKey>( Base.ImplementorKey.Value ),
+            isShared: true,
             ! Base.IsLastRangeElement,
             Lifetime );
     }

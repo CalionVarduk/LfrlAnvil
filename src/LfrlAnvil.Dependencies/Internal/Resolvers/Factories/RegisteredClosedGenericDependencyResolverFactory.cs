@@ -138,7 +138,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                     ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )factory );
                 else
                 {
-                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution.Value );
+                    var (baseResolver, implementorType) = CustomOpenGenericResolutionFactory.Extract( baseResolution.Value );
                     if ( ! baseResolver.IsOpenGeneric )
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )baseResolver );
                     else
@@ -146,7 +146,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                         var implementorKey = InternalImplementorKey.WithType(
                             baseResolver is OpenGenericRangeDependencyResolverFactory
                                 ? parameter.ParameterType
-                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( parameter.ParameterType ) );
+                                : implementorType.CloseImplementorType( parameter.ParameterType ) );
 
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                         {
@@ -197,7 +197,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                     MemberResolutions[i] = KeyValuePair.Create( member, ( object? )factory );
                 else
                 {
-                    var baseResolver = ReinterpretCast.To<DependencyResolverFactory>( baseResolution );
+                    var (baseResolver, implementorType) = CustomOpenGenericResolutionFactory.Extract( baseResolution );
                     if ( ! baseResolver.IsOpenGeneric )
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )baseResolver );
                     else
@@ -205,7 +205,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
                         var implementorKey = InternalImplementorKey.WithType(
                             baseResolver is OpenGenericRangeDependencyResolverFactory
                                 ? memberType
-                                : baseResolver.InternalImplementorKey.Type.CloseImplementorType( memberType ) );
+                                : implementorType.CloseImplementorType( memberType ) );
 
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var memberFactory ) )
                         {

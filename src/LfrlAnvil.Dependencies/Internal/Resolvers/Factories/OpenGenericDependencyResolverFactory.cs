@@ -200,7 +200,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
             {
-                ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
+                ParameterResolutions[i] = KeyValuePair.Create(
+                    parameter,
+                    ( object? )CustomOpenGenericResolutionFactory.TryCreate(
+                        parameterFactory,
+                        implementorKey.Type,
+                        customResolutionIndex >= 0 ) );
+
                 captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                 continue;
             }
@@ -214,7 +220,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                     if ( ! implementorKey.Type.ContainsGenericParameters )
                         parameterFactory = parameterFactory.Close( internalKey, in @params, dynamicResolverFactories );
 
-                    ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
+                    ParameterResolutions[i] = KeyValuePair.Create(
+                        parameter,
+                        ( object? )CustomOpenGenericResolutionFactory.TryCreate(
+                            parameterFactory,
+                            implementorKey.Type,
+                            customResolutionIndex >= 0 ) );
+
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                     continue;
                 }
@@ -266,7 +278,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             if ( @params.ResolverFactories.TryGetValue( implementorKey, out var memberFactory ) )
             {
-                MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
+                MemberResolutions[i] = KeyValuePair.Create(
+                    member,
+                    ( object? )CustomOpenGenericResolutionFactory.TryCreate(
+                        memberFactory,
+                        implementorKey.Type,
+                        customResolutionIndex >= 0 ) );
+
                 captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                 continue;
             }
@@ -280,7 +298,13 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
                     if ( ! implementorKey.Type.ContainsGenericParameters )
                         memberFactory = memberFactory.Close( internalKey, in @params, dynamicResolverFactories );
 
-                    MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
+                    MemberResolutions[i] = KeyValuePair.Create(
+                        member,
+                        ( object? )CustomOpenGenericResolutionFactory.TryCreate(
+                            memberFactory,
+                            implementorKey.Type,
+                            customResolutionIndex >= 0 ) );
+
                     captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                     continue;
                 }
@@ -315,14 +339,9 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             for ( var i = 0; i < parameterResolvers.Length; ++i )
             {
                 var resolution = ParameterResolutions[i].Value;
-                if ( resolution is null or LambdaExpression )
-                    parameterResolvers[i] = resolution;
-                else
-                {
-                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );
-                    factory.Build( idGenerator, configuration );
-                    parameterResolvers[i] = factory.GetResolver();
-                }
+                parameterResolvers[i] = resolution is null or LambdaExpression
+                    ? resolution
+                    : CustomOpenGenericResolution.TryCreate( idGenerator, configuration, resolution );
             }
         }
 
@@ -333,14 +352,11 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             for ( var i = 0; i < memberResolvers.Length; ++i )
             {
                 var resolution = MemberResolutions[i];
-                if ( resolution.Value is null or LambdaExpression )
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, resolution.Value );
-                else
-                {
-                    var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution.Value );
-                    factory.Build( idGenerator, configuration );
-                    memberResolvers[i] = KeyValuePair.Create( resolution.Key, ( object? )factory.GetResolver() );
-                }
+                memberResolvers[i] = KeyValuePair.Create(
+                    resolution.Key,
+                    resolution.Value is null or LambdaExpression
+                        ? resolution.Value
+                        : CustomOpenGenericResolution.TryCreate( idGenerator, configuration, resolution.Value ) );
             }
         }
 
@@ -354,7 +370,8 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             ImplementorBuilder.OnResolvingCallback,
             ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
             configuration.InjectablePropertyType,
-            ImplementorKey.IsShared ? ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value ) : null,
+            ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value ),
+            ImplementorKey.IsShared,
             ! IsLastRangeElement,
             Lifetime );
     }

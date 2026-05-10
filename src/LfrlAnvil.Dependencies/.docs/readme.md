@@ -19,11 +19,24 @@ public interface IBar { }
 
 public interface IQux { }
 
+public interface IGenericFoo<T> { }
+
+public interface IGenericBar<T> { }
+
+public interface IGenericQux<T> { }
+
 public class FooBar : IFoo, IBar { }
 
 public class Qux : IQux
 {
     public Qux(IFoo foo) { }
+}
+
+public class GenericFooBar<T> : IGenericFoo<T>, IGenericBar<T> { }
+
+public class GenericQux<T1, T2> : IGenericQux<T1>
+{
+    public GenericQux(IGenericFoo<T2> foo) { }
 }
 
 // creates a new empty IoC container builder
@@ -34,14 +47,31 @@ var builder = new DependencyContainerBuilder();
 // that use the same dependency resolver, as long as those dependency types have the same lifetime
 builder.AddSharedImplementor<FooBar>();
 
+// registers an open generic shared implementor type
+builder.AddSharedGenericImplementor( typeof( GenericFooBar<> ) );
+
 // registers an IFoo interface as a resolvable dependency with Scoped lifetime
 // that should be resolved by using the previously registered shared implementor
 builder.Add<IFoo>().SetLifetime( DependencyLifetime.Scoped ).FromSharedImplementor<FooBar>();
 
 // registers an IBar interface as a resolvable dependency with Scoped lifetime
 // that should be resolved by using the previously registered shared implementor
-// this means that IFoo and IBar resolutions from the same scope will returns the same FooBar instance
+// this means that IFoo and IBar resolutions from the same scope will return the same FooBar instance
 builder.Add<IBar>().SetLifetime( DependencyLifetime.Scoped ).FromSharedImplementor<FooBar>();
+
+// registers an open generic IGenericFoo<> interface
+// using previously registered open generic shared implementor
+builder
+    .AddGeneric( typeof( IGenericFoo<> ) )
+    .SetLifetime( DependencyLifetime.Scoped )
+    .FromSharedImplementor( typeof( GenericFooBar<> ) );
+
+// registers an open generic IGenericBar<> interface
+// using previously registered open generic shared implementor
+builder
+    .AddGeneric( typeof( IGenericBar<> ) )
+    .SetLifetime( DependencyLifetime.Scoped )
+    .FromSharedImplementor( typeof( GenericFooBar<> ) );
 
 // defines a keyed locator builder
 var keyed = builder.GetKeyedLocator( 42 );
@@ -52,7 +82,20 @@ var quxBuilder = keyed.Add<IQux>().SetLifetime( DependencyLifetime.Singleton ).F
 
 // the container builder will automatically attempt to find the best-suited implementor constructor
 // but it is also possible to specify constructors explicitly
-quxBuilder.FromConstructor( typeof( Qux ).GetConstructors().First() );
+// also, since keyed locator doesn't have IFoo registered
+// a custom resolution can be used to e.g. point at the non-keyed IFoo registration instead
+quxBuilder.FromConstructor(
+    typeof( Qux ).GetConstructors().First(),
+    opt => opt.ResolveParameter( p => p.Name == "foo", typeof( IFoo ), o => o.NotKeyed() ) );
+
+// registeres an open generic keyed IGenericQux<> interface
+// that should be implemented via partially closed type GenericQux<T1, int>
+keyed
+    .AddGeneric( typeof( IGenericQux<> ) )
+    .SetLifetime( DependencyLifetime.Singleton )
+    .FromType(
+        typeof( GenericQux<,> ).SubstituteGenericArguments( null, typeof( int ) ),
+        opt => opt.ResolveParameter( p => p.Name == "foo", typeof( IGenericFoo<int> ), o => o.NotKeyed() ) );
 
 // builds the IoC container
 var container = builder.Build();
@@ -76,9 +119,25 @@ var qux = scope.GetKeyedLocator( 42 ).Resolve<IQux>();
 // result will contain only one element, since IBar dependency has only been registered once
 var barRange = scope.Locator.Resolve<IEnumerable<IBar>>();
 
+// resolves open generic IGenericFoo<> instance with string argument
+var genericFoo = scope.Locator.Resolve<IGenericFoo<string>>();
+
+// resolves open generic IGenericBar<> instance with string argument
+// which should return the same object
+var genericBar = scope.Locator.Resolve<IGenericBar<string>>();
+
+// resolves keyed IGenericQux<> instance with string argument
+var genericQux = scope.GetKeyedLocator( 42 ).Resolve<IGenericQux<string>>();
+
+// resolves an open generic range of IGenericBar<> instances with string argument
+var genericBarRange = scope.Locator.Resolve<IEnumerable<IGenericBar<string>>>();
+
 // it is also possible to resolve the container itself
 var c = scope.Locator.Resolve<IDependencyContainer>();
 
 // as well as the current scope
 var s = scope.Locator.Resolve<IDependencyScope>();
+
+// or a scope factory
+var f = scope.Locator.Resolve<IDependencyScopeFactory>();
 ```
