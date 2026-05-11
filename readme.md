@@ -20,6 +20,7 @@ Following is the list of all individual projects, in no particular order
 - [LfrlAnvil.Chrono](./src/LfrlAnvil.Chrono/.docs/readme.md)
 - [LfrlAnvil.Collections](./src/LfrlAnvil.Collections/.docs/readme.md)
 - [LfrlAnvil.Dependencies](./src/LfrlAnvil.Dependencies/.docs/readme.md)
+- [LfrlAnvil.Dependencies.MicrosoftExtensions](./src/LfrlAnvil.Dependencies.MicrosoftExtensions/.docs/readme.md)
 - [LfrlAnvil.Functional](./src/LfrlAnvil.Functional/.docs/readme.md)
 - [LfrlAnvil.Identifiers](./src/LfrlAnvil.Identifiers/.docs/readme.md)
 - [LfrlAnvil.Mapping](./src/LfrlAnvil.Mapping/.docs/readme.md)
