@@ -26,7 +26,7 @@ internal sealed class ScopedSingletonDependencyResolver : DependencyResolver, IR
     internal ScopedSingletonDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy )
     {

@@ -63,11 +63,23 @@ public interface IDependencyBuilder
     int RangeIndex { get; }
 
     /// <summary>
+    /// Specifies whether this dependency is configured as available in all locators.
+    /// </summary>
+    bool IsGlobal { get; }
+
+    /// <summary>
     /// Sets <see cref="IsIncludedInRange"/> of this instance.
     /// </summary>
     /// <param name="included">Value to set. Equal to <b>true</b> by default.</param>
     /// <returns><b>this</b>.</returns>
     IDependencyBuilder IncludeInRange(bool included = true);
+
+    /// <summary>
+    /// Sets <see cref="IsGlobal"/> of this instance.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns><b>this</b>.</returns>
+    IDependencyBuilder MakeGlobal(bool enabled = true);
 
     /// <summary>
     /// Sets <see cref="Lifetime"/> of this instance.

@@ -27,9 +27,9 @@ namespace LfrlAnvil.Dependencies.Internal;
 internal readonly struct KeyedDependencyResolversStore : IDisposable
 {
     private readonly Dictionary<Type, IDisposable> _cachesByKeyType;
-    private readonly IReadOnlyDictionary<Type, DependencyResolver> _defaultResolvers;
+    private readonly ReadOnlyArray<KeyValuePair<Type, DependencyResolver>> _defaultResolvers;
 
-    private KeyedDependencyResolversStore(IReadOnlyDictionary<Type, DependencyResolver> defaultResolvers)
+    private KeyedDependencyResolversStore(ReadOnlyArray<KeyValuePair<Type, DependencyResolver>> defaultResolvers)
     {
         _defaultResolvers = defaultResolvers;
         _cachesByKeyType = new Dictionary<Type, IDisposable>();
@@ -44,7 +44,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static KeyedDependencyResolversStore Create(IReadOnlyDictionary<Type, DependencyResolver> defaultResolvers)
+    internal static KeyedDependencyResolversStore Create(ReadOnlyArray<KeyValuePair<Type, DependencyResolver>> defaultResolvers)
     {
         return new KeyedDependencyResolversStore( defaultResolvers );
     }
@@ -60,7 +60,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
         var cache = ReinterpretCast.To<Cache<TKey>>( cacheRef );
         ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( cache.Resolvers, key, out exists );
         if ( ! exists )
-            result = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( _defaultResolvers ) );
+            result = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( _defaultResolvers.GetUnderlyingArray() ) );
 
         return result;
     }
@@ -103,7 +103,8 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
 
             ref var resolvers = ref CollectionsMarshal.GetValueRefOrAddDefault( cache.Resolvers, key, out var exists );
             if ( ! exists )
-                resolvers = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( _defaultResolvers ) );
+                resolvers = DependencyResolversStore.Create(
+                    new Dictionary<Type, DependencyResolver>( _defaultResolvers.GetUnderlyingArray() ) );
 
             return resolvers;
         }

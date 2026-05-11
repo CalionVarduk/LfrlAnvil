@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
@@ -1712,7 +1713,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         action.Test( exc => exc.TestType()
                 .Exact<InvalidDependencyCastException>( e => Assertion.All(
                     e.DependencyType.TestEquals( typeof( string ) ),
-                    e.ResultType.TestNull() ) ) )
+                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
             .Go();
     }
 
@@ -1733,7 +1734,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         action.Test( exc => exc.TestType()
                 .Exact<InvalidDependencyCastException>( e => Assertion.All(
                     e.DependencyType.TestEquals( typeof( int ) ),
-                    e.ResultType.TestNull() ) ) )
+                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
             .Go();
     }
 
@@ -1754,7 +1755,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
         action.Test( exc => exc.TestType()
                 .Exact<InvalidDependencyCastException>( e => Assertion.All(
                     e.DependencyType.TestEquals( typeof( byte? ) ),
-                    e.ResultType.TestNull() ) ) )
+                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
             .Go();
     }
 
@@ -2316,6 +2317,29 @@ public partial class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void ResolvingDependency_WithCustomKeyProviders()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.GetKeyedLocator( 1 ).Add<IFoo>().FromType<Implementor>();
+        builder.Add<IQux>().FromType<ChainableQux>();
+        builder.Add<IQux>().FromType<ChainableFieldQux>();
+
+        builder.Configuration
+            .SetConstructorParameterKeyProvider( p => p.ParameterType == typeof( IFoo ) ? 1 : null )
+            .SetMemberKeyProvider( m => m is FieldInfo field && field.FieldType == typeof( Injected<IFoo> ) ? 1 : null );
+
+        var sut = builder.Build();
+
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IQux>>();
+
+        result.TestCount( count => count.TestEquals( 2 ) )
+            .Then( qux => Assertion.All(
+                qux[0].TestType().Exact<ChainableQux>( e => e.Foo.TestType().Exact<Implementor>() ),
+                qux[1].TestType().Exact<ChainableFieldQux>( e => e.Foo.TestType().Exact<Implementor>() ) ) )
+            .Go();
+    }
+
+    [Fact]
     public void Dispose_ShouldDisposeAllActiveScopes()
     {
         var builder = new DependencyContainerBuilder();
@@ -2405,6 +2429,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
     [InlineData( typeof( ExplicitCtorImplementor ), DependencyLifetime.ScopedSingleton )]
     [InlineData( typeof( FieldImplementor ), DependencyLifetime.Singleton )]
     [InlineData( typeof( IEnumerable<int> ), DependencyLifetime.Transient )]
+    [InlineData( typeof( IEnumerable<double> ), DependencyLifetime.Transient )]
     [InlineData( typeof( string ), null )]
     public void DependencyLocator_TryGetLifetime_ShouldReturnCorrectResult(Type type, DependencyLifetime? expected)
     {
@@ -2441,6 +2466,30 @@ public partial class DependencyContainerTests : DependencyTestsBase
         var result = sut.TryGetLifetime( typeof( IDependencyContainer ) );
 
         result.TestNull().Go();
+    }
+
+    [Fact]
+    public void DependencyMarkedAsGlobal_ShouldBeResolvableInAllLocators()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.AddSharedImplementor<Implementor>();
+        builder.Add<IFoo>().MakeGlobal().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<Implementor>();
+        builder.Add<IBar>().MakeGlobal().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<Implementor>();
+        builder.Add<IQux>().MakeGlobal().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<Implementor>();
+        builder.GetKeyedLocator( 1 ).Add<IWithText>().FromType<DefaultCtorParamImplementor>();
+        var sut = builder.Build();
+
+        var foo1 = sut.RootScope.Locator.Resolve<IFoo>();
+        var bar1 = sut.RootScope.Locator.Resolve<IBar>();
+        var qux1 = sut.RootScope.Locator.Resolve<IQux>();
+        var foo2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IFoo>();
+        var bar2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IBar>();
+        var qux2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IQux>();
+        var foo3 = sut.RootScope.GetKeyedLocator( "x" ).Resolve<IFoo>();
+        var bar3 = sut.RootScope.GetKeyedLocator( "x" ).Resolve<IBar>();
+        var qux3 = sut.RootScope.GetKeyedLocator( "x" ).Resolve<IQux>();
+
+        new object[] { foo1, bar1, qux1, foo2, bar2, qux2, foo3, bar3, qux3 }.Distinct().Count().TestEquals( 1 ).Go();
     }
 
     [Fact]

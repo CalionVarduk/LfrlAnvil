@@ -18,4 +18,5 @@ internal interface IInternalDependencyBuilder
 {
     bool IsOpenGeneric { get; }
     bool IsIncludedInRange { get; }
+    bool IsGlobal { get; }
 }

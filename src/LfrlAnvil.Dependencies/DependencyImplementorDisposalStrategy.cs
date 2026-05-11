@@ -16,7 +16,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using LfrlAnvil.Dependencies.Internal;
 
 namespace LfrlAnvil.Dependencies;
 
@@ -105,28 +104,5 @@ public readonly struct DependencyImplementorDisposalStrategy
     public static DependencyImplementorDisposalStrategy RenounceOwnership()
     {
         return new DependencyImplementorDisposalStrategy( DependencyImplementorDisposalStrategyType.RenounceOwnership, callback: null );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyDisposer? TryCreateDisposer(object instance)
-    {
-        switch ( Type )
-        {
-            case DependencyImplementorDisposalStrategyType.UseDisposableInterface:
-                if ( instance is IAsyncDisposable asyncDisposable )
-                    return new DependencyDisposer( asyncDisposable, callback: null, isAsync: true );
-
-                if ( instance is IDisposable disposable )
-                    return new DependencyDisposer( disposable, callback: null, isAsync: false );
-
-                break;
-
-            case DependencyImplementorDisposalStrategyType.UseCallback:
-                Assume.IsNotNull( Callback );
-                return new DependencyDisposer( instance, Callback, isAsync: Callback is Func<object, ValueTask> );
-        }
-
-        return null;
     }
 }

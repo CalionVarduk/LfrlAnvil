@@ -83,6 +83,7 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
 
     protected override bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -90,7 +91,7 @@ internal abstract class RangeDependencyResolverFactory : DependencyResolverFacto
             return true;
 
         foreach ( var f in Factories )
-            f.PrepareCreationMethod( idGenerator, availableDependencies, configuration );
+            f.PrepareCreationMethod( idGenerator, typeErasedKeyFactories, availableDependencies, configuration );
 
         return true;
     }

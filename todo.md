@@ -2,7 +2,6 @@
 
 |        Project         |              Title               |                        Details                         |
 |:----------------------:|:--------------------------------:|:------------------------------------------------------:|
-|     Dependencies.*     |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |
 |    MessageBroker.*     |           Refinements            |           [link](#messagebroker-refinements)           |
 | Computable.Expressions |           Refinements            |       [link](#computableexpressions-refinements)       |
 |      Computable.*      |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |
@@ -99,6 +98,24 @@ Might do:
 ### Dependencies: Refinements
 
 Low priority/probably won't do:
+- add possibility to disable captive dependency checks for specific implementors
+  - might be useful for registrations marked as global
+- log warning when global registration overrides another registration of the same type
+- factory-based resolutions should have an internal Create method, used for invoking from within an expression resolver
+  - currently, each invocation verifies Type.IsInstanceOfType result
+  - this is redundant for expression-based resolvers, and it could be optimized away
+- AnyKey support:
+  - requires custom AnyKey singleton object, so that there are no references to external packages
+  - works as a fallback for resolving keyed dependencies
+    - dependencies registered under AnyKey will be used, in case the desired one doesn't exist
+    - this part is relatively straightforward, complexity similar to FromKeyedServices support
+      - impacts closed generic specializations, since they too should verify AnyKey registrations as fallback
+  - direct request for dependencies with AnyKey key throws
+    - except for IEnumerable<> requests, which should return ALL keyed dependencies of that type
+      - except for those registered under AnyKey key
+    - this part is more complex due to IEnumerable<>
+      - every non-AnyKey keyed registration should be automatically added to relevant AnyKey range of the same dependency type
+      - however, dependencies can be registered with AnyKey key, so those non-AnyKey ranges would have to be tracked separately
 - better decorator registration support
   - currently, the goto way is to define a keyed locator and register base implementations there
   - while the decorator registration resolves ctor-param/member from that keyed locator
@@ -204,14 +221,7 @@ ideas for other LfrlAnvil.Computable projects:
 ### Sql.Core: Add JSON nodes
 
 Add nodes for JSON column manipulation (read value, set value etc.)
-
 - this heavily depends on all sql providers' support for json
-
-### Dependencies: AspNetCore
-
-- Add adapter layer between lfrlanvil & aspnetcore service providers
-- so that lfrlanvil provider can be used as service container in aspentcore apps
-- requires possibility to register open generics
 
 ### Sql.Core: DbBatch support
 

@@ -38,7 +38,7 @@ internal readonly struct DependencyDisposer
             if ( Callback is not null )
                 ReinterpretCast.To<Action<object>>( Callback )( Dependency );
             else
-                ReinterpretCast.To<IDisposable>( Dependency ).Dispose();
+                (( IDisposable )Dependency).Dispose();
         }
         catch ( Exception exc )
         {
@@ -55,7 +55,7 @@ internal readonly struct DependencyDisposer
         {
             var task = Callback is not null
                 ? ReinterpretCast.To<Func<object, ValueTask>>( Callback )( Dependency )
-                : ReinterpretCast.To<IAsyncDisposable>( Dependency ).DisposeAsync();
+                : (( IAsyncDisposable )Dependency).DisposeAsync();
 
             await task.ConfigureAwait( false );
         }

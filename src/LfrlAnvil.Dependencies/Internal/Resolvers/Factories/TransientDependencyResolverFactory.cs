@@ -33,12 +33,12 @@ internal sealed class TransientDependencyResolverFactory : RegisteredImmediately
             ? new TransientDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 expression )
             : new CycleTrackingTransientDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 ImplementorBuilder.OnResolvingCallback,
                 expression );
     }
@@ -51,7 +51,7 @@ internal sealed class TransientDependencyResolverFactory : RegisteredImmediately
         return new CycleTrackingTransientDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
+            DisposalStrategy,
             ImplementorBuilder.OnResolvingCallback,
             ImplementorBuilder.Factory );
     }

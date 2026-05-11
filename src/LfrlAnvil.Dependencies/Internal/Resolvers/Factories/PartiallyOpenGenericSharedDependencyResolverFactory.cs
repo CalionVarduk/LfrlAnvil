@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
@@ -59,17 +60,19 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
 
     protected override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
     {
         resolver = null;
-        Base.PrepareCreationMethod( idGenerator, availableDependencies, configuration );
+        Base.PrepareCreationMethod( idGenerator, typeErasedKeyFactories, availableDependencies, configuration );
         return ! Base.HasState( DependencyResolverFactoryState.Invalid );
     }
 
     [Pure]
     protected override ConstructorInfo? FindValidConstructor(
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -133,11 +136,11 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )baseResolver );
                     else
                     {
-                        var implementorKey = InternalImplementorKey.WithType(
-                            baseResolver is OpenGenericRangeDependencyResolverFactory
-                                ? parameter.ParameterType
-                                : implementorType.CloseImplementorType( parameter.ParameterType ) );
+                        var dependencyType = baseResolver is OpenGenericRangeDependencyResolverFactory
+                            ? parameter.ParameterType
+                            : implementorType.CloseImplementorType( parameter.ParameterType );
 
+                        var implementorKey = InternalImplementorKey.WithType( dependencyType );
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var parameterFactory ) )
                         {
                             ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
@@ -150,6 +153,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                             continue;
                         }
 
+                        implementorKey = baseResolver.InternalImplementorKey.WithType( dependencyType );
                         parameterFactory = baseResolver.Close( implementorKey, in @params, dynamicResolverFactories );
                         ParameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
@@ -197,11 +201,11 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )baseResolver );
                     else
                     {
-                        var implementorKey = InternalImplementorKey.WithType(
-                            baseResolver is OpenGenericRangeDependencyResolverFactory
-                                ? memberType
-                                : implementorType.CloseImplementorType( memberType ) );
+                        var dependencyType = baseResolver is OpenGenericRangeDependencyResolverFactory
+                            ? memberType
+                            : implementorType.CloseImplementorType( memberType );
 
+                        var implementorKey = InternalImplementorKey.WithType( dependencyType );
                         if ( @params.ResolverFactories.TryGetValue( implementorKey, out var memberFactory ) )
                         {
                             MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
@@ -209,6 +213,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
                             continue;
                         }
 
+                        implementorKey = baseResolver.InternalImplementorKey.WithType( dependencyType );
                         memberFactory = baseResolver.Close( implementorKey, in @params, dynamicResolverFactories );
                         MemberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                         captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
@@ -260,7 +265,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
         return new OpenGenericDependencyResolver(
             idGenerator.Generate(),
             ImplementorKey.Value.Type,
-            Base.ImplementorBuilder.DisposalStrategy,
+            new ResolvedInstanceDisposalStrategy( Base.ImplementorBuilder.DisposalStrategy, ConstructorInfo ),
             ConstructorInfo,
             parameterResolvers,
             memberResolvers,

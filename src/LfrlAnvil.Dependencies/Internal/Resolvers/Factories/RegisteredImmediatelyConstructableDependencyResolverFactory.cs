@@ -38,11 +38,16 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
     internal IDependencyImplementorBuilder ImplementorBuilder { get; }
 
+    internal ResolvedInstanceDisposalStrategy DisposalStrategy => new ResolvedInstanceDisposalStrategy(
+        ImplementorBuilder.DisposalStrategy,
+        ConstructorInfo );
+
     protected override Action<object, Type, IDependencyScope>? OnCreatedCallback =>
         ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback;
 
     protected sealed override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
@@ -54,6 +59,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected sealed override ConstructorInfo? FindValidConstructor(
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -87,7 +93,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
         if ( Errors.Count == 0 )
         {
-            ctor = FindBestSuitedCtor( type, availableDependencies, configuration );
+            ctor = FindBestSuitedCtor( type, typeErasedKeyFactories, availableDependencies, configuration );
             if ( ctor is null )
                 Errors = Errors.Extend( Resources.FailedToFindValidCtorForType( explicitType ) );
         }
@@ -121,7 +127,12 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
             IDependencyKey implementorKey;
             if ( customResolutionIndex == -1 )
-                implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
+            {
+                var customKey = configuration.ConstructorParameterKeyProvider?.Invoke( parameter );
+                implementorKey = customKey is null
+                    ? InternalImplementorKey.WithType( parameter.ParameterType )
+                    : DependencyKey.CreateKeyedTypeErased( @params.TypeErasedKeyFactories, parameter.ParameterType, customKey );
+            }
             else
             {
                 var resolution = GetResolution( explicitParameterResolutions, usedExplicitResolutions, customResolutionIndex );
@@ -185,7 +196,12 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
             IDependencyKey implementorKey;
             if ( customResolutionIndex == -1 )
-                implementorKey = InternalImplementorKey.WithType( memberType );
+            {
+                var customKey = configuration.MemberKeyProvider?.Invoke( member.GetActualMember() );
+                implementorKey = customKey is null
+                    ? InternalImplementorKey.WithType( memberType )
+                    : DependencyKey.CreateKeyedTypeErased( @params.TypeErasedKeyFactories, memberType, customKey );
+            }
             else
             {
                 var resolution = GetResolution( explicitMemberResolutions, usedExplicitResolutions, customResolutionIndex );
@@ -250,6 +266,7 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
     private ConstructorInfo? FindBestSuitedCtor(
         Type type,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -275,7 +292,12 @@ internal abstract class RegisteredImmediatelyConstructableDependencyResolverFact
 
                 IDependencyKey implementorKey;
                 if ( customResolutionIndex == -1 )
-                    implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
+                {
+                    var customKey = configuration.ConstructorParameterKeyProvider?.Invoke( parameter );
+                    implementorKey = customKey is null
+                        ? InternalImplementorKey.WithType( parameter.ParameterType )
+                        : DependencyKey.CreateKeyedTypeErased( typeErasedKeyFactories, parameter.ParameterType, customKey );
+                }
                 else
                 {
                     Assume.IsNotNull( explicitParameterResolutions );

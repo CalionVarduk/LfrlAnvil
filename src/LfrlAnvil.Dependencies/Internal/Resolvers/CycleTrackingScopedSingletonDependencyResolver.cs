@@ -26,18 +26,18 @@ internal sealed class CycleTrackingScopedSingletonDependencyResolver : CycleTrac
     internal CycleTrackingScopedSingletonDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
-        Factory = factory;
+        Factory = factory.SanitizeExternalFactory( ImplementorType );
     }
 
     internal CycleTrackingScopedSingletonDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )

@@ -91,13 +91,14 @@ internal class DependencyResolverFactory
 
     internal void PrepareCreationMethod(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
         if ( State != DependencyResolverFactoryState.Created )
             return;
 
-        if ( ! IsCreationMethodValid( idGenerator, availableDependencies, configuration ) )
+        if ( ! IsCreationMethodValid( idGenerator, typeErasedKeyFactories, availableDependencies, configuration ) )
             FinishAsInvalid();
         else if ( ! IsFinished )
             SetState( DependencyResolverFactoryState.Validatable );
@@ -291,6 +292,7 @@ internal class DependencyResolverFactory
 
     protected virtual bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {

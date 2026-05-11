@@ -248,6 +248,11 @@ internal class DependencyScope : IDependencyScope, IDisposable, IAsyncDisposable
         return GetKeyedLocator( key );
     }
 
+    IDependencyLocator IDependencyScope.GetTypeErasedKeyedLocator(object key)
+    {
+        return _locatorStore.GetOrCreateTypeErased( key );
+    }
+
     IChildDependencyScope IDependencyScopeFactory.BeginScope(string? name)
     {
         return BeginScope( name );

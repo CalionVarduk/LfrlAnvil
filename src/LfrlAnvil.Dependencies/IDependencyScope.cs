@@ -79,6 +79,16 @@ public interface IDependencyScope : IDependencyScopeFactory
         where TKey : notnull;
 
     /// <summary>
+    /// Gets the keyed locator associated with this scope by its <paramref name="key"/>.
+    /// </summary>
+    /// <param name="key">Locator's key.</param>
+    /// <returns>
+    /// <see cref="IDependencyLocator"/> instance associated with this scope and the provided <paramref name="key"/>.
+    /// </returns>
+    [Pure]
+    IDependencyLocator GetTypeErasedKeyedLocator(object key);
+
+    /// <summary>
     /// Retrieves all child scopes created by this scope.
     /// </summary>
     /// <returns>Collection of child scopes created by this scope.</returns>

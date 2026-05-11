@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -63,10 +64,16 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
     protected sealed override bool IsCreationMethodValid(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
-        if ( ! TryResolveCreationMethodImmediately( idGenerator, availableDependencies, configuration, out var resolver ) )
+        if ( ! TryResolveCreationMethodImmediately(
+            idGenerator,
+            typeErasedKeyFactories,
+            availableDependencies,
+            configuration,
+            out var resolver ) )
             return false;
 
         if ( resolver is not null )
@@ -75,7 +82,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
             return true;
         }
 
-        ConstructorInfo = FindValidConstructor( availableDependencies, configuration );
+        ConstructorInfo = FindValidConstructor( typeErasedKeyFactories, availableDependencies, configuration );
         return ConstructorInfo is not null;
     }
 
@@ -150,12 +157,14 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
     protected abstract bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver);
 
     [Pure]
     protected abstract ConstructorInfo? FindValidConstructor(
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration);
 

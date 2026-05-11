@@ -33,7 +33,7 @@ internal sealed class OpenGenericRangeDependencyResolver : DependencyResolver
         Type implementorType,
         OpenGenericDependencyResolver[]? elementResolvers,
         Action<Type, IDependencyScope>? onResolvingCallback)
-        : base( id, implementorType, DependencyImplementorDisposalStrategy.RenounceOwnership() )
+        : base( id, implementorType, ResolvedInstanceDisposalStrategy.RenounceOwnership() )
     {
         _elementResolvers = elementResolvers;
         _onResolvingCallback = onResolvingCallback;
@@ -77,12 +77,12 @@ internal sealed class OpenGenericRangeDependencyResolver : DependencyResolver
             ? new TransientDependencyResolver(
                 id,
                 ImplementorType,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                ResolvedInstanceDisposalStrategy.RenounceOwnership(),
                 expression )
             : new CycleTrackingTransientDependencyResolver(
                 id,
                 ImplementorType,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                ResolvedInstanceDisposalStrategy.RenounceOwnership(),
                 _onResolvingCallback,
                 expression );
     }

@@ -128,12 +128,16 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyContainerBuildResult<DependencyContainer> TryBuild()
     {
         var idGenerator = new UlongSequenceGenerator();
-        var extractionParams = DependencyLocatorBuilderExtractionParams.Create( idGenerator );
+        var extractionParams = DependencyLocatorBuilderExtractionParams.Create();
         var messages = Chain<DependencyContainerBuildMessages>.Empty;
 
         var locatorBuilders = _locatorBuilderStore.GetAll();
         foreach ( var locatorBuilder in locatorBuilders )
-            messages = messages.Extend( locatorBuilder.ExtractResolverFactories( _locatorBuilderStore, extractionParams ) );
+            messages = messages.Extend( locatorBuilder.ExtractResolverFactories( _locatorBuilderStore, in extractionParams ) );
+
+        extractionParams.FinalizeDefaultResolverFactories( idGenerator );
+        foreach ( var locatorBuilder in locatorBuilders )
+            extractionParams.AddDefaultResolverFactories( locatorBuilder );
 
         var resolverFactories = extractionParams.ResolverFactories.Values;
         var resolverFactoriesToScan = resolverFactories;
@@ -141,7 +145,11 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
         {
             var dynamicResolverFactories = new Dictionary<IDependencyKey, DependencyResolverFactory>();
             foreach ( var factory in resolverFactoriesToScan )
-                factory.PrepareCreationMethod( idGenerator, extractionParams.ResolverFactories, _configuration );
+                factory.PrepareCreationMethod(
+                    idGenerator,
+                    extractionParams.TypeErasedKeyFactories,
+                    extractionParams.ResolverFactories,
+                    _configuration );
 
             foreach ( var factory in resolverFactoriesToScan )
                 factory.ValidateRequiredDependencies( in extractionParams, dynamicResolverFactories, _configuration );
@@ -172,7 +180,9 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
             factory.Build( idGenerator, _configuration );
 
         var defaultResolvers = extractionParams.GetDefaultResolvers();
-        var globalResolvers = DependencyResolversStore.Create( new Dictionary<Type, DependencyResolver>( defaultResolvers ) );
+        var globalResolvers = DependencyResolversStore.Create(
+            new Dictionary<Type, DependencyResolver>( defaultResolvers.GetUnderlyingArray() ) );
+
         var keyedDependencyResolvers = KeyedDependencyResolversStore.Create( defaultResolvers );
 
         foreach ( var (dependencyKey, factory) in extractionParams.ResolverFactories )

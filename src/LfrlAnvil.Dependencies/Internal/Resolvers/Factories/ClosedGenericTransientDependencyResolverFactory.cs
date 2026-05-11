@@ -32,12 +32,12 @@ internal sealed class ClosedGenericTransientDependencyResolverFactory : Register
                 ? new TransientDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     expression )
                 : new CycleTrackingTransientDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     Base.ImplementorBuilder.OnResolvingCallback,
                     expression );
     }

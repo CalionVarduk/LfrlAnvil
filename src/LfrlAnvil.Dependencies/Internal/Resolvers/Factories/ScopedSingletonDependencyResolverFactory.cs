@@ -35,12 +35,12 @@ internal sealed class ScopedSingletonDependencyResolverFactory : RegisteredImmed
             ? new ScopedSingletonDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 expression )
             : new CycleTrackingScopedSingletonDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 ImplementorBuilder.OnResolvingCallback,
                 expression );
     }
@@ -53,7 +53,7 @@ internal sealed class ScopedSingletonDependencyResolverFactory : RegisteredImmed
         return new CycleTrackingScopedSingletonDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
+            DisposalStrategy,
             ImplementorBuilder.OnResolvingCallback,
             ImplementorBuilder.Factory );
     }

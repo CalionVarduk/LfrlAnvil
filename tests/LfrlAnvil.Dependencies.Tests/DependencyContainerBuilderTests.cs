@@ -188,6 +188,34 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
             .Go();
     }
 
+    [Fact]
+    public void Configuration_SetConstructorParameterKeyProvider_ShouldUpdateTheOptions()
+    {
+        var provider = Substitute.For<Func<ParameterInfo, object?>>();
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.Configuration.SetConstructorParameterKeyProvider( provider );
+
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.ConstructorParameterKeyProvider.TestRefEquals( provider ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Configuration_SetMemberKeyProvider_ShouldUpdateTheOptions()
+    {
+        var provider = Substitute.For<Func<MemberInfo, object?>>();
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.Configuration.SetMemberKeyProvider( provider );
+
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.MemberKeyProvider.TestRefEquals( provider ) )
+            .Go();
+    }
+
     [Theory]
     [InlineData( 1 )]
     [InlineData( 2 )]

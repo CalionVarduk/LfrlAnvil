@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Dependencies.Internal.Resolvers.Factories;
@@ -25,31 +26,17 @@ namespace LfrlAnvil.Dependencies.Internal.Builders;
 internal readonly struct DependencyLocatorBuilderExtractionParams
 {
     internal readonly Dictionary<IDependencyKey, DependencyResolverFactory> ResolverFactories;
+    internal readonly Dictionary<Type, Func<Type, object, IInternalDependencyKey>> TypeErasedKeyFactories;
 
-    private readonly DependencyResolverFactory[] _defaultResolverFactories;
+    private readonly List<(Type DependencyType, DependencyResolverFactory Factory)> _defaultResolverFactories;
     private readonly Dictionary<(IDependencyKey, DependencyLifetime), DependencyResolverFactory> _sharedResolvers;
 
-    private DependencyLocatorBuilderExtractionParams(UlongSequenceGenerator idGenerator)
+    private DependencyLocatorBuilderExtractionParams(Dictionary<IDependencyKey, DependencyResolverFactory> resolverFactories)
     {
         _sharedResolvers = new Dictionary<(IDependencyKey, DependencyLifetime), DependencyResolverFactory>();
-
-        _defaultResolverFactories = new[]
-        {
-            DependencyResolverFactory.CreateFinished(
-                ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyContainer ) ) ),
-                DependencyLifetime.Singleton,
-                new DependencyContainerResolver( idGenerator.Generate() ) ),
-            DependencyResolverFactory.CreateFinished(
-                ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyScope ) ) ),
-                DependencyLifetime.Singleton,
-                new DependencyScopeResolver( idGenerator.Generate() ) ),
-            DependencyResolverFactory.CreateFinished(
-                ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyScopeFactory ) ) ),
-                DependencyLifetime.Singleton,
-                new DependencyScopeFactoryResolver( idGenerator.Generate() ) )
-        };
-
-        ResolverFactories = new Dictionary<IDependencyKey, DependencyResolverFactory>();
+        _defaultResolverFactories = new List<(Type, DependencyResolverFactory)>( capacity: 3 );
+        ResolverFactories = resolverFactories;
+        TypeErasedKeyFactories = new Dictionary<Type, Func<Type, object, IInternalDependencyKey>>();
     }
 
     [Pure]
@@ -66,27 +53,58 @@ internal readonly struct DependencyLocatorBuilderExtractionParams
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RegisterCustomDefaultResolverFactory(Type dependencyType, DependencyResolverFactory factory)
+    {
+        _defaultResolverFactories.Add( (dependencyType, factory) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void FinalizeDefaultResolverFactories(UlongSequenceGenerator idGenerator)
+    {
+        _defaultResolverFactories.Add(
+            (typeof( IDependencyContainer ),
+                DependencyResolverFactory.CreateFinished(
+                    ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyContainer ) ) ),
+                    DependencyLifetime.Singleton,
+                    new DependencyContainerResolver( idGenerator.Generate() ) )) );
+
+        _defaultResolverFactories.Add(
+            (typeof( IDependencyScope ),
+                DependencyResolverFactory.CreateFinished(
+                    ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyScope ) ) ),
+                    DependencyLifetime.Singleton,
+                    new DependencyScopeResolver( idGenerator.Generate() ) )) );
+
+        _defaultResolverFactories.Add(
+            (typeof( IDependencyScopeFactory ),
+                DependencyResolverFactory.CreateFinished(
+                    ImplementorKey.CreateShared( new DependencyKey( typeof( IDependencyScopeFactory ) ) ),
+                    DependencyLifetime.Singleton,
+                    new DependencyScopeFactoryResolver( idGenerator.Generate() ) )) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddDefaultResolverFactories(DependencyLocatorBuilder locatorBuilder)
     {
-        foreach ( var factory in _defaultResolverFactories )
-            ResolverFactories[locatorBuilder.CreateImplementorKey( factory.ImplementorKey.Value.Type )] = factory;
+        foreach ( var (dependencyType, factory) in _defaultResolverFactories )
+            ResolverFactories[locatorBuilder.CreateImplementorKey( dependencyType )] = factory;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal IReadOnlyDictionary<Type, DependencyResolver> GetDefaultResolvers()
+    internal ReadOnlyArray<KeyValuePair<Type, DependencyResolver>> GetDefaultResolvers()
     {
         var result = new Dictionary<Type, DependencyResolver>();
-        foreach ( var factory in _defaultResolverFactories )
-            result.Add( factory.ImplementorKey.Value.Type, factory.GetResolver() );
+        foreach ( var (dependencyType, factory) in _defaultResolverFactories )
+            result[dependencyType] = factory.GetResolver();
 
-        return result;
+        return result.ToArray();
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static DependencyLocatorBuilderExtractionParams Create(UlongSequenceGenerator idGenerator)
+    internal static DependencyLocatorBuilderExtractionParams Create()
     {
-        return new DependencyLocatorBuilderExtractionParams( idGenerator );
+        return new DependencyLocatorBuilderExtractionParams( new Dictionary<IDependencyKey, DependencyResolverFactory>() );
     }
 }

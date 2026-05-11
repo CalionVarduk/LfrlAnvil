@@ -64,6 +64,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             return sharedResolverFactory;
         }
 
+        Assume.True( Equals( ImplementorKey.Value.Key, dependencyKey.Key ) );
         if ( ImplementorKey.RangeIndex is not null )
             return RegisteredClosedGenericDependencyResolverFactory.Create(
                 this,
@@ -108,6 +109,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
     protected override bool TryResolveCreationMethodImmediately(
         UlongSequenceGenerator idGenerator,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration,
         out DependencyResolver? resolver)
@@ -118,6 +120,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
     [Pure]
     protected override ConstructorInfo? FindValidConstructor(
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -151,7 +154,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
         if ( Errors.Count == 0 )
         {
-            ctor = FindBestSuitedCtor( type, availableDependencies, configuration );
+            ctor = FindBestSuitedCtor( type, typeErasedKeyFactories, availableDependencies, configuration );
             if ( ctor is null )
                 Errors = Errors.Extend( Resources.FailedToFindValidCtorForType( explicitType ) );
         }
@@ -185,7 +188,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             IDependencyKey implementorKey;
             if ( customResolutionIndex == -1 )
-                implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
+            {
+                var customKey = configuration.ConstructorParameterKeyProvider?.Invoke( parameter );
+                implementorKey = customKey is null
+                    ? InternalImplementorKey.WithType( parameter.ParameterType )
+                    : DependencyKey.CreateKeyedTypeErased( @params.TypeErasedKeyFactories, parameter.ParameterType, customKey );
+            }
             else
             {
                 var resolution = GetResolution( explicitParameterResolutions, usedExplicitResolutions, customResolutionIndex );
@@ -263,7 +271,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
             IDependencyKey implementorKey;
             if ( customResolutionIndex == -1 )
-                implementorKey = InternalImplementorKey.WithType( memberType );
+            {
+                var customKey = configuration.MemberKeyProvider?.Invoke( member.GetActualMember() );
+                implementorKey = customKey is null
+                    ? InternalImplementorKey.WithType( memberType )
+                    : DependencyKey.CreateKeyedTypeErased( @params.TypeErasedKeyFactories, memberType, customKey );
+            }
             else
             {
                 var resolution = GetResolution( explicitMemberResolutions, usedExplicitResolutions, customResolutionIndex );
@@ -363,7 +376,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         return new OpenGenericDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
+            new ResolvedInstanceDisposalStrategy( ImplementorBuilder.DisposalStrategy, ConstructorInfo ),
             ConstructorInfo,
             parameterResolvers,
             memberResolvers,
@@ -393,6 +406,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
     private ConstructorInfo? FindBestSuitedCtor(
         Type type,
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> typeErasedKeyFactories,
         Dictionary<IDependencyKey, DependencyResolverFactory> availableDependencies,
         DependencyContainerConfigurationBuilder configuration)
     {
@@ -418,7 +432,12 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
 
                 IDependencyKey implementorKey;
                 if ( customResolutionIndex == -1 )
-                    implementorKey = InternalImplementorKey.WithType( parameter.ParameterType );
+                {
+                    var customKey = configuration.ConstructorParameterKeyProvider?.Invoke( parameter );
+                    implementorKey = customKey is null
+                        ? InternalImplementorKey.WithType( parameter.ParameterType )
+                        : DependencyKey.CreateKeyedTypeErased( typeErasedKeyFactories, parameter.ParameterType, customKey );
+                }
                 else
                 {
                     Assume.IsNotNull( explicitParameterResolutions );

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ internal abstract class CycleTrackingDependencyResolver : DependencyResolver
     protected CycleTrackingDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback)
         : base( id, implementorType, disposalStrategy )
     {

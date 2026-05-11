@@ -34,12 +34,12 @@ internal sealed class ClosedGenericScopedSingletonDependencyResolverFactory : Re
                 ? new ScopedSingletonDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     expression )
                 : new CycleTrackingScopedSingletonDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     Base.ImplementorBuilder.OnResolvingCallback,
                     expression );
     }

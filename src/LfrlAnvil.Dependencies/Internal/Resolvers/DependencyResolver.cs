@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
 internal abstract class DependencyResolver
 {
-    protected DependencyResolver(ulong id, Type implementorType, DependencyImplementorDisposalStrategy disposalStrategy)
+    protected DependencyResolver(ulong id, Type implementorType, ResolvedInstanceDisposalStrategy disposalStrategy)
     {
         Id = id;
         ImplementorType = implementorType;
@@ -32,7 +32,7 @@ internal abstract class DependencyResolver
     internal ulong Id { get; }
     internal Type ImplementorType { get; }
     internal abstract DependencyLifetime Lifetime { get; }
-    internal DependencyImplementorDisposalStrategy DisposalStrategy { get; }
+    internal ResolvedInstanceDisposalStrategy DisposalStrategy { get; }
 
     internal abstract object Create(DependencyScope scope, Type dependencyType);
 

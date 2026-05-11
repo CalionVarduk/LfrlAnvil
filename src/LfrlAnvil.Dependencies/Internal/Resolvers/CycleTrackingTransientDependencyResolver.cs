@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,18 +22,18 @@ internal sealed class CycleTrackingTransientDependencyResolver : CycleTrackingDe
     internal CycleTrackingTransientDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
-        Factory = factory;
+        Factory = factory.SanitizeExternalFactory( ImplementorType );
     }
 
     internal CycleTrackingTransientDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )

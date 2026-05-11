@@ -74,12 +74,12 @@ internal sealed class ClosedRangeDependencyResolverFactory : RangeDependencyReso
             ? new TransientDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorKey.Value.Type,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                ResolvedInstanceDisposalStrategy.RenounceOwnership(),
                 expression )
             : new CycleTrackingTransientDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorKey.Value.Type,
-                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                ResolvedInstanceDisposalStrategy.RenounceOwnership(),
                 OnResolvingCallback,
                 expression );
     }

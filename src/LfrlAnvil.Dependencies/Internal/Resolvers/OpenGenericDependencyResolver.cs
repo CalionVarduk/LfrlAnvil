@@ -41,7 +41,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
     internal OpenGenericDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         ConstructorInfo ctor,
         object?[]? parameterResolvers,
         KeyValuePair<MemberInfo, object?>[]? memberResolvers,
@@ -283,7 +283,7 @@ internal sealed class OpenGenericDependencyResolver : DependencyResolver
                 if ( resolution is null )
                     AddDefaultResolution( builder, locator, instanceType, name );
                 else if ( resolution is Expression<Func<IDependencyScope, MemberInfo, object>> factory )
-                    builder.AddExpressionResolution( instanceType, name, member, factory );
+                    builder.AddExpressionResolution( instanceType, name, member.GetActualMember(), factory );
                 else
                 {
                     var (resolver, customSource) = CustomOpenGenericResolution.Extract( resolution );

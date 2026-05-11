@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ namespace LfrlAnvil.Dependencies.Exceptions;
 /// <summary>
 /// Represents an error that occurred due to an invalid type cast of a resolved dependency.
 /// </summary>
-public class InvalidDependencyCastException : InvalidCastException
+public class InvalidDependencyCastException : InvalidOperationException
 {
     /// <summary>
     /// Creates a new <see cref="InvalidDependencyCastException"/> instance.

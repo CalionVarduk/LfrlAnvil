@@ -70,9 +70,9 @@ internal readonly struct DependencyLocatorBuilderStore
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal IEnumerable<DependencyLocatorBuilder> GetAll()
+    internal List<DependencyLocatorBuilder> GetAll()
     {
-        return _cachesByKeyType.Values.SelectMany( static f => f.GetAll() ).Prepend( Global );
+        return _cachesByKeyType.Values.SelectMany( static f => f.GetAll() ).Prepend( Global ).ToList();
     }
 
     private abstract class KeyedCache

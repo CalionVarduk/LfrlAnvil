@@ -26,11 +26,13 @@ internal sealed class DependencyBuilder : IDependencyBuilder, IInternalDependenc
         InternalSharedImplementorKey = null;
         Implementor = null;
         IsIncludedInRange = true;
+        IsGlobal = false;
     }
 
     public DependencyLifetime Lifetime { get; private set; }
     public IDependencyImplementorBuilder? Implementor { get; private set; }
     public bool IsIncludedInRange { get; private set; }
+    public bool IsGlobal { get; private set; }
 
     public bool IsLastInRange => InternalRangeBuilder.InternalElements.Count > 0
         && ReferenceEquals( this, InternalRangeBuilder.InternalElements[^1] );
@@ -46,6 +48,12 @@ internal sealed class DependencyBuilder : IDependencyBuilder, IInternalDependenc
     public IDependencyBuilder IncludeInRange(bool included = true)
     {
         IsIncludedInRange = included;
+        return this;
+    }
+
+    public IDependencyBuilder MakeGlobal(bool enabled = true)
+    {
+        IsGlobal = enabled;
         return this;
     }
 

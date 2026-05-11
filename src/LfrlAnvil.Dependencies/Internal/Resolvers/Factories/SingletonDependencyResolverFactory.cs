@@ -33,12 +33,12 @@ internal sealed class SingletonDependencyResolverFactory : RegisteredImmediately
             ? new SingletonDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 expression )
             : new CycleTrackingSingletonDependencyResolver(
                 idGenerator.Generate(),
                 ImplementorBuilder.ImplementorType,
-                ImplementorBuilder.DisposalStrategy,
+                DisposalStrategy,
                 ImplementorBuilder.OnResolvingCallback,
                 expression );
     }
@@ -51,7 +51,7 @@ internal sealed class SingletonDependencyResolverFactory : RegisteredImmediately
         return new CycleTrackingSingletonDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
+            DisposalStrategy,
             ImplementorBuilder.OnResolvingCallback,
             ImplementorBuilder.Factory );
     }

@@ -38,6 +38,7 @@ internal sealed class OpenGenericRangeDependencyResolverFactory : RangeDependenc
     {
         Assume.False( dependencyKey.Type.ContainsGenericParameters );
         Assume.False( ImplementorKey.IsShared || ImplementorKey.RangeIndex is not null );
+        Assume.True( Equals( ImplementorKey.Value.Key, dependencyKey.Key ) );
 
         if ( ! dynamicResolverFactories.TryGetValue( dependencyKey, out var closedFactory ) )
         {

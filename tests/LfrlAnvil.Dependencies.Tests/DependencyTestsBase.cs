@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LfrlAnvil.Dependencies.Tests;
 
@@ -44,6 +45,17 @@ public abstract class DependencyTestsBase : TestsBase
         public void Dispose()
         {
             IsDisposed = true;
+        }
+    }
+
+    public class AsyncDisposableDependency : IAsyncDisposable
+    {
+        public bool IsDisposed { get; private set; }
+
+        public ValueTask DisposeAsync()
+        {
+            IsDisposed = true;
+            return ValueTask.CompletedTask;
         }
     }
 

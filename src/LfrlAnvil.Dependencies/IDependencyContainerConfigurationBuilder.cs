@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Reflection;
 using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies;
@@ -36,6 +37,16 @@ public interface IDependencyContainerConfigurationBuilder
     /// Specifies whether captive dependencies should be treated as errors instead of warnings.
     /// </summary>
     bool TreatCaptiveDependenciesAsErrors { get; }
+
+    /// <summary>
+    /// Specifies a delegate which allows to provide a custom locator key for constructor parameters.
+    /// </summary>
+    Func<ParameterInfo, object?>? ConstructorParameterKeyProvider { get; }
+
+    /// <summary>
+    /// Specifies a delegate which allows to provide a custom locator key for members.
+    /// </summary>
+    Func<MemberInfo, object?>? MemberKeyProvider { get; }
 
     /// <summary>
     /// Sets the <see cref="InjectablePropertyType"/> of this instance.
@@ -65,4 +76,18 @@ public interface IDependencyContainerConfigurationBuilder
     /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
     /// <returns><b>this</b>.</returns>
     IDependencyContainerConfigurationBuilder EnableTreatingCaptiveDependenciesAsErrors(bool enabled = true);
+
+    /// <summary>
+    /// Sets the <see cref="ConstructorParameterKeyProvider"/> of this instance.
+    /// </summary>
+    /// <param name="provider">Provider to set.</param>
+    /// <returns><b>this</b>.</returns>
+    IDependencyContainerConfigurationBuilder SetConstructorParameterKeyProvider(Func<ParameterInfo, object?>? provider);
+
+    /// <summary>
+    /// Sets the <see cref="MemberKeyProvider"/> of this instance.
+    /// </summary>
+    /// <param name="provider">Provider to set.</param>
+    /// <returns><b>this</b>.</returns>
+    IDependencyContainerConfigurationBuilder SetMemberKeyProvider(Func<MemberInfo, object?>? provider);
 }

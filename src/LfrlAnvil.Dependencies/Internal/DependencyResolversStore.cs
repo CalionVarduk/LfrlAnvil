@@ -109,7 +109,23 @@ internal readonly struct DependencyResolversStore : IDisposable
     internal DependencyLifetime? TryGetLifetime(Type type)
     {
         using ( ReadLockSlim.TryEnter( Lock, out var entered ) )
-            return entered && Resolvers.TryGetValue( type, out var resolver ) ? resolver.Lifetime : null;
+        {
+            if ( ! entered )
+                return null;
+
+            if ( Resolvers.TryGetValue( type, out var resolver ) )
+                return resolver.Lifetime;
+        }
+
+        if ( ! type.IsGenericType || type.ContainsGenericParameters )
+            return null;
+
+        var openDependencyType = type.GetGenericTypeDefinition();
+        if ( openDependencyType == typeof( IEnumerable<> ) )
+            return DependencyLifetime.Transient;
+
+        using ( ReadLockSlim.TryEnter( Lock, out var entered ) )
+            return entered && Resolvers.TryGetValue( openDependencyType, out var resolver ) ? resolver.Lifetime : null;
     }
 
     [Pure]

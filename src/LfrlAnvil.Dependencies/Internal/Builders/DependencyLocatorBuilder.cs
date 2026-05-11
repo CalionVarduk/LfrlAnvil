@@ -158,7 +158,6 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                     ref messages );
         }
 
-        @params.AddDefaultResolverFactories( this );
         return messages;
     }
 
@@ -187,6 +186,9 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             messages = messages.Extend( m );
             if ( ! builder.IsOpenGeneric )
                 @params.ResolverFactories.Add( dependencyKey, builderFactory );
+
+            if ( builder.IsGlobal )
+                @params.RegisterCustomDefaultResolverFactory( rangeBuilder.DependencyType, builderFactory );
         }
 
         var rangeDependencyType = typeof( IEnumerable<> ).MakeGenericType( rangeBuilder.DependencyType );

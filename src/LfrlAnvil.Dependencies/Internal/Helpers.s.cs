@@ -78,6 +78,20 @@ internal static class Helpers
         };
     }
 
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static Func<IDependencyScope, object> SanitizeExternalFactory(this Func<IDependencyScope, object> source, Type expectedType)
+    {
+        return s =>
+        {
+            var result = source( s );
+            if ( ! expectedType.IsInstanceOfType( result ) )
+                ExceptionThrower.Throw( new InvalidDependencyCastException( expectedType, result.GetType() ) );
+
+            return result;
+        };
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static object CreateScopedInstance(
         this DependencyResolver resolver,

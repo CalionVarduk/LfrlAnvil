@@ -49,8 +49,9 @@ public interface IDependencyLocator
     /// <param name="type">Type to resolve.</param>
     /// <returns>Instance of the resolved dependency or null when the resolution has failed.</returns>
     /// <exception cref="CircularDependencyReferenceException">When a circular dependency reference has been detected.</exception>
+    /// <exception cref="InvalidDependencyCastException">When a resolved dependency could not be cast to the expected type.</exception>
     [Pure]
-    object? TryResolveUnsafe(Type type);
+    object? TryResolve(Type type);
 
     /// <summary>
     /// Attempts to get the lifetime of a dependency of the provided <paramref name="type"/> resolvable by this locator.

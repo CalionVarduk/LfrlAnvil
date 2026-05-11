@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Async;
@@ -25,7 +26,11 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal readonly struct DependencyLocatorStore : IDisposable
 {
-    private readonly Dictionary<Type, object> _cachesByKeyType;
+    private static readonly MethodInfo OpenTryCreateMethod = typeof( DependencyLocatorStore ).GetMethod(
+        nameof( TryCreate ),
+        BindingFlags.NonPublic | BindingFlags.Instance )!;
+
+    private readonly Dictionary<Type, IKeyedCache> _cachesByKeyType;
 
     private DependencyLocatorStore(
         KeyedDependencyResolversStore keyedResolversStore,
@@ -34,7 +39,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
     {
         KeyedResolversStore = keyedResolversStore;
         Global = new DependencyLocator( scope, globalResolvers );
-        _cachesByKeyType = new Dictionary<Type, object>();
+        _cachesByKeyType = new Dictionary<Type, IKeyedCache>();
     }
 
     internal DependencyLocator Global { get; }
@@ -73,6 +78,36 @@ internal readonly struct DependencyLocatorStore : IDisposable
             }
         }
 
+        return TryCreate( cache, key );
+    }
+
+    internal IDependencyLocator GetOrCreateTypeErased(object key)
+    {
+        var keyType = key.GetType();
+        IKeyedCache? cache;
+        using ( ReadLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
+        {
+            if ( ! entered || Global.InternalAttachedScope.IsDisposedInternal )
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
+
+            if ( _cachesByKeyType.TryGetValue( keyType, out cache ) )
+            {
+                var locator = cache.TryGet( key );
+                if ( locator is not null )
+                    return locator;
+            }
+        }
+
+        var tryCreateMethod = OpenTryCreateMethod.MakeGenericMethod( keyType );
+        var result = tryCreateMethod.Invoke( this, [ cache, key ] );
+        Assume.IsNotNull( result );
+        return ReinterpretCast.To<IDependencyLocator>( result );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private DependencyLocator<TKey> TryCreate<TKey>(KeyedCache<TKey>? cache, TKey key)
+        where TKey : notnull
+    {
         using ( WriteLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
         {
             if ( ! entered || Global.InternalAttachedScope.IsDisposedInternal )
@@ -101,7 +136,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
         }
     }
 
-    private sealed class KeyedCache<TKey>
+    private sealed class KeyedCache<TKey> : IKeyedCache
         where TKey : notnull
     {
         internal readonly Dictionary<TKey, DependencyLocator<TKey>> Locators;
@@ -110,5 +145,15 @@ internal readonly struct DependencyLocatorStore : IDisposable
         {
             Locators = new Dictionary<TKey, DependencyLocator<TKey>>();
         }
+
+        public IDependencyLocator? TryGet(object key)
+        {
+            return key is TKey typedKey && Locators.TryGetValue( typedKey, out var result ) ? result : null;
+        }
+    }
+
+    private interface IKeyedCache
+    {
+        IDependencyLocator? TryGet(object key);
     }
 }

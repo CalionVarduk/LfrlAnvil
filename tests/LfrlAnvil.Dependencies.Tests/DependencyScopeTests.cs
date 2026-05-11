@@ -144,6 +144,66 @@ public class DependencyScopeTests : DependencyTestsBase
         action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
+    [Theory]
+    [InlineData( 1 )]
+    [InlineData( 2 )]
+    [InlineData( 3 )]
+    public void GetTypeErasedKeyedLocator_ShouldReturnLocatorWithCorrectKey(int key)
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+
+        var result = sut.GetTypeErasedKeyedLocator( key );
+
+        Assertion.All(
+                result.Key.TestEquals( key ),
+                result.KeyType.TestEquals( typeof( int ) ),
+                result.IsKeyed.TestTrue(),
+                result.AttachedScope.TestRefEquals( sut ) )
+            .Go();
+    }
+
+    [Fact]
+    public void GetTypeErasedKeyedLocator_ShouldReturnLocatorWithCorrectKey_WhenKeyTypeIsCached()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+        _ = sut.GetKeyedLocator( 1 );
+
+        var result = sut.GetTypeErasedKeyedLocator( 2 );
+
+        Assertion.All(
+                result.Key.TestEquals( 2 ),
+                result.KeyType.TestEquals( typeof( int ) ),
+                result.IsKeyed.TestTrue(),
+                result.AttachedScope.TestRefEquals( sut ) )
+            .Go();
+    }
+
+    [Fact]
+    public void GetTypeErasedKeyedLocator_ShouldReturnCorrectCachedLocator_WhenCalledMoreThanOnceWithTheSameKey()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+
+        var result1 = sut.GetTypeErasedKeyedLocator( 1 );
+        var result2 = sut.GetTypeErasedKeyedLocator( 1 );
+
+        result1.TestRefEquals( result2 ).Go();
+    }
+
+    [Fact]
+    public void GetTypeErasedKeyedLocator_ShouldThrowObjectDisposedException_WhenScopeIsDisposed()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+        container.Dispose();
+
+        var action = Lambda.Of( () => sut.GetTypeErasedKeyedLocator( 1 ) );
+
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
+    }
+
     [Fact]
     public void BeginScope_ThroughRootScope_ShouldCreateChildScope()
     {
@@ -561,6 +621,21 @@ public class DependencyScopeTests : DependencyTestsBase
         container.Dispose();
 
         ((resolved as DisposableDependency)?.IsDisposed).TestEquals( true ).Go();
+    }
+
+    [Fact]
+    public void Dispose_ThroughRootScope_ShouldDisposeOwnedSingletonAsyncDisposableDependenciesResolvedByChildScope_BasedOnImplementor()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IAsyncDisposable>().SetLifetime( DependencyLifetime.Singleton ).FromType<AsyncDisposableDependency>();
+        var container = builder.Build();
+        var sut = container.RootScope.BeginScope();
+
+        var resolved = sut.Locator.Resolve<IAsyncDisposable>();
+
+        container.Dispose();
+
+        ((resolved as AsyncDisposableDependency)?.IsDisposed).TestEquals( true ).Go();
     }
 
     [Fact]

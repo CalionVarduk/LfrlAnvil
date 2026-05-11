@@ -35,6 +35,7 @@ internal sealed class OpenGenericDependencyBuilder : IOpenGenericDependencyBuild
     public bool IsLastInRange => ReferenceEquals( this, InternalRangeBuilder.TryGetLast() );
     public int RangeIndex => InternalRangeBuilder.InternalElements.IndexOf( this );
     public bool IsOpenGeneric => true;
+    public bool IsGlobal => false;
     public Type DependencyType => InternalRangeBuilder.DependencyType;
     public IDependencyKey? SharedImplementorKey => InternalSharedImplementorKey;
     public IOpenGenericDependencyRangeBuilder RangeBuilder => InternalRangeBuilder;

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ internal sealed class EmptyRangeResolver : DependencyResolver
     private readonly object _instance;
 
     internal EmptyRangeResolver(ulong id, Type implementorType, object instance)
-        : base( id, implementorType, DependencyImplementorDisposalStrategy.RenounceOwnership() )
+        : base( id, implementorType, ResolvedInstanceDisposalStrategy.RenounceOwnership() )
     {
         _instance = instance;
     }

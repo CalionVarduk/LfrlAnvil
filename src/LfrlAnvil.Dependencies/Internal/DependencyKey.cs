@@ -15,7 +15,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Dependencies.Internal.Builders;
 using LfrlAnvil.Extensions;
 
@@ -32,6 +34,28 @@ internal sealed class DependencyKey : IInternalDependencyKey
     public Type? KeyType => null;
     public object? Key => null;
     public bool IsKeyed => false;
+
+    [Pure]
+    public static IInternalDependencyKey CreateKeyedTypeErased(
+        Dictionary<Type, Func<Type, object, IInternalDependencyKey>> keyFactories,
+        Type type,
+        object key)
+    {
+        var keyType = key.GetType();
+        ref var provider = ref CollectionsMarshal.GetValueRefOrAddDefault( keyFactories, keyType, out var exists )!;
+        if ( ! exists )
+        {
+            var dependencyKeyType = typeof( DependencyKey<> ).MakeGenericType( keyType );
+            var providerMethod = dependencyKeyType.GetMethod(
+                nameof( DependencyKey<object>.CreateTypeErased ),
+                BindingFlags.NonPublic | BindingFlags.Static );
+
+            Assume.IsNotNull( providerMethod );
+            provider = providerMethod.CreateDelegate<Func<Type, object, IInternalDependencyKey>>();
+        }
+
+        return provider( type, key );
+    }
 
     [Pure]
     public override string ToString()
@@ -114,6 +138,12 @@ internal sealed class DependencyKey<TKey> : IInternalDependencyKey, IDependencyK
     public bool IsKeyed => true;
 
     object IDependencyKey.Key => Key;
+
+    [Pure]
+    internal static IInternalDependencyKey CreateTypeErased(Type type, object key)
+    {
+        return new DependencyKey<TKey>( type, ( TKey )key );
+    }
 
     [Pure]
     public override string ToString()

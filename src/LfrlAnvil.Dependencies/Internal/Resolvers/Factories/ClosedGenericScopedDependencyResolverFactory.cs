@@ -32,12 +32,12 @@ internal sealed class ClosedGenericScopedDependencyResolverFactory : RegisteredC
                 ? new ScopedDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     expression )
                 : new CycleTrackingScopedDependencyResolver(
                     idGenerator.Generate(),
                     ImplementorKey.Value.Type,
-                    Base.ImplementorBuilder.DisposalStrategy,
+                    DisposalStrategy,
                     Base.ImplementorBuilder.OnResolvingCallback,
                     expression );
     }

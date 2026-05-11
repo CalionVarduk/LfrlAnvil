@@ -69,7 +69,7 @@ internal abstract class RegisteredConstructableDependencyResolverFactory : Regis
             if ( resolution is null )
                 expressionBuilder.AddDefaultResolution( instanceType, name );
             else if ( resolution is Expression<Func<IDependencyScope, MemberInfo, object>> expression )
-                expressionBuilder.AddExpressionResolution( instanceType, name, member, expression );
+                expressionBuilder.AddExpressionResolution( instanceType, name, member.GetActualMember(), expression );
             else
             {
                 var factory = ReinterpretCast.To<DependencyResolverFactory>( resolution );

@@ -28,19 +28,19 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
     internal CycleTrackingSingletonDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Func<IDependencyScope, object> factory)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
         _instance = null;
-        _factory = factory;
+        _factory = factory.SanitizeExternalFactory( ImplementorType );
     }
 
     internal CycleTrackingSingletonDependencyResolver(
         ulong id,
         Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
+        ResolvedInstanceDisposalStrategy disposalStrategy,
         Action<Type, IDependencyScope>? onResolvingCallback,
         Expression<Func<DependencyScope, object>> expression)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )

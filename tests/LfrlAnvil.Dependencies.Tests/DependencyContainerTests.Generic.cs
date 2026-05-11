@@ -1362,6 +1362,40 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingDependency_WithCustomKeyProviders()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( ChainableGenericQux<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( ChainableFieldGenericQux<> ) );
+
+            builder.Configuration
+                .SetConstructorParameterKeyProvider( p =>
+                    p.ParameterType.IsGenericType && p.ParameterType.GetGenericTypeDefinition() == typeof( IGenericFoo<> ) ? 1 : null )
+                .SetMemberKeyProvider( m =>
+                    m is FieldInfo field
+                    && field.FieldType.IsGenericType
+                    && field.FieldType.GetGenericTypeDefinition() == typeof( Injected<> )
+                    && field.FieldType.GetGenericArguments()[0].IsGenericType
+                    && field.FieldType.GetGenericArguments()[0].GetGenericTypeDefinition() == typeof( IGenericFoo<> )
+                        ? 1
+                        : null );
+
+            builder.Add<Parameterized<IEnumerable<IGenericQux<string>>>>();
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<Parameterized<IEnumerable<IGenericQux<string>>>>();
+
+            result.Inner.TestCount( count => count.TestEquals( 2 ) )
+                .Then( qux => Assertion.All(
+                    qux[0].TestType().Exact<ChainableGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ),
+                    qux[1]
+                        .TestType()
+                        .Exact<ChainableFieldGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependencyDirectly_ShouldThrowOpenGenericDependencyException()
         {
             var builder = new DependencyContainerBuilder();
@@ -3059,6 +3093,39 @@ public partial class DependencyContainerTests
         }
 
         [Fact]
+        public void ResolvingOpenDependency_WithCustomKeyProviders()
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.GetKeyedLocator( 1 ).AddGeneric( typeof( IGenericFoo<> ) ).FromType( typeof( GenericImplementor<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( ChainableGenericQux<> ) );
+            builder.AddGeneric( typeof( IGenericQux<> ) ).FromType( typeof( ChainableFieldGenericQux<> ) );
+
+            builder.Configuration
+                .SetConstructorParameterKeyProvider( p =>
+                    p.ParameterType.IsGenericType && p.ParameterType.GetGenericTypeDefinition() == typeof( IGenericFoo<> ) ? 1 : null )
+                .SetMemberKeyProvider( m =>
+                    m is FieldInfo field
+                    && field.FieldType.IsGenericType
+                    && field.FieldType.GetGenericTypeDefinition() == typeof( Injected<> )
+                    && field.FieldType.GetGenericArguments()[0].IsGenericType
+                    && field.FieldType.GetGenericArguments()[0].GetGenericTypeDefinition() == typeof( IGenericFoo<> )
+                        ? 1
+                        : null );
+
+            var sut = builder.Build();
+
+            var result = sut.RootScope.Locator.Resolve<IEnumerable<IGenericQux<string>>>();
+
+            result.TestCount( count => count.TestEquals( 2 ) )
+                .Then( qux => Assertion.All(
+                    qux[0].TestType().Exact<ChainableGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ),
+                    qux[1]
+                        .TestType()
+                        .Exact<ChainableFieldGenericQux<string>>( e => e.Foo.TestType().Exact<GenericImplementor<string>>() ) ) )
+                .Go();
+        }
+
+        [Fact]
         public void ResolvingOpenDependency_WithPartiallyClosedImplementorCtor()
         {
             var ctor = typeof( GenericFreeFoo<,> ).SubstituteGenericArguments( null, typeof( int ) ).GetConstructors().First();
@@ -3257,6 +3324,22 @@ public partial class DependencyContainerTests
             var container = builder.Build();
 
             var result = container.RootScope.Locator.TryGetLifetime( typeof( IGenericFoo<> ) );
+
+            result.TestEquals( expected ).Go();
+        }
+
+        [Theory]
+        [InlineData( DependencyLifetime.Transient )]
+        [InlineData( DependencyLifetime.Scoped )]
+        [InlineData( DependencyLifetime.ScopedSingleton )]
+        [InlineData( DependencyLifetime.Singleton )]
+        public void DependencyLocator_TryGetLifetime_ForClosedType_ShouldReturnCorrectResult(DependencyLifetime expected)
+        {
+            var builder = new DependencyContainerBuilder();
+            builder.AddGeneric( typeof( IGenericFoo<> ) ).SetLifetime( expected ).FromType( typeof( GenericImplementor<> ) );
+            var container = builder.Build();
+
+            var result = container.RootScope.Locator.TryGetLifetime( typeof( IGenericFoo<string> ) );
 
             result.TestEquals( expected ).Go();
         }

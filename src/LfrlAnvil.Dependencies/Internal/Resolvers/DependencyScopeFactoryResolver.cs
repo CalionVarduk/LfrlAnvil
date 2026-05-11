@@ -20,7 +20,7 @@ namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 internal sealed class DependencyScopeFactoryResolver : DependencyResolver
 {
     internal DependencyScopeFactoryResolver(ulong id)
-        : base( id, typeof( IDependencyScopeFactory ), DependencyImplementorDisposalStrategy.RenounceOwnership() ) { }
+        : base( id, typeof( IDependencyScopeFactory ), ResolvedInstanceDisposalStrategy.RenounceOwnership() ) { }
 
     internal override DependencyLifetime Lifetime => DependencyLifetime.ScopedSingleton;
 

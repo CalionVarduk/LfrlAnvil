@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ internal class DependencyLocator : IDependencyLocator
     object? IDependencyLocator.Key => null;
     bool IDependencyLocator.IsKeyed => false;
 
-    public object? TryResolveUnsafe(Type type)
+    public object? TryResolve(Type type)
     {
         return InternalAttachedScope.InternalContainer.TryResolveDependency( this, type );
     }
