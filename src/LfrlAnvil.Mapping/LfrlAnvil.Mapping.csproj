@@ -5,12 +5,4 @@
         <Description>This project contains an object mapper, as well as a builder of such a mapper.</Description>
     </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\..\assets\logo-small.png">
-            <Pack>true</Pack>
-            <Visible>false</Visible>
-            <PackagePath>\</PackagePath>
-        </None>
-    </ItemGroup>
-
 </Project>

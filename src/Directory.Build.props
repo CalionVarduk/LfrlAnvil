@@ -6,7 +6,7 @@
         <PackageId>$(AssemblyName)</PackageId>
         <Product>$(AssemblyName)</Product>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
-        <PackageIcon>logo-small.png</PackageIcon>
+        <PackageIcon>logo.png</PackageIcon>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -27,6 +27,15 @@
         <None Include=".docs\readme.md">
             <Pack>true</Pack>
             <PackagePath>\</PackagePath>
+        </None>
+        <None Condition="Exists('.docs\THIRD-PARTY-LICENSES.txt')" Include=".docs\THIRD-PARTY-LICENSES.txt">
+            <Pack>true</Pack>
+            <PackagePath>licenses\THIRD-PARTY-LICENSES.txt</PackagePath>
+        </None>
+        <None Include="$(MSBuildThisFileDirectory)..\assets\logo-small.png">
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>logo.png</PackagePath>
         </None>
     </ItemGroup>
 

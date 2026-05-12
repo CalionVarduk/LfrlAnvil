@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
+
 namespace LfrlAnvil.Dependencies.Tests;
 
 public abstract class DependencyTestsBase : TestsBase

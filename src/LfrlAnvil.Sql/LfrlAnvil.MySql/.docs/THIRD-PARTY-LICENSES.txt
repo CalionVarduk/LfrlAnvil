@@ -1,0 +1,28 @@
+﻿License notice for MySqlConnector (v2.3.7)
+------------------------------------
+
+https://github.com/mysql-net/MySqlConnector.git at 72ee684ed0e04e5f39d6e0757a1963e4aa36807f
+
+https://mysqlconnector.net/
+
+Copyright 2016–2024 Bradley Grainger
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Extensions.Logging.Abstractions (v7.0.1)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5b20af47d99620150c53eaf5db8636fdf730b126
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+

@@ -5,12 +5,4 @@
         <Description>This project contains an intermediate request dispatcher, as well as a factory of request handlers.</Description>
     </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\..\assets\logo-small.png">
-            <Pack>true</Pack>
-            <Visible>false</Visible>
-            <PackagePath>\</PackagePath>
-        </None>
-    </ItemGroup>
-
 </Project>

@@ -6,12 +6,4 @@
         <RootNamespace>LfrlAnvil</RootNamespace>
     </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\..\assets\logo-small.png">
-            <Pack>true</Pack>
-            <Visible>false</Visible>
-            <PackagePath>\</PackagePath>
-        </None>
-    </ItemGroup>
-
 </Project>
