@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Dependencies)](https://www.nuget.org/packages/LfrlAnvil.Dependencies/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Dependencies.svg)](https://www.nuget.org/packages/LfrlAnvil.Dependencies/)
 
 # [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Dependencies](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Dependencies)
 

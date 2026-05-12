@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Functional)](https://www.nuget.org/packages/LfrlAnvil.Functional/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Functional.svg)](https://www.nuget.org/packages/LfrlAnvil.Functional/)
 
 # [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Functional](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Functional)
 

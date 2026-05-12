@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.MessageBroker.Server)](https://www.nuget.org/packages/LfrlAnvil.MessageBroker.Server/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.MessageBroker.Server.svg)](https://www.nuget.org/packages/LfrlAnvil.MessageBroker.Server/)
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.MessageBroker.Server](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Server)
 

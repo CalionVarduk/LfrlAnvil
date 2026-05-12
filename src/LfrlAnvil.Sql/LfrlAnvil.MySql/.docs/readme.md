@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.MySql)](https://www.nuget.org/packages/LfrlAnvil.MySql/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.MySql.svg)](https://www.nuget.org/packages/LfrlAnvil.MySql/)
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.MySql](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.MySql)
 

@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Computable.Expressions)](https://www.nuget.org/packages/LfrlAnvil.Computable.Expressions/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Computable.Expressions.svg)](https://www.nuget.org/packages/LfrlAnvil.Computable.Expressions/)
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.Computable.Expressions](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Computable/LfrlAnvil.Computable.Expressions)
 

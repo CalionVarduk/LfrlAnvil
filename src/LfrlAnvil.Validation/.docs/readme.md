@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Validation)](https://www.nuget.org/packages/LfrlAnvil.Validation/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Validation.svg)](https://www.nuget.org/packages/LfrlAnvil.Validation/)
 
 # [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Validation](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Validation)
 

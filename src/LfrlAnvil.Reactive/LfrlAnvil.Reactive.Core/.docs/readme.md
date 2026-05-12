@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Reactive.Core)](https://www.nuget.org/packages/LfrlAnvil.Reactive.Core/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Reactive.Core.svg)](https://www.nuget.org/packages/LfrlAnvil.Reactive.Core/)
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.Reactive.Core](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Core)
 

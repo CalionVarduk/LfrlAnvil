@@ -1,5 +1,5 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
-[![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Sqlite)](https://www.nuget.org/packages/LfrlAnvil.Sqlite/)
+[![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Sqlite.svg)](https://www.nuget.org/packages/LfrlAnvil.Sqlite/)
 
 # [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.Sqlite](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.Sqlite)
 
