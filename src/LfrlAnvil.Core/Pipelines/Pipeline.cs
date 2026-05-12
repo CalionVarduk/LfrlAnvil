@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class Pipeline<TArgs, TResult> : IPipeline<TArgs, TResult>
     public virtual TResult Invoke(TArgs args)
     {
         var context = new PipelineContext<TArgs, TResult>( args, DefaultResult );
-        ReinterpretCast.To<IPipelineProcessor<TArgs, TResult>>( this ).Process( context );
+        (( IPipelineProcessor<TArgs, TResult> )this).Process( context );
         return context.Result;
     }
 

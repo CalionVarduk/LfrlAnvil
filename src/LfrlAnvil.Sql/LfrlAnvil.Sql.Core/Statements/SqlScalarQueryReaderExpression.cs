@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public readonly struct SqlScalarQueryReaderExpression<T>
     {
         Assume.Equals( @base.ResultType, typeof( T ) );
         Dialect = @base.Dialect;
-        Expression = ReinterpretCast.To<Expression<Func<IDataReader, SqlScalarQueryResult<T>>>>( @base.Expression );
+        Expression = ( Expression<Func<IDataReader, SqlScalarQueryResult<T>>> )@base.Expression;
     }
 
     /// <summary>

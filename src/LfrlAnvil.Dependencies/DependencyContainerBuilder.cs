@@ -206,7 +206,7 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
     IDependencyLocatorBuilder IDependencyLocatorBuilder.SetDefaultLifetime(DependencyLifetime lifetime)
     {
-        return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultLifetime( lifetime );
+        return (( IDependencyContainerBuilder )this).SetDefaultLifetime( lifetime );
     }
 
     IDependencyContainerBuilder IDependencyContainerBuilder.SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
@@ -216,6 +216,6 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
     IDependencyLocatorBuilder IDependencyLocatorBuilder.SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
     {
-        return ReinterpretCast.To<IDependencyContainerBuilder>( this ).SetDefaultDisposalStrategy( strategy );
+        return (( IDependencyContainerBuilder )this).SetDefaultDisposalStrategy( strategy );
     }
 }

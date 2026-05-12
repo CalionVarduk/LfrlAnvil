@@ -492,11 +492,11 @@ public static class SqlObjectExtensions
                     switch ( constraint.Type )
                     {
                         case SqlObjectType.Check:
-                            checks.Add( ReinterpretCast.To<ISqlCheckBuilder>( constraint ).ToDefinitionNode() );
+                            checks.Add( (( ISqlCheckBuilder )constraint).ToDefinitionNode() );
                             break;
 
                         case SqlObjectType.ForeignKey:
-                            foreignKeys?.Add( ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t ) );
+                            foreignKeys?.Add( (( ISqlForeignKeyBuilder )constraint).ToDefinitionNode( t ) );
                             break;
                     }
                 }

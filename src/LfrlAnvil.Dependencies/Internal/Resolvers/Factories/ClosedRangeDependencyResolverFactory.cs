@@ -46,8 +46,9 @@ internal sealed class ClosedRangeDependencyResolverFactory : RangeDependencyReso
                 if ( ! factory.ImplementorKey.IsShared || factory is not RegisteredClosedGenericDependencyResolverFactory genericFactory )
                     continue;
 
-                var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( genericFactory.ImplementorKey.Value )
-                    .GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
+                var implementorStore = genericFactory.InternalImplementorKey.GetTargetResolversStore(
+                    in globalResolvers,
+                    in keyedResolversStore );
 
                 var resolver = genericFactory.GetResolver();
                 implementorStore.SharedGenericResolvers.TryAdd(

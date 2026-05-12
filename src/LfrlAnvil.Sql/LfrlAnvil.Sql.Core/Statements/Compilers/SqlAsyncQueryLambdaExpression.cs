@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,9 +92,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
 
         if ( _populatesFieldTypes )
         {
-            var readRowDelegate = ReinterpretCast.To<Expression<Func<TDataReader, int[], SqlResultSetField[], TRow>>>( ReadRowExpression )
-                .Compile();
-
+            var readRowDelegate = (( Expression<Func<TDataReader, int[], SqlResultSetField[], TRow>> )ReadRowExpression).Compile();
             return async (reader, options, cancellationToken) =>
             {
                 var concreteReader = ( TDataReader )reader;
@@ -116,9 +114,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
         }
         else
         {
-            var readRowDelegate = ReinterpretCast.To<Expression<Func<TDataReader, int[], TRow>>>( ReadRowExpression )
-                .Compile();
-
+            var readRowDelegate = (( Expression<Func<TDataReader, int[], TRow>> )ReadRowExpression).Compile();
             return async (reader, options, cancellationToken) =>
             {
                 var concreteReader = ( TDataReader )reader;

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public readonly struct SqlParameterBinderExpression<TSource>
     {
         Assume.Equals( typeof( TSource ), @base.SourceType );
         Dialect = @base.Dialect;
-        Expression = ReinterpretCast.To<Expression<Action<IDbCommand, TSource>>>( @base.Expression );
+        Expression = ( Expression<Action<IDbCommand, TSource>> )@base.Expression;
     }
 
     /// <summary>

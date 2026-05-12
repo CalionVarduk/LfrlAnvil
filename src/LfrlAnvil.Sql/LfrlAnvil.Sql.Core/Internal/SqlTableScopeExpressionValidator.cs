@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class SqlTableScopeExpressionValidator : SqlExpressionValidator
             return;
         }
 
-        var column = ReinterpretCast.To<SqlColumnBuilder>( node.Value );
+        var column = ( SqlColumnBuilder )node.Value;
         if ( column.IsRemoved )
             AddForbiddenNode( node );
         else

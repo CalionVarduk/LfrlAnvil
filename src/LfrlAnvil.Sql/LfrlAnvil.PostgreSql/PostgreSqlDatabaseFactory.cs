@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,11 +71,11 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
     [Pure]
     protected override NpgsqlConnection CreateConnection(DbConnectionStringBuilder connectionString)
     {
-        var pgsqlConnectionString = ReinterpretCast.To<NpgsqlConnectionStringBuilder>( connectionString );
-        var database = pgsqlConnectionString.Database;
-        pgsqlConnectionString.Database = null;
-        var result = new NpgsqlConnection( pgsqlConnectionString.ToString() );
-        pgsqlConnectionString.Database = database;
+        var npgsqlConnectionString = ReinterpretCast.To<NpgsqlConnectionStringBuilder>( connectionString );
+        var database = npgsqlConnectionString.Database;
+        npgsqlConnectionString.Database = null;
+        var result = new NpgsqlConnection( npgsqlConnectionString.ToString() );
+        npgsqlConnectionString.Database = database;
         return result;
     }
 

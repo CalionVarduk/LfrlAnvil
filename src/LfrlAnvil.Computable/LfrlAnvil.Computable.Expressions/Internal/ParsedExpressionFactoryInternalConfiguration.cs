@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -288,14 +288,14 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
 
             if ( ! TokenConstants.AreEqual( _info.NumberDecimalSeparator, configuration.DecimalPoint ) )
             {
-                _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
+                _info = ( NumberFormatInfo )_info.Clone();
                 _info.NumberDecimalSeparator = configuration.DecimalPoint.ToString();
             }
 
             if ( ! TokenConstants.AreEqual( _info.NumberGroupSeparator, configuration.IntegerDigitSeparator ) )
             {
                 if ( _info.IsReadOnly )
-                    _info = ReinterpretCast.To<NumberFormatInfo>( _info.Clone() );
+                    _info = ( NumberFormatInfo )_info.Clone();
 
                 _info.NumberGroupSeparator = configuration.IntegerDigitSeparator.ToString();
             }

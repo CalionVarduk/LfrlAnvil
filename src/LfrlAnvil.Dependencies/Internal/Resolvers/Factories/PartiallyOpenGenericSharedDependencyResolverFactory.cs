@@ -272,7 +272,7 @@ internal sealed class PartiallyOpenGenericSharedDependencyResolverFactory : Regi
             Base.ImplementorBuilder.OnResolvingCallback,
             Base.ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
             configuration.InjectablePropertyType,
-            ReinterpretCast.To<IInternalDependencyKey>( Base.ImplementorKey.Value ),
+            Base.InternalImplementorKey,
             isShared: true,
             ! Base.IsLastRangeElement,
             Lifetime );

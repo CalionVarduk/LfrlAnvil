@@ -383,7 +383,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
             ImplementorBuilder.OnResolvingCallback,
             ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback,
             configuration.InjectablePropertyType,
-            ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value ),
+            InternalImplementorKey,
             ImplementorKey.IsShared,
             ! IsLastRangeElement,
             Lifetime );

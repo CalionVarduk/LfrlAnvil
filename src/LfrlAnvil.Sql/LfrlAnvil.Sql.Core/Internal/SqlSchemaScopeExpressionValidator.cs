@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class SqlSchemaScopeExpressionValidator : SqlExpressionValidator
             return;
         }
 
-        var column = ReinterpretCast.To<SqlColumnBuilder>( node.Value );
+        var column = ( SqlColumnBuilder )node.Value;
         if ( column.IsRemoved )
             AddForbiddenNode( node );
         else
@@ -109,7 +109,7 @@ public class SqlSchemaScopeExpressionValidator : SqlExpressionValidator
             return;
         }
 
-        var table = ReinterpretCast.To<SqlTableBuilder>( node.Table );
+        var table = ( SqlTableBuilder )node.Table;
         if ( table.IsRemoved )
             AddForbiddenNode( node );
         else
@@ -129,7 +129,7 @@ public class SqlSchemaScopeExpressionValidator : SqlExpressionValidator
             return;
         }
 
-        var view = ReinterpretCast.To<SqlViewBuilder>( node.View );
+        var view = ( SqlViewBuilder )node.View;
         if ( view.IsRemoved )
             AddForbiddenNode( node );
         else

@@ -68,9 +68,7 @@ internal abstract class RegisteredClosedGenericDependencyResolverFactory : Regis
         if ( ! ImplementorKey.IsShared )
             return;
 
-        var implementorStore = ReinterpretCast.To<IInternalDependencyKey>( ImplementorKey.Value )
-            .GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
-
+        var implementorStore = InternalImplementorKey.GetTargetResolversStore( in globalResolvers, in keyedResolversStore );
         var resolver = GetResolver();
         implementorStore.SharedGenericResolvers.TryAdd(
             new SharedGenericKey( Base.ImplementorKey.Value.Type, ImplementorKey.Value.Type, Lifetime ),
