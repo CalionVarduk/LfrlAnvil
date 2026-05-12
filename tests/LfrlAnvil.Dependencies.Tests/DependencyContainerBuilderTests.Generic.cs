@@ -1223,6 +1223,22 @@ public partial class DependencyContainerBuilderTests
                 .Go();
         }
 
+        [Theory]
+        [InlineData( typeof( GenericRefTypeFoo<> ) )]
+        [InlineData( typeof( GenericValueTypeFoo<> ) )]
+        [InlineData( typeof( GenericDefaultCtorFoo<> ) )]
+        [InlineData( typeof( GenericDisposableFoo<> ) )]
+        public void TryBuild_ShouldReturnCorrectResult_WhenExplicitTypeAddsMoreGenericConstraints_ButTheirVerificationIsDisabled(Type type)
+        {
+            var sut = new DependencyContainerBuilder();
+            sut.Configuration.EnableOpenGenericArgumentConstraintsVerification( false );
+            sut.AddGeneric( typeof( IGenericFoo<> ) ).FromType( type );
+
+            var result = sut.TryBuild();
+
+            result.IsOk.TestTrue().Go();
+        }
+
         [Fact]
         public void TryBuild_ShouldReturnFailureResult_WhenExplicitTypeIsAbstract()
         {

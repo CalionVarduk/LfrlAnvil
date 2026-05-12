@@ -22,6 +22,7 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
                 sut.Configuration.InjectablePropertyType.TestRefEquals( typeof( Injected<> ) ),
                 sut.Configuration.OptionalDependencyAttributeType.TestRefEquals( typeof( OptionalDependencyAttribute ) ),
                 sut.Configuration.TreatCaptiveDependenciesAsErrors.TestFalse(),
+                sut.Configuration.VerifyOpenGenericArgumentConstraints.TestTrue(),
                 (( IDependencyLocatorBuilder )sut).KeyType.TestNull(),
                 (( IDependencyLocatorBuilder )sut).Key.TestNull(),
                 (( IDependencyLocatorBuilder )sut).IsKeyed.TestFalse() )
@@ -185,6 +186,21 @@ public partial class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.TestRefEquals( sut.Configuration ),
                 sut.Configuration.TreatCaptiveDependenciesAsErrors.TestEquals( enabled ) )
+            .Go();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void Configuration_EnableOpenGenericArgumentConstraintsVerification_ShouldUpdateTheOptions(bool enabled)
+    {
+        IDependencyContainerBuilder sut = new DependencyContainerBuilder();
+
+        var result = sut.Configuration.EnableOpenGenericArgumentConstraintsVerification( enabled );
+
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.VerifyOpenGenericArgumentConstraints.TestEquals( enabled ) )
             .Go();
     }
 

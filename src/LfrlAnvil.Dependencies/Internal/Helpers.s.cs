@@ -312,7 +312,7 @@ internal static class Helpers
     }
 
     [Pure]
-    internal static bool IsOpenGenericAssignableTo(this Type type, Type targetType)
+    internal static bool IsOpenGenericAssignableTo(this Type type, Type targetType, bool verifyGenericConstraints = false)
     {
         Assume.True( targetType.IsGenericTypeDefinition );
         if ( ! type.ContainsGenericParameters )
@@ -363,7 +363,7 @@ internal static class Helpers
                 var typeArg = args[index];
                 if ( ! typeArg.IsGenericParameter
                     || ! usedImplementorIndices.Add( index )
-                    || ! AreConstraintsCompatible( targetArgs[i], typeArg ) )
+                    || (verifyGenericConstraints && ! AreConstraintsCompatible( targetArgs[i], typeArg )) )
                 {
                     isValid = false;
                     break;

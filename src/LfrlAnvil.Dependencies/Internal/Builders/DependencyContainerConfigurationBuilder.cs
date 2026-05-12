@@ -28,6 +28,7 @@ internal sealed class DependencyContainerConfigurationBuilder : IDependencyConta
         InjectablePropertyType = typeof( Injected<> );
         OptionalDependencyAttributeType = typeof( OptionalDependencyAttribute );
         TreatCaptiveDependenciesAsErrors = false;
+        VerifyOpenGenericArgumentConstraints = true;
         ConstructorParameterKeyProvider = null;
         MemberKeyProvider = null;
     }
@@ -35,6 +36,7 @@ internal sealed class DependencyContainerConfigurationBuilder : IDependencyConta
     public Type InjectablePropertyType { get; private set; }
     public Type OptionalDependencyAttributeType { get; private set; }
     public bool TreatCaptiveDependenciesAsErrors { get; private set; }
+    public bool VerifyOpenGenericArgumentConstraints { get; private set; }
     public Func<ParameterInfo, object?>? ConstructorParameterKeyProvider { get; private set; }
     public Func<MemberInfo, object?>? MemberKeyProvider { get; private set; }
 
@@ -67,6 +69,12 @@ internal sealed class DependencyContainerConfigurationBuilder : IDependencyConta
     public IDependencyContainerConfigurationBuilder EnableTreatingCaptiveDependenciesAsErrors(bool enabled = true)
     {
         TreatCaptiveDependenciesAsErrors = enabled;
+        return this;
+    }
+
+    public IDependencyContainerConfigurationBuilder EnableOpenGenericArgumentConstraintsVerification(bool enabled = true)
+    {
+        VerifyOpenGenericArgumentConstraints = enabled;
         return this;
     }
 

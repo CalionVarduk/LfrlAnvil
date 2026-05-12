@@ -133,7 +133,8 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
 
         var locatorBuilders = _locatorBuilderStore.GetAll();
         foreach ( var locatorBuilder in locatorBuilders )
-            messages = messages.Extend( locatorBuilder.ExtractResolverFactories( _locatorBuilderStore, in extractionParams ) );
+            messages = messages.Extend(
+                locatorBuilder.ExtractResolverFactories( _locatorBuilderStore, in extractionParams, _configuration ) );
 
         extractionParams.FinalizeDefaultResolverFactories( idGenerator );
         foreach ( var locatorBuilder in locatorBuilders )

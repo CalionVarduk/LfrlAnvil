@@ -138,7 +138,8 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
 
     internal Chain<DependencyContainerBuildMessages> ExtractResolverFactories(
         DependencyLocatorBuilderStore locatorBuilderStore,
-        in DependencyLocatorBuilderExtractionParams @params)
+        in DependencyLocatorBuilderExtractionParams @params,
+        DependencyContainerConfigurationBuilder configuration)
     {
         var messages = Chain<DependencyContainerBuildMessages>.Empty;
 
@@ -149,12 +150,14 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                     locatorBuilderStore,
                     in @params,
                     ReinterpretCast.To<OpenGenericDependencyRangeBuilder>( rangeBuilder ),
+                    configuration,
                     ref messages );
             else
                 ExtractClosedTypeResolverFactories(
                     locatorBuilderStore,
                     in @params,
                     ReinterpretCast.To<DependencyRangeBuilder>( rangeBuilder ),
+                    configuration,
                     ref messages );
         }
 
@@ -166,6 +169,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderStore locatorBuilderStore,
         in DependencyLocatorBuilderExtractionParams @params,
         DependencyRangeBuilder rangeBuilder,
+        DependencyContainerConfigurationBuilder configuration,
         ref Chain<DependencyContainerBuildMessages> messages)
     {
         var dependencyKey = CreateImplementorKey( rangeBuilder.DependencyType );
@@ -180,6 +184,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 in @params,
                 ImplementorKey.Create( dependencyKey ),
                 builder,
+                configuration,
                 isLastInRange: true,
                 out var m );
 
@@ -225,6 +230,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 in @params,
                 ImplementorKey.Create( dependencyKey, i ),
                 builder,
+                configuration,
                 isLastInRange: false,
                 out var m );
 
@@ -246,6 +252,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         DependencyLocatorBuilderStore locatorBuilderStore,
         in DependencyLocatorBuilderExtractionParams @params,
         OpenGenericDependencyRangeBuilder rangeBuilder,
+        DependencyContainerConfigurationBuilder configuration,
         ref Chain<DependencyContainerBuildMessages> messages)
     {
         var builderSpan = CollectionsMarshal.AsSpan( rangeBuilder.InternalElements );
@@ -259,6 +266,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             in @params,
             ImplementorKey.Create( dependencyKey ),
             builder,
+            configuration,
             isLastInRange: true,
             out var m );
 
@@ -299,6 +307,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 in @params,
                 ImplementorKey.Create( dependencyKey, i ),
                 builder,
+                configuration,
                 isLastInRange: false,
                 out m );
 
@@ -321,6 +330,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         in DependencyLocatorBuilderExtractionParams @params,
         ImplementorKey closedKey,
         IInternalDependencyBuilder builder,
+        DependencyContainerConfigurationBuilder configuration,
         bool isLastInRange,
         out Chain<DependencyContainerBuildMessages> messages)
     {
@@ -342,6 +352,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
                 ? ImplementorKey.CreateShared( openDependencyKey )
                 : ImplementorKey.Create( openDependencyKey, closedKey.RangeIndex ),
             openBuilder,
+            configuration,
             isLastInRange,
             out messages );
 
@@ -426,6 +437,7 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
         in DependencyLocatorBuilderExtractionParams @params,
         ImplementorKey key,
         OpenGenericDependencyBuilder builder,
+        DependencyContainerConfigurationBuilder configuration,
         bool isLastInRange,
         out Chain<DependencyContainerBuildMessages> messages)
     {
@@ -438,7 +450,9 @@ internal class DependencyLocatorBuilder : IDependencyLocatorBuilder
             return new OpenGenericDependencyResolverFactory( key, builder.Lifetime, implementorBuilder, isLastInRange );
         }
 
-        if ( ! builder.InternalSharedImplementorKey.Type.IsOpenGenericAssignableTo( key.Value.Type ) )
+        if ( ! builder.InternalSharedImplementorKey.Type.IsOpenGenericAssignableTo(
+            key.Value.Type,
+            configuration.VerifyOpenGenericArgumentConstraints ) )
             errors = errors.Extend( Resources.ProvidedSharedImplementorTypeIsIncorrect( builder.InternalSharedImplementorKey.Type ) );
 
         var openDependencyKey = builder.InternalSharedImplementorKey;

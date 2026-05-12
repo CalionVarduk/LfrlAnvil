@@ -39,6 +39,11 @@ public interface IDependencyContainerConfigurationBuilder
     bool TreatCaptiveDependenciesAsErrors { get; }
 
     /// <summary>
+    /// Specifies whether open generic registrations should verify if their implementor types don't add more generic argument constraints.
+    /// </summary>
+    bool VerifyOpenGenericArgumentConstraints { get; }
+
+    /// <summary>
     /// Specifies a delegate which allows to provide a custom locator key for constructor parameters.
     /// </summary>
     Func<ParameterInfo, object?>? ConstructorParameterKeyProvider { get; }
@@ -76,6 +81,13 @@ public interface IDependencyContainerConfigurationBuilder
     /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
     /// <returns><b>this</b>.</returns>
     IDependencyContainerConfigurationBuilder EnableTreatingCaptiveDependenciesAsErrors(bool enabled = true);
+
+    /// <summary>
+    /// Sets the <see cref="VerifyOpenGenericArgumentConstraints"/> of this instance.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns><b>this</b>.</returns>
+    IDependencyContainerConfigurationBuilder EnableOpenGenericArgumentConstraintsVerification(bool enabled = true);
 
     /// <summary>
     /// Sets the <see cref="ConstructorParameterKeyProvider"/> of this instance.

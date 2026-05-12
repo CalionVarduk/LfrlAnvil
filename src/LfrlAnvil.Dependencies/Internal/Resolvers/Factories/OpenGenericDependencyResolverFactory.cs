@@ -129,7 +129,10 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         if ( ctor is not null )
         {
             var declaringType = ctor.DeclaringType;
-            if ( declaringType is null || ! declaringType.IsOpenGenericAssignableTo( ImplementorKey.Value.Type ) )
+            if ( declaringType is null
+                || ! declaringType.IsOpenGenericAssignableTo(
+                    ImplementorKey.Value.Type,
+                    configuration.VerifyOpenGenericArgumentConstraints ) )
                 Errors = Errors.Extend( Resources.ProvidedConstructorDoesNotCreateInstancesOfCorrectType( ctor ) );
 
             if ( declaringType?.IsAbstract != false )
@@ -143,7 +146,7 @@ internal sealed class OpenGenericDependencyResolverFactory : RegisteredDependenc
         if ( explicitType is not null )
         {
             type = explicitType;
-            if ( ! explicitType.IsOpenGenericAssignableTo( ImplementorKey.Value.Type ) )
+            if ( ! explicitType.IsOpenGenericAssignableTo( ImplementorKey.Value.Type, configuration.VerifyOpenGenericArgumentConstraints ) )
                 Errors = Errors.Extend( Resources.ProvidedTypeIsIncorrect( explicitType ) );
         }
         else

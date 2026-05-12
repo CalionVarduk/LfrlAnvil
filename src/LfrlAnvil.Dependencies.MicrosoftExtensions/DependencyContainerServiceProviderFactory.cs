@@ -30,6 +30,7 @@ public sealed class DependencyContainerServiceProviderFactory : IServiceProvider
     private readonly Action<DependencyContainerBuilder>? _onBuild;
     private readonly Action<DependencyContainerBuildResult<DependencyContainer>>? _onCreated;
     private readonly bool _supportFromKeyedServicesAttribute;
+    private readonly bool _verifyGenericConstraints;
 
     /// <summary>
     /// Creates a new <see cref="DependencyContainerServiceProviderFactory"/> instance.
@@ -38,6 +39,10 @@ public sealed class DependencyContainerServiceProviderFactory : IServiceProvider
     /// Specifies whether to support <see cref="FromKeyedServicesAttribute"/> usage in constructor parameters.
     /// Equal to <b>true</b> by default.
     /// </param>
+    /// <param name="verifyGenericConstraints">
+    /// Specifies whether open generic registrations should verify if their implementor types don't add more generic argument constraints.
+    /// Equal to <b>false</b> by default.
+    /// </param>
     /// <param name="onBuild">
     /// Optional delegate invoked after created dependency container builder
     /// has been populated with <see cref="IServiceCollection"/> descriptors.
@@ -45,10 +50,12 @@ public sealed class DependencyContainerServiceProviderFactory : IServiceProvider
     /// <param name="onCreated">Optional delegate invoked after dependency container build attempt has been made.</param>
     public DependencyContainerServiceProviderFactory(
         bool supportFromKeyedServicesAttribute = true,
+        bool verifyGenericConstraints = false,
         Action<DependencyContainerBuilder>? onBuild = null,
         Action<DependencyContainerBuildResult<DependencyContainer>>? onCreated = null)
     {
         _supportFromKeyedServicesAttribute = supportFromKeyedServicesAttribute;
+        _verifyGenericConstraints = verifyGenericConstraints;
         _onBuild = onBuild;
         _onCreated = onCreated;
     }
@@ -91,6 +98,8 @@ public sealed class DependencyContainerServiceProviderFactory : IServiceProvider
                     ? p => TryReadFromKeyedServicesAttribute( p ) ?? provider( p )
                     : TryReadFromKeyedServicesAttribute );
         }
+
+        containerBuilder.Configuration.EnableOpenGenericArgumentConstraintsVerification( _verifyGenericConstraints );
 
         var result = containerBuilder.TryBuild();
         _onCreated?.Invoke( result );
