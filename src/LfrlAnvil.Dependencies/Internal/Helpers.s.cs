@@ -63,33 +63,32 @@ internal static class Helpers
         {
             using ( ExclusiveLock.Enter( expression ) )
             {
-                if ( compiled is not null )
+                Assume.True( compiled is null || ReferenceEquals( compiled, source.Factory ) );
+                if ( compiled is null )
                 {
-                    Assume.Equals( compiled, source.Factory );
-                    return compiled( scope );
+                    compiled = expression.Compile();
+                    source.Factory = compiled;
                 }
-
-                compiled = expression.Compile();
-                source.Factory = compiled;
             }
 
-            Assume.Equals( compiled, source.Factory );
             return compiled( scope );
         };
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static Func<IDependencyScope, object> SanitizeExternalFactory(this Func<IDependencyScope, object> source, Type expectedType)
+    internal static Expression<Func<DependencyScope, object>> SanitizeExternalFactory(
+        this Func<IDependencyScope, object> factory,
+        Type expectedType)
     {
-        return s =>
-        {
-            var result = source( s );
-            if ( ! expectedType.IsInstanceOfType( result ) )
-                ExceptionThrower.Throw( new InvalidDependencyCastException( expectedType, result.GetType() ) );
+        var expressionBuilder = new ExpressionBuilder(
+            dependencyCount: 1,
+            defaultDependencyCount: 0,
+            implementorType: expectedType,
+            hasRequiredValueTypeDependency: expectedType.IsValueType && Nullable.GetUnderlyingType( expectedType ) is null );
 
-            return result;
-        };
+        var instance = expressionBuilder.AddFactoryCall( factory, expectedType );
+        return expressionBuilder.Build( instance );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -130,19 +129,23 @@ internal static class Helpers
         if ( disposer is null )
             return;
 
+        var failed = false;
         using ( WriteLockSlim.TryEnter( scope.Lock, out var entered ) )
         {
             if ( ! entered || scope.IsDisposedInternal )
-            {
-                if ( disposer.Value.IsAsync )
-                    disposer.Value.TryDisposeAsync().AsTask().GetAwaiter().GetResult();
-                else
-                    disposer.Value.TryDispose();
+                failed = true;
+            else
+                scope.AddDisposer( disposer.Value );
+        }
 
-                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
-            }
+        if ( failed )
+        {
+            if ( disposer.Value.IsAsync )
+                disposer.Value.TryDisposeAsync().AsTask().GetAwaiter().GetResult();
+            else
+                disposer.Value.TryDispose();
 
-            scope.AddDisposer( disposer.Value );
+            ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
         }
     }
 

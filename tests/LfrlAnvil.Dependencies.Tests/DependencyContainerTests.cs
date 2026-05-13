@@ -880,10 +880,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Test( exc => exc.TestType()
-                .Exact<InvalidDependencyCastException>( e => Assertion.All(
-                    e.DependencyType.TestEquals( typeof( IFoo ) ),
-                    e.ResultType.TestEquals( typeof( string ) ) ) ) )
+        action.Test( exc => exc.TestType().Exact<InvalidDependencyCastException>( e => e.DependencyType.TestEquals( typeof( IFoo ) ) ) )
             .Go();
     }
 
@@ -899,10 +896,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( typeof( IFoo ) ) );
 
-        action.Test( exc => exc.TestType()
-                .Exact<InvalidDependencyCastException>( e => Assertion.All(
-                    e.DependencyType.TestEquals( typeof( IFoo ) ),
-                    e.ResultType.TestEquals( typeof( string ) ) ) ) )
+        action.Test( exc => exc.TestType().Exact<InvalidDependencyCastException>( e => e.DependencyType.TestEquals( typeof( IFoo ) ) ) )
             .Go();
     }
 
@@ -1710,10 +1704,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test( exc => exc.TestType()
-                .Exact<InvalidDependencyCastException>( e => Assertion.All(
-                    e.DependencyType.TestEquals( typeof( string ) ),
-                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
+        action.Test( exc => exc.TestType().Exact<InvalidDependencyCastException>( e => e.DependencyType.TestEquals( typeof( string ) ) ) )
             .Go();
     }
 
@@ -1731,10 +1722,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test( exc => exc.TestType()
-                .Exact<InvalidDependencyCastException>( e => Assertion.All(
-                    e.DependencyType.TestEquals( typeof( int ) ),
-                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
+        action.Test( exc => exc.TestType().Exact<InvalidDependencyCastException>( e => e.DependencyType.TestEquals( typeof( int ) ) ) )
             .Go();
     }
 
@@ -1752,10 +1740,7 @@ public partial class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Test( exc => exc.TestType()
-                .Exact<InvalidDependencyCastException>( e => Assertion.All(
-                    e.DependencyType.TestEquals( typeof( byte? ) ),
-                    e.ResultType.TestEquals( typeof( object ) ) ) ) )
+        action.Test( exc => exc.TestType().Exact<InvalidDependencyCastException>( e => e.DependencyType.TestEquals( typeof( byte? ) ) ) )
             .Go();
     }
 

@@ -13,7 +13,9 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Exceptions;
@@ -34,7 +36,8 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
         _instance = null;
-        _factory = factory.SanitizeExternalFactory( ImplementorType );
+        var expression = factory.SanitizeExternalFactory( ImplementorType );
+        _factory = CreateFactory( expression );
     }
 
     internal CycleTrackingSingletonDependencyResolver(
@@ -46,11 +49,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
         _instance = null;
-        _factory = scope =>
-        {
-            var factory = expression.Compile();
-            return factory( scope );
-        };
+        _factory = CreateFactory( expression );
     }
 
     internal override DependencyLifetime Lifetime => DependencyLifetime.Singleton;
@@ -99,5 +98,16 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
                 return _instance;
             }
         }
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static Func<DependencyScope, object> CreateFactory(Expression<Func<DependencyScope, object>> expression)
+    {
+        return scope =>
+        {
+            var factory = expression.Compile();
+            return factory( scope );
+        };
     }
 }

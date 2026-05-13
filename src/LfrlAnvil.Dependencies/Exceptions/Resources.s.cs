@@ -84,13 +84,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string InvalidDependencyType(Type expected, Type? actual)
+    internal static string InvalidDependencyType(Type expected)
     {
-        if ( actual is null )
-            return $"Cannot cast resolved object to expected dependency type '{expected.GetDebugString()}'.";
-
-        return
-            $"Cannot cast resolved object of type '{actual.GetDebugString()}' to expected dependency type '{expected.GetDebugString()}'.";
+        return $"Cannot cast resolved object to expected dependency type '{expected.GetDebugString()}'.";
     }
 
     [Pure]

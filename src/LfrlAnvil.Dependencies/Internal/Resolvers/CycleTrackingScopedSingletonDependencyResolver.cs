@@ -31,7 +31,7 @@ internal sealed class CycleTrackingScopedSingletonDependencyResolver : CycleTrac
         Func<IDependencyScope, object> factory)
         : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
-        Factory = factory.SanitizeExternalFactory( ImplementorType );
+        Factory = factory.SanitizeExternalFactory( ImplementorType ).CreateResolverFactory( this );
     }
 
     internal CycleTrackingScopedSingletonDependencyResolver(

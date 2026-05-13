@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -32,7 +33,7 @@ internal sealed class ExpressionBuilder
 {
     private static readonly MethodInfo ArrayEmptyGenericMethod = typeof( Array ).GetMethod( nameof( Array.Empty ) )!;
 
-    private static readonly Dictionary<Type, MethodInfo> CreateMethodsByResolverType
+    private static readonly FrozenDictionary<Type, MethodInfo> CreateMethodsByResolverType
         = new Dictionary<Type, MethodInfo>( capacity: 11 )
         {
             { typeof( DependencyContainerResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyContainerResolver ) ) },
@@ -61,7 +62,7 @@ internal sealed class ExpressionBuilder
                 typeof( CycleTrackingSingletonDependencyResolver ),
                 Helpers.FindResolverCreateMethod( typeof( CycleTrackingSingletonDependencyResolver ) )
             }
-        };
+        }.ToFrozenDictionary();
 
     private static readonly ConstructorInfo ExceptionCtor =
         typeof( InvalidDependencyCastException ).GetConstructor( new[] { typeof( Type ) } )!;
@@ -200,8 +201,21 @@ internal sealed class ExpressionBuilder
         return variable;
     }
 
+    internal Expression AddFactoryCall(Func<IDependencyScope, object> factory, Type expectedType)
+    {
+        var variable = AddVariable( expectedType, "result" );
+
+        var rawValue = Expression.Invoke(
+            Expression.Constant( factory, typeof( Func<IDependencyScope, object> ) ),
+            AbstractScopeParameter );
+
+        AddRawValueAssignment( variable, rawValue );
+        return variable;
+    }
+
     internal Expression<Func<DependencyScope, object>> Build(Expression instance)
     {
+        instance = instance.GetOrConvert<object>();
         if ( Block.Length == 0 )
             return Expression.Lambda<Func<DependencyScope, object>>( instance, ScopeParameter );
 
