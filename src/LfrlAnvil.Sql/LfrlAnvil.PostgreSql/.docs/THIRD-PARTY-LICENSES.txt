@@ -1,9 +1,9 @@
-﻿License notice for Npgsql (v8.0.3)
+﻿License notice for Npgsql (v8.0.9)
 ------------------------------------
 
-https://github.com/npgsql/npgsql at c5aab163a27a328af4cdb2e2285c7dcc46b2d1d8
+https://github.com/npgsql/npgsql at c641eb2d56004bdff577f7aee487ac88d05de637
 
-Copyright 2023 © The Npgsql Development Team
+Copyright 2025 © The Npgsql Development Team
 
 Licensed under PostgreSQL
 

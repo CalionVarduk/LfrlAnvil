@@ -32,8 +32,11 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
         if ( obj is null )
             return null;
 
-        if ( obj is IEnumerable source )
-            return source.Cast<object?>().Select( o => ConvertDataItem( testMethod, o ) );
+        if ( obj is IEnumerable<object[]> theoryLikeSource )
+            return theoryLikeSource;
+
+        if ( obj is IEnumerable genericSource )
+            return genericSource.Cast<object?>().Select( o => ConvertDataItem( testMethod, o ) );
 
         throw new ArgumentException( $"Method '{MemberName}' did not return IEnumerable" );
     }
@@ -42,7 +45,7 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
 
     protected sealed override object[]? ConvertDataItem(MethodInfo testMethod, object? item)
     {
-        if ( item == null )
+        if ( item is null )
             return null;
 
         if ( item is object[] objArray )

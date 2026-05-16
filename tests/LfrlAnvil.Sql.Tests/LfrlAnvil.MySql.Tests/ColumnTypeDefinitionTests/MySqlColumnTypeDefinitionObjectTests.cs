@@ -109,7 +109,7 @@ public class MySqlColumnTypeDefinitionObjectTests : TestsBase
 
         Assertion.All(
                 parameter.DbType.TestEquals( DbType.Object ),
-                parameter.MySqlDbType.TestEquals( MySqlDbType.Null ),
+                parameter.MySqlDbType.TestEquals( MySqlDbType.Vector ),
                 parameter.IsNullable.TestTrue() )
             .Go();
     }
