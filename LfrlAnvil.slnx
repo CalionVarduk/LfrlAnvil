@@ -1,0 +1,97 @@
+<Solution>
+  <Folder Name="/external/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="readme.md" />
+    <File Path="todo.md" />
+  </Folder>
+  <Folder Name="/external/assets/">
+    <File Path="assets/logo-small.png" />
+    <File Path="assets/logo.png" />
+  </Folder>
+  <Folder Name="/external/scripts/">
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/pages.yml" />
+    <File Path="scripts/build.cake" />
+    <File Path="scripts/docfx-logo.cake" />
+    <File Path="scripts/docfx.cake" />
+    <File Path="scripts/license-headers.cake" />
+    <File Path="scripts/projects.cake" />
+    <File Path="scripts/third-party-licenses.cake" />
+  </Folder>
+  <Folder Name="/misc/">
+    <Project Path="misc/LfrlAnvil.Benchmarks/LfrlAnvil.Benchmarks.csproj" />
+    <Project Path="misc/LfrlAnvil.ConsoleApp/LfrlAnvil.ConsoleApp.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <Project Path="src/LfrlAnvil.Chrono/LfrlAnvil.Chrono.csproj" />
+    <Project Path="src/LfrlAnvil.Collections/LfrlAnvil.Collections.csproj" />
+    <Project Path="src/LfrlAnvil.Core/LfrlAnvil.Core.csproj" />
+    <Project Path="src/LfrlAnvil.Dependencies.MicrosoftExtensions/LfrlAnvil.Dependencies.MicrosoftExtensions.csproj" />
+    <Project Path="src/LfrlAnvil.Dependencies/LfrlAnvil.Dependencies.csproj" />
+    <Project Path="src/LfrlAnvil.Functional/LfrlAnvil.Functional.csproj" />
+    <Project Path="src/LfrlAnvil.Identifiers/LfrlAnvil.Identifiers.csproj" />
+    <Project Path="src/LfrlAnvil.Mapping/LfrlAnvil.Mapping.csproj" />
+    <Project Path="src/LfrlAnvil.Requests/LfrlAnvil.Requests.csproj" />
+    <Project Path="src/LfrlAnvil.Validation/LfrlAnvil.Validation.csproj" />
+  </Folder>
+  <Folder Name="/src/LfrlAnvil.Computable/">
+    <Project Path="src/LfrlAnvil.Computable/LfrlAnvil.Computable.Automata/LfrlAnvil.Computable.Automata.csproj" />
+    <Project Path="src/LfrlAnvil.Computable/LfrlAnvil.Computable.Expressions/LfrlAnvil.Computable.Expressions.csproj" />
+  </Folder>
+  <Folder Name="/src/LfrlAnvil.MessageBroker/">
+    <Project Path="src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Client/LfrlAnvil.MessageBroker.Client.csproj" />
+    <Project Path="src/LfrlAnvil.MessageBroker/LfrlAnvil.MessageBroker.Server/LfrlAnvil.MessageBroker.Server.csproj" />
+  </Folder>
+  <Folder Name="/src/LfrlAnvil.Reactive/">
+    <Project Path="src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Chrono/LfrlAnvil.Reactive.Chrono.csproj" />
+    <Project Path="src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Core/LfrlAnvil.Reactive.Core.csproj" />
+    <Project Path="src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.Queues/LfrlAnvil.Reactive.Queues.csproj" />
+    <Project Path="src/LfrlAnvil.Reactive/LfrlAnvil.Reactive.State/LfrlAnvil.Reactive.State.csproj" />
+  </Folder>
+  <Folder Name="/src/LfrlAnvil.Sql/">
+    <Project Path="src/LfrlAnvil.Sql/LfrlAnvil.MySql/LfrlAnvil.MySql.csproj" />
+    <Project Path="src/LfrlAnvil.Sql/LfrlAnvil.PostgreSql/LfrlAnvil.PostgreSql.csproj" />
+    <Project Path="src/LfrlAnvil.Sql/LfrlAnvil.Sql.Core/LfrlAnvil.Sql.Core.csproj" />
+    <Project Path="src/LfrlAnvil.Sql/LfrlAnvil.Sqlite/LfrlAnvil.Sqlite.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <File Path="tests/xunit.runner.json" />
+    <Project Path="tests/LfrlAnvil.Chrono.Tests/LfrlAnvil.Chrono.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Collections.Tests/LfrlAnvil.Collections.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Core.Tests/LfrlAnvil.Core.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Dependencies.MicrosoftExtensions.Tests/LfrlAnvil.Dependencies.MicrosoftExtensions.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Dependencies.Tests/LfrlAnvil.Dependencies.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Functional.Tests/LfrlAnvil.Functional.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Identifiers.Tests/LfrlAnvil.Identifiers.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Mapping.Tests/LfrlAnvil.Mapping.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Requests.Tests/LfrlAnvil.Requests.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.TestExtensions.Sql/LfrlAnvil.TestExtensions.Sql.csproj" />
+    <Project Path="tests/LfrlAnvil.TestExtensions/LfrlAnvil.TestExtensions.csproj" />
+    <Project Path="tests/LfrlAnvil.Validation.Tests/LfrlAnvil.Validation.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/LfrlAnvil.Computable.Tests/">
+    <Project Path="tests/LfrlAnvil.Computable.Tests/LfrlAnvil.Computable.Automata.Tests/LfrlAnvil.Computable.Automata.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Computable.Tests/LfrlAnvil.Computable.Expressions.Tests/LfrlAnvil.Computable.Expressions.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/LfrlAnvil.MessageBroker.Tests/">
+    <Project Path="tests/LfrlAnvil.MessageBroker.Tests/LfrlAnvil.MessageBroker.Client.Tests/LfrlAnvil.MessageBroker.Client.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.MessageBroker.Tests/LfrlAnvil.MessageBroker.Core.Tests/LfrlAnvil.MessageBroker.Core.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.MessageBroker.Tests/LfrlAnvil.MessageBroker.Server.Tests/LfrlAnvil.MessageBroker.Server.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/LfrlAnvil.Reactive.Tests/">
+    <Project Path="tests/LfrlAnvil.Reactive.Tests/LfrlAnvil.Reactive.Chrono.Tests/LfrlAnvil.Reactive.Chrono.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Reactive.Tests/LfrlAnvil.Reactive.Core.Tests/LfrlAnvil.Reactive.Core.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Reactive.Tests/LfrlAnvil.Reactive.Queues.Tests/LfrlAnvil.Reactive.Queues.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Reactive.Tests/LfrlAnvil.Reactive.State.Tests/LfrlAnvil.Reactive.State.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/LfrlAnvil.Sql.Tests/">
+    <Project Path="tests/LfrlAnvil.Sql.Tests/LfrlAnvil.MySql.Tests/LfrlAnvil.MySql.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Sql.Tests/LfrlAnvil.PostgreSql.Tests/LfrlAnvil.PostgreSql.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Sql.Tests/LfrlAnvil.Sql.Core.Tests/LfrlAnvil.Sql.Core.Tests.csproj" />
+    <Project Path="tests/LfrlAnvil.Sql.Tests/LfrlAnvil.Sqlite.Tests/LfrlAnvil.Sqlite.Tests.csproj" />
+  </Folder>
+</Solution>
