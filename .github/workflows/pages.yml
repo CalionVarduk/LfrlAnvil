@@ -32,10 +32,10 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - run: dotnet tool install --global docfx --version 2.78.2
+      - run: dotnet tool install --global docfx --version 2.78.5
 
       - name: Install Cake tool
-        run: dotnet tool install --global Cake.Tool --version 4.0.0
+        run: dotnet tool install --global Cake.Tool --version 6.1.0
 
       - name: Install tool dependencies
         run: dotnet tool restore
