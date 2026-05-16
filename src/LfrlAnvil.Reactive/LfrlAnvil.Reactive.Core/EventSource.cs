@@ -53,7 +53,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         }
     }
 
-    /// <inheritdoc cref="IEventSource{TEvent}.Subscribers" />
+    /// <inheritdoc cref="IEventSource.Subscribers" />
     public IEventSubscriber[] Subscribers
     {
         get
