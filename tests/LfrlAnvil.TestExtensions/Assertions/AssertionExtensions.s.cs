@@ -435,7 +435,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAll( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAll( elementAssertion, context );
     }
 
     [Pure]
@@ -445,7 +445,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAll( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAll( elementAssertion, context );
     }
 
     [Pure]
@@ -455,7 +455,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAll( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAll( elementAssertion, context );
     }
 
     [Pure]
@@ -465,7 +465,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAll( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAll( elementAssertion, context );
     }
 
     [Pure]
@@ -485,7 +485,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAny( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAny( elementAssertion, context );
     }
 
     [Pure]
@@ -495,7 +495,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAny( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAny( elementAssertion, context );
     }
 
     [Pure]
@@ -505,7 +505,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAny( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAny( elementAssertion, context );
     }
 
     [Pure]
@@ -515,7 +515,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestAny( elementAssertion, context );
+        return subject.ToArray().AsEnumerable().TestAny( elementAssertion, context );
     }
 
     [Pure]
@@ -539,7 +539,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -549,7 +549,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -559,7 +559,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -569,7 +569,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -684,7 +684,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestCount( assertion, context );
+        return subject.ToArray().AsEnumerable().TestCount( assertion, context );
     }
 
     [Pure]
@@ -694,7 +694,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestCount( assertion, context );
+        return subject.ToArray().AsEnumerable().TestCount( assertion, context );
     }
 
     [Pure]
@@ -704,7 +704,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestCount( assertion, context );
+        return subject.ToArray().AsEnumerable().TestCount( assertion, context );
     }
 
     [Pure]
@@ -714,7 +714,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestCount( assertion, context );
+        return subject.ToArray().AsEnumerable().TestCount( assertion, context );
     }
 
     [Pure]
@@ -738,7 +738,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -748,7 +748,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -758,7 +758,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -768,7 +768,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -852,7 +852,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsContiguousSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -862,7 +862,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsContiguousSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -872,7 +872,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsContiguousSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -882,7 +882,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+        return subject.ToArray().AsEnumerable().TestContainsContiguousSequence( elementAssertions, context );
     }
 
     [Pure]
@@ -962,7 +962,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSetEqual( values, context );
+        return subject.ToArray().AsEnumerable().TestSetEqual( values, context );
     }
 
     [Pure]
@@ -972,7 +972,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSetEqual( values, context );
+        return subject.ToArray().AsEnumerable().TestSetEqual( values, context );
     }
 
     [Pure]
@@ -982,7 +982,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSetEqual( values, context );
+        return subject.ToArray().AsEnumerable().TestSetEqual( values, context );
     }
 
     [Pure]
@@ -992,7 +992,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSetEqual( values, context );
+        return subject.ToArray().AsEnumerable().TestSetEqual( values, context );
     }
 
     [Pure]
@@ -1012,7 +1012,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSupersetOf( values, context );
+        return subject.ToArray().AsEnumerable().TestSupersetOf( values, context );
     }
 
     [Pure]
@@ -1022,7 +1022,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSupersetOf( values, context );
+        return subject.ToArray().AsEnumerable().TestSupersetOf( values, context );
     }
 
     [Pure]
@@ -1032,7 +1032,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSupersetOf( values, context );
+        return subject.ToArray().AsEnumerable().TestSupersetOf( values, context );
     }
 
     [Pure]
@@ -1042,7 +1042,7 @@ public static class AssertionExtensions
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return subject.ToArray().TestSupersetOf( values, context );
+        return subject.ToArray().AsEnumerable().TestSupersetOf( values, context );
     }
 
     [Pure]

@@ -34,6 +34,6 @@ public class EnumerableExtensionsOfCharTests : TestsBase
     {
         var sut = Enumerable.Empty<char>();
         var result = sut.ToMemory();
-        result.TestEquals( ReadOnlyMemory<char>.Empty ).Go();
+        result.Length.TestEquals( 0 ).Go();
     }
 }

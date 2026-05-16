@@ -1,7 +1,7 @@
-﻿License notice for Npgsql (v8.0.9)
+﻿License notice for Npgsql (v10.0.2)
 ------------------------------------
 
-https://github.com/npgsql/npgsql at c641eb2d56004bdff577f7aee487ac88d05de637
+https://github.com/npgsql/npgsql at 4d57e27b370e2ab2a350ad8bcef78d7ddd97e5ea
 
 Copyright 2025 © The Npgsql Development Team
 
@@ -10,10 +10,10 @@ Licensed under PostgreSQL
 Available at https://licenses.nuget.org/PostgreSQL
 
 
-License notice for Microsoft.Extensions.DependencyInjection.Abstractions (v8.0.0)
+License notice for Microsoft.Extensions.DependencyInjection.Abstractions (v10.0.0)
 ------------------------------------
 
-https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+https://github.com/dotnet/dotnet at b0f34d51fccc69fd334253924abd8d6853fad7aa
 
 https://dot.net/
 
@@ -24,10 +24,10 @@ Licensed under MIT
 Available at https://licenses.nuget.org/MIT
 
 
-License notice for Microsoft.Extensions.Logging.Abstractions (v8.0.0)
+License notice for Microsoft.Extensions.Logging.Abstractions (v10.0.0)
 ------------------------------------
 
-https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+https://github.com/dotnet/dotnet at b0f34d51fccc69fd334253924abd8d6853fad7aa
 
 https://dot.net/
 

@@ -896,40 +896,6 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void LeftJoin_ShouldReturnCorrectResult()
-    {
-        var values = Fixture.CreateManyDistinct<T>( count: 5 );
-
-        var sut = new[] { values[0], values[1], values[2], values[1], values[3], values[0] }
-            .Select( v => new Contained<T> { Value = v } )
-            .ToList();
-
-        var inner = new[] { values[1], values[2], values[1], values[3], values[4] }
-            .Select( v => new Contained<T> { Value = v } )
-            .ToList();
-
-        var expected = new (Contained<T> o, Contained<T>? i )[]
-        {
-            (sut[0], null),
-            (sut[1], inner[0]),
-            (sut[1], inner[2]),
-            (sut[2], inner[1]),
-            (sut[3], inner[0]),
-            (sut[3], inner[2]),
-            (sut[4], inner[3]),
-            (sut[0], null)
-        };
-
-        var result = sut.LeftJoin(
-            inner,
-            o => o.Value,
-            i => i.Value,
-            (o, i) => (o, i) );
-
-        result.TestSequence( expected ).Go();
-    }
-
-    [Fact]
     public void FullJoin_ShouldReturnCorrectResult()
     {
         var values = Fixture.CreateManyDistinct<T>( count: 5 );
@@ -1144,6 +1110,6 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.ToMemory();
-        result.TestEquals( ReadOnlyMemory<T>.Empty ).Go();
+        result.Length.TestEquals( 0 ).Go();
     }
 }

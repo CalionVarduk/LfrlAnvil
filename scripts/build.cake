@@ -218,7 +218,7 @@ void DotNetPackWithReadmeLogoFix(string projectPath, DotNetPackSettings settings
         var match = logoMatches[i];
         readmeContents.Append(originalReadmeContents.Substring(lastIndex, match.Index - lastIndex));
         if (i == 0)
-            readmeContents.Append("logo.png");
+            readmeContents.Append("https://raw.githubusercontent.com/CalionVarduk/LfrlAnvil/main/assets/logo-small.png");
         else if (i == 1)
             readmeContents.Append(nugetLink);
         else

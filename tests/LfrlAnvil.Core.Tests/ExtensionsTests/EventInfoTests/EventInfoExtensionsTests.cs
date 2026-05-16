@@ -9,7 +9,7 @@ public class EventInfoExtensionsTests : TestsBase
     {
         var @event = typeof( TestEventClass ).GetEvent( nameof( TestEventClass.Foo ) )!;
         var result = @event.GetDebugString( includeDeclaringType: false );
-        result.TestEquals( "System.EventHandler`1[TEventArgs is System.EventArgs] Foo [event]" ).Go();
+        result.TestEquals( "System.EventHandler`1[TEventArgs [in] is System.EventArgs] Foo [event]" ).Go();
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class EventInfoExtensionsTests : TestsBase
         var result = @event.GetDebugString( includeDeclaringType: true );
 
         result.TestEquals(
-                "System.EventHandler`1[TEventArgs is System.EventArgs] LfrlAnvil.Tests.ExtensionsTests.EventInfoTests.TestEventClass.Foo [event]" )
+                "System.EventHandler`1[TEventArgs [in] is System.EventArgs] LfrlAnvil.Tests.ExtensionsTests.EventInfoTests.TestEventClass.Foo [event]" )
             .Go();
     }
 }
