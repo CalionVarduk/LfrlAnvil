@@ -26,7 +26,7 @@ Core:
 - migrate to dotnet10 once most refinements are implemented
   - swap to System.Threading.Lock instead of ExclusiveLock
     - ExclusiveLock may stay for legacy Monitor usage
-  - use directory.packages.props
+  - use directory.packages.props + slnx
 
 ### Terminal
 

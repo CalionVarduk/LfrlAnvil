@@ -14,15 +14,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{09DABFA2
 		tests\xunit.runner.json = tests\xunit.runner.json
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{834C7885-FD66-44D4-A5ED-240E37BED6BD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Benchmarks", "benchmarks\LfrlAnvil.Benchmarks\LfrlAnvil.Benchmarks.csproj", "{D446703D-5C74-4478-BDAE-4813082CDA48}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Benchmarks", "misc\LfrlAnvil.Benchmarks\LfrlAnvil.Benchmarks.csproj", "{D446703D-5C74-4478-BDAE-4813082CDA48}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.TestExtensions", "tests\LfrlAnvil.TestExtensions\LfrlAnvil.TestExtensions.csproj", "{80BD79F2-B835-4789-9FA6-A7238994C7C3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "console", "console", "{DB23EBFC-46F1-4B6A-89D8-E046C7F5BCA3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.ConsoleApp", "console\LfrlAnvil.ConsoleApp\LfrlAnvil.ConsoleApp.csproj", "{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.ConsoleApp", "misc\LfrlAnvil.ConsoleApp\LfrlAnvil.ConsoleApp.csproj", "{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Core", "src\LfrlAnvil.Core\LfrlAnvil.Core.csproj", "{C144B4EF-D4BA-44A0-B969-64CABA302AF7}"
 EndProject
@@ -157,6 +153,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Dependencies.MicrosoftExtensions", "src\LfrlAnvil.Dependencies.MicrosoftExtensions\LfrlAnvil.Dependencies.MicrosoftExtensions.csproj", "{69818107-C838-4A04-A07A-6393E28D16F8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Dependencies.MicrosoftExtensions.Tests", "tests\LfrlAnvil.Dependencies.MicrosoftExtensions.Tests\LfrlAnvil.Dependencies.MicrosoftExtensions.Tests.csproj", "{C904E4D2-200A-4B71-8BA8-5DCAE444F690}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{5B3FCC79-0C79-48AD-9C7F-E8ABB79EFAD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -365,8 +363,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{D446703D-5C74-4478-BDAE-4813082CDA48} = {834C7885-FD66-44D4-A5ED-240E37BED6BD}
-		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779} = {DB23EBFC-46F1-4B6A-89D8-E046C7F5BCA3}
 		{C144B4EF-D4BA-44A0-B969-64CABA302AF7} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
 		{42892FB4-5427-4C90-A790-225AA6D21A42} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
 		{E90940B3-D159-4856-B2BE-A4F81A5BC62E} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
@@ -424,6 +420,8 @@ Global
 		{7B169F0A-1577-4252-BA67-147D17460826} = {CB9B16F8-FAE3-4B85-B0F6-B19D1381AF7A}
 		{69818107-C838-4A04-A07A-6393E28D16F8} = {DA5FF8FC-7936-4469-94B0-34EF8455EE5D}
 		{C904E4D2-200A-4B71-8BA8-5DCAE444F690} = {09DABFA2-E13A-419B-9EEC-11A014E1243C}
+		{9FD358A6-D0AF-4D58-86D3-F13EEE8A0779} = {5B3FCC79-0C79-48AD-9C7F-E8ABB79EFAD8}
+		{D446703D-5C74-4478-BDAE-4813082CDA48} = {5B3FCC79-0C79-48AD-9C7F-E8ABB79EFAD8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3FEF45BB-2269-4080-B6FD-C782F257A901}
