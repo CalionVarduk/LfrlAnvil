@@ -16,20 +16,19 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
-using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
 /// <summary>
 /// Represents a disposable timer that can be listened to.
 /// </summary>
-public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, EventPublisher<WithInterval<long>>>, IAsyncDisposable
+public sealed class ReactiveTimer : EventSource<WithInterval<long>>, IAsyncDisposable
 {
     /// <summary>
     /// Specifies the default <see cref="SpinWait"/> duration hint. Equal to <b>1 microsecond</b>.
@@ -37,6 +36,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public static Duration DefaultSpinWaitDurationHint => Duration.FromMicroseconds( 1 );
 
     private readonly ITimestampProvider _timestampProvider;
+    private readonly TaskCompletionSource _disposal;
     private readonly Duration _spinWaitDurationHint;
     private readonly long _expectedLastIndex;
     private DelaySource _delaySource;
@@ -84,13 +84,13 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         ITimestampProvider? timestampProvider = null,
         ValueTaskDelaySource? delaySource = null,
         long count = long.MaxValue)
-        : base( new EventPublisher<WithInterval<long>>() )
     {
         Ensure.IsGreaterThan( count, 0 );
         Ensure.IsInRange( interval, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         Ensure.IsGreaterThanOrEqualTo( spinWaitDurationHint, Duration.Zero );
 
         Interval = interval;
+        _disposal = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         Count = count;
         _state = ReactiveTimerState.Idle;
 
@@ -120,7 +120,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     {
         get
         {
-            using ( ExclusiveLock.Enter( Sync ) )
+            using ( AcquireLock() )
                 return _state;
         }
     }
@@ -162,9 +162,9 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     /// <returns><b>true</b> when timer was marked for stopping, otherwise <b>false</b>.</returns>
     public bool Stop()
     {
-        using ( ExclusiveLock.Enter( Sync ) )
+        using ( AcquireLock() )
         {
-            if ( _state != ReactiveTimerState.Running )
+            if ( IsDisposedUnsafe() || _state != ReactiveTimerState.Running )
                 return false;
 
             _state = ReactiveTimerState.Stopping;
@@ -187,65 +187,72 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
 
     private async ValueTask DisposeAsyncCore(bool ignoreTask = false)
     {
-        Task? task;
-        ValueTaskDelaySource? ownedDelaySource;
-
-        using ( ExclusiveLock.Enter( Sync ) )
+        if ( DisposeCore( out var exceptions ) )
         {
-            if ( Base.IsDisposed )
-                return;
-
-            ownedDelaySource = _delaySource.DiscardOwnedSource();
-            if ( ignoreTask )
+            try
             {
-                task = null;
-                MakeIdle();
-                Base.Dispose();
-            }
-            else
-            {
-                task = _task;
-                _task = null;
+                Task? task;
+                ValueTaskDelaySource? ownedDelaySource;
 
-                Base.Dispose();
-                if ( _state == ReactiveTimerState.Running )
+                using ( AcquireLock() )
                 {
-                    _state = ReactiveTimerState.Stopping;
-                    _reset.Set();
+                    ownedDelaySource = _delaySource.DiscardOwnedSource();
+                    if ( ignoreTask )
+                    {
+                        task = null;
+                        MakeIdle();
+                    }
+                    else
+                    {
+                        task = _task;
+                        _task = null;
+                        if ( _state == ReactiveTimerState.Running )
+                        {
+                            _state = ReactiveTimerState.Stopping;
+                            _reset.Set();
+                        }
+                    }
+                }
+
+                try
+                {
+                    if ( task is not null )
+                        await task.ConfigureAwait( false );
+                }
+                catch ( Exception exc )
+                {
+                    exceptions = exceptions.Extend( exc );
+                }
+
+                try
+                {
+                    if ( ownedDelaySource is not null )
+                        await ownedDelaySource.DisposeAsync().ConfigureAwait( false );
+                }
+                catch ( Exception exc )
+                {
+                    exceptions = exceptions.Extend( exc );
                 }
             }
+            finally
+            {
+                _disposal.TrySetResult();
+            }
         }
+        else
+            await _disposal.Task.ConfigureAwait( false );
 
-        var errors = Chain<Exception>.Empty;
-        try
-        {
-            if ( task is not null )
-                await task.ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            errors = errors.Extend( exc );
-        }
-
-        try
-        {
-            if ( ownedDelaySource is not null )
-                await ownedDelaySource.DisposeAsync().ConfigureAwait( false );
-        }
-        catch ( Exception exc )
-        {
-            errors = errors.Extend( exc );
-        }
-
-        if ( errors.Count > 0 )
-            throw errors.Consolidate()!;
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     private bool StartCore(Duration delay)
     {
-        using ( ExclusiveLock.Enter( Sync ) )
+        using ( AcquireLock() )
         {
-            ObjectDisposedException.ThrowIf( Base.IsDisposed, this );
+            if ( IsDisposedUnsafe() )
+                ThrowDisposedException();
+
             if ( _state != ReactiveTimerState.Idle )
                 return false;
 
@@ -261,9 +268,9 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         }
 
         var task = RunCore();
-        using ( ExclusiveLock.Enter( Sync ) )
+        using ( AcquireLock() )
         {
-            if ( Base.IsDisposed )
+            if ( IsDisposedUnsafe() )
                 MakeIdle();
             else if ( _state == ReactiveTimerState.Running )
                 _task = task;
@@ -294,7 +301,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         {
             if ( timestamp - lockAcquiredAt > lockAcquisitionInterval )
             {
-                using ( ExclusiveLock.Enter( Sync ) )
+                using ( AcquireLock() )
                 {
                     if ( _state == ReactiveTimerState.Stopping )
                     {
@@ -321,7 +328,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         Duration delay;
         Timestamp expectedNextTimestamp;
 
-        using ( ExclusiveLock.Enter( Sync ) )
+        using ( AcquireLock() )
         {
             if ( _state == ReactiveTimerState.Stopping )
             {
@@ -339,7 +346,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
             var result = await _reset.WaitAsync( delay ).ConfigureAwait( false );
             if ( result == AsyncManualResetEventResult.Disposed )
             {
-                if ( ! Base.IsDisposed )
+                if ( ! IsDisposed )
                     await DisposeAsyncCore( ignoreTask: true ).ConfigureAwait( false );
 
                 return;
@@ -349,25 +356,40 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
                 return;
 
             var dispose = false;
-            using ( ExclusiveLock.Enter( Sync ) )
+            WithInterval<long> nextEvent;
+            long skippedEventCount;
+            ArrayPoolToken<IEventSubscriber> subscribersToken = default;
+            try
             {
-                if ( _state == ReactiveTimerState.Stopping )
+                using ( AcquireLock() )
                 {
-                    MakeIdle();
-                    return;
+                    if ( IsDisposedUnsafe() || _state == ReactiveTimerState.Stopping )
+                    {
+                        MakeIdle();
+                        return;
+                    }
+
+                    Assume.Equals( _state, ReactiveTimerState.Running );
+                    var interval = timestamp - _prevStartTimestamp;
+                    _prevStartTimestamp = timestamp;
+
+                    var offsetFromExpectedTimestamp = timestamp - expectedNextTimestamp;
+                    skippedEventCount = offsetFromExpectedTimestamp.Ticks / Interval.Ticks;
+                    var eventIndex = Math.Min( _prevIndex + skippedEventCount + 1, _expectedLastIndex );
+                    nextEvent = new WithInterval<long>( eventIndex, timestamp, interval );
+                    subscribersToken = GetCurrentSubscribersUnsafe();
                 }
 
-                Assume.Equals( _state, ReactiveTimerState.Running );
-                var interval = timestamp - _prevStartTimestamp;
-                _prevStartTimestamp = timestamp;
+                // NOTE: exceptions are swallowed
+                NotifyListeners( subscribersToken, nextEvent );
+            }
+            finally
+            {
+                subscribersToken.Dispose();
+            }
 
-                var offsetFromExpectedTimestamp = timestamp - expectedNextTimestamp;
-                var skippedEventCount = offsetFromExpectedTimestamp.Ticks / Interval.Ticks;
-                var eventIndex = Math.Min( _prevIndex + skippedEventCount + 1, _expectedLastIndex );
-                var nextEvent = new WithInterval<long>( eventIndex, timestamp, interval );
-
-                Base.Publish( nextEvent );
-
+            using ( AcquireLock() )
+            {
                 if ( nextEvent.Event == _expectedLastIndex )
                 {
                     _prevIndex = nextEvent.Event;
@@ -381,6 +403,12 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
                     expectedNextTimestamp += Duration.FromTicks( Interval.Ticks * (actualSkippedEventCount + 1) );
                     _expectedNextTimestamp = expectedNextTimestamp;
                     _prevIndex = Math.Min( nextEvent.Event + (actualSkippedEventCount - skippedEventCount), _expectedLastIndex );
+
+                    if ( _state == ReactiveTimerState.Stopping )
+                    {
+                        MakeIdle();
+                        return;
+                    }
 
                     delay = Duration.Zero.Max( expectedNextTimestamp - endTimestamp - _spinWaitDurationHint );
                     _reset.Reset();

@@ -567,7 +567,7 @@ public class ReactiveTimerTests : TestsBase
             Timestamp.Zero + interval,
             Timestamp.Zero + interval * 2,
             Timestamp.Zero + interval * 2,
-            Timestamp.Zero + interval * 3,
+            Timestamp.Zero + interval * 5,
             Timestamp.Zero + interval * 5,
             Timestamp.Zero + interval * 6,
             Timestamp.Zero + interval * 6,
@@ -718,9 +718,10 @@ public class ReactiveTimerTests : TestsBase
         sut.Listen( listener );
         sut.Start();
         await completion.Task;
+        await Task.Delay( 15 );
 
         Assertion.All(
-                sut.State.TestNotEquals( ReactiveTimerState.Idle ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
                 sut.IsDisposed.TestFalse(),
                 actualEvents.TestSequence( [ expectedEvent ] ) )
             .Go();

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -48,8 +50,10 @@ public sealed class EventListenerDistinctDecorator<TEvent, TKey> : IEventListene
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly HashSet<TKey> _keySet;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, Func<TEvent, TKey> keySelector, IEqualityComparer<TKey> equalityComparer)
             : base( next )
@@ -60,16 +64,34 @@ public sealed class EventListenerDistinctDecorator<TEvent, TKey> : IEventListene
 
         public override void React(TEvent @event)
         {
-            if ( _keySet.Add( _keySelector( @event ) ) )
-                Next.React( @event );
+            var key = _keySelector( @event );
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed || ! _keySet.Add( key ) )
+                    return;
+            }
+
+            Next.React( @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _keySet.Clear();
-            _keySet.TrimExcess();
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                _isDisposed = true;
+                _keySet.Clear();
+            }
 
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

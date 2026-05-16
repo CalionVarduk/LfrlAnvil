@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ public class EventPublisher<TEvent> : EventSource<TEvent>, IEventPublisher<TEven
     /// <inheritdoc />
     public void Publish(TEvent @event)
     {
-        EnsureNotDisposed();
         OnPublish( @event );
     }
 
@@ -32,7 +31,8 @@ public class EventPublisher<TEvent> : EventSource<TEvent>, IEventPublisher<TEven
     /// <param name="event">Event to publish.</param>
     protected virtual void OnPublish(TEvent @event)
     {
-        NotifyListeners( @event );
+        if ( ! TryNotifyListeners( @event ) )
+            ThrowDisposedException();
     }
 
     void IEventPublisher.Publish(object? @event)

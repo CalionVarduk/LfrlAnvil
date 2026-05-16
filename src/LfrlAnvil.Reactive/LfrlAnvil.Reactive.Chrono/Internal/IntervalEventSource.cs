@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
@@ -49,28 +51,49 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
     }
 
     /// <inheritdoc />
-    protected override IEventListener<WithInterval<long>> OverrideListener(
+    protected override IEventListener<WithInterval<long>> OverrideListenerUnsafe(
         IEventSubscriber subscriber,
         IEventListener<WithInterval<long>> listener)
     {
-        if ( IsDisposed )
-            return listener;
+        ValueTaskDelaySource delaySource;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposedUnsafe() )
+                return listener;
 
-        var timer = new ReactiveTimer( _interval, _spinWaitDurationHint, _timestampProvider, _delaySource.GetSource(), _count );
+            delaySource = _delaySource.GetSource();
+        }
+
+        var timer = new ReactiveTimer( _interval, _spinWaitDurationHint, _timestampProvider, delaySource, _count );
         return new EventListener( listener, subscriber, timer );
     }
 
     /// <inheritdoc />
-    protected override void OnDispose()
+    public override void Dispose()
     {
-        base.OnDispose();
-        var delaySource = _delaySource.DiscardOwnedSource();
-        delaySource?.Dispose();
+        if ( DisposeCore( out var exceptions ) )
+        {
+            ValueTaskDelaySource? delaySource;
+            using ( AcquireLock() )
+                delaySource = _delaySource.DiscardOwnedSource();
+
+            try
+            {
+                delaySource?.Dispose();
+            }
+            catch ( Exception exc )
+            {
+                exceptions = exceptions.Extend( exc );
+            }
+        }
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     private sealed class EventListener : DecoratedEventListener<WithInterval<long>, WithInterval<long>>
     {
-        private ReactiveTimer? _timer;
+        private readonly ReactiveTimer _timer;
 
         internal EventListener(IEventListener<WithInterval<long>> next, IEventSubscriber subscriber, ReactiveTimer timer)
             : base( next )
@@ -88,17 +111,15 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _timer );
             _timer.Dispose();
-            _timer = null;
             base.OnDispose( source );
         }
     }
 
     private sealed class TimerListener : EventListener<WithInterval<long>>
     {
-        private EventListener? _mainListener;
-        private IEventSubscriber? _mainSubscriber;
+        private readonly EventListener _mainListener;
+        private readonly IEventSubscriber _mainSubscriber;
 
         internal TimerListener(EventListener mainListener, IEventSubscriber mainSubscriber)
         {
@@ -108,16 +129,12 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 
         public override void React(WithInterval<long> @event)
         {
-            Assume.IsNotNull( _mainListener );
             _mainListener.React( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _mainSubscriber );
             _mainSubscriber.Dispose();
-            _mainSubscriber = null;
-            _mainListener = null;
         }
     }
 }

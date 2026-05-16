@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,12 +41,15 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
     }
 
     /// <inheritdoc />
-    protected override IEventListener<FromTask<TEvent>> OverrideListener(
+    protected override IEventListener<FromTask<TEvent>> OverrideListenerUnsafe(
         IEventSubscriber subscriber,
         IEventListener<FromTask<TEvent>> listener)
     {
-        if ( IsDisposed )
-            return listener;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposedUnsafe() )
+                return listener;
+        }
 
         var callbackScheduler = _schedulerCapture.TryGetScheduler();
         return new EventListener( listener, subscriber, _taskFactory, callbackScheduler );
@@ -56,7 +59,7 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
     {
         private readonly IEventSubscriber _subscriber;
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private DisposalSource _disposalSource;
+        private InterlockedInt32 _disposalSource;
 
         internal EventListener(
             IEventListener<FromTask<TEvent>> next,
@@ -66,7 +69,7 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
             : base( next )
         {
             _subscriber = subscriber;
-            _disposalSource = default;
+            _disposalSource = new InterlockedInt32( 0 );
             _cancellationTokenSource = new CancellationTokenSource();
 
             var task = taskFactory( _cancellationTokenSource.Token );
@@ -83,7 +86,7 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
 
         public override void OnDispose(DisposalSource source)
         {
-            _disposalSource = source;
+            _disposalSource.Write( ( int )source );
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
         }
@@ -91,20 +94,31 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
         private void AddTaskContinuation(Task<TEvent> task, TaskScheduler? scheduler)
         {
             if ( scheduler is not null )
-            {
-                task.ContinueWith( ContinuationCallback, scheduler );
-                return;
-            }
-
-            task.ContinueWith( ContinuationCallback );
+                task.ContinueWith( ContinuationCallback, this, default, TaskContinuationOptions.ExecuteSynchronously, scheduler );
+            else
+                task.ContinueWith( ContinuationCallback, this, TaskContinuationOptions.ExecuteSynchronously );
         }
 
-        private void ContinuationCallback(Task<TEvent> completedTask)
+        private void Complete()
         {
-            var nextEvent = new FromTask<TEvent>( completedTask );
-            React( nextEvent );
             _subscriber.Dispose();
-            Next.OnDispose( _disposalSource );
+            Next.OnDispose( ( DisposalSource )_disposalSource.Value );
+        }
+
+        private static void ContinuationCallback(Task<TEvent> completedTask, object? state)
+        {
+            Assume.IsNotNull( state );
+            var listener = ReinterpretCast.To<EventListener>( state );
+
+            var nextEvent = new FromTask<TEvent>( completedTask );
+            try
+            {
+                listener.React( nextEvent );
+            }
+            finally
+            {
+                listener.Complete();
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorat
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private TEvent[]? _values;
+        private readonly TEvent[] _values;
 
         internal EventListener(IEventListener<TEvent> next, TEvent[] values)
             : base( next )
@@ -57,11 +57,8 @@ public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorat
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _values );
             foreach ( var value in _values )
                 Next.React( value );
-
-            _values = null;
 
             base.OnDispose( source );
         }

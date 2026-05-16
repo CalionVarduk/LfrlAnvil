@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -46,10 +47,13 @@ public sealed class EventListenerAuditUntilDecorator<TEvent, TTargetEvent> : IEv
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
+        private readonly IEventStream<TTargetEvent> _target;
         private readonly IEventSubscriber _subscriber;
         private LazyDisposable<IEventSubscriber>? _targetSubscriber;
         private TargetEventListener? _targetListener;
-        private IEventStream<TTargetEvent>? _target;
+        private TEvent? _latestEvent;
+        private State _state;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
             : base( next )
@@ -58,89 +62,136 @@ public sealed class EventListenerAuditUntilDecorator<TEvent, TTargetEvent> : IEv
             _target = target;
             _targetSubscriber = null;
             _targetListener = null;
+            _state = State.Idle;
 
             if ( target.IsDisposed )
-                DisposeSubscriber();
+                _subscriber.Dispose();
         }
 
         public override void React(TEvent @event)
         {
-            if ( _targetListener is not null )
+            LazyDisposable<IEventSubscriber> targetSubscriber;
+            TargetEventListener targetListener;
+            using ( AcquireLock() )
             {
-                _targetListener.UpdateEvent( @event );
-                return;
+                if ( _state >= State.Disposing )
+                    return;
+
+                _latestEvent = @event;
+                if ( _state == State.WaitingForTarget )
+                    return;
+
+                _state = State.WaitingForTarget;
+                Assume.IsNull( _targetSubscriber );
+                Assume.IsNull( _targetListener );
+                _targetSubscriber = new LazyDisposable<IEventSubscriber>();
+                targetSubscriber = _targetSubscriber;
+                _targetListener = new TargetEventListener( this, _targetSubscriber );
+                targetListener = _targetListener;
             }
 
-            Assume.IsNotNull( _target );
-            _targetSubscriber = new LazyDisposable<IEventSubscriber>();
-            _targetListener = new TargetEventListener( this, @event );
-            var actualTargetSubscriber = _target.Listen( _targetListener );
-            _targetSubscriber?.Assign( actualTargetSubscriber );
+            var actualTargetSubscriber = _target.Listen( targetListener );
+            targetSubscriber.Assign( actualTargetSubscriber );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _target = null;
-            _targetSubscriber?.Dispose();
+            LazyDisposable<IEventSubscriber>? targetSubscriber;
+            using ( AcquireLock() )
+            {
+                if ( _state == State.Disposed )
+                    return;
 
+                _state = State.Disposed;
+                _latestEvent = default;
+                targetSubscriber = _targetSubscriber;
+                _targetSubscriber = null;
+                _targetListener = null;
+            }
+
+            targetSubscriber?.Dispose();
             base.OnDispose( source );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void OnTargetEvent(TEvent @event)
+        internal void OnTargetEvent(TargetEventListener listener)
         {
-            Next.React( @event );
-            Assume.IsNotNull( _targetSubscriber );
-            _targetSubscriber.Dispose();
+            TEvent e;
+            LazyDisposable<IEventSubscriber> targetSubscriber;
+            using ( AcquireLock() )
+            {
+                if ( _state >= State.Disposing || ! ReferenceEquals( _targetListener, listener ) )
+                    return;
+
+                Assume.Equals( _state, State.WaitingForTarget );
+                Assume.IsNotNull( _targetSubscriber );
+                Assume.IsNotNull( _targetListener );
+                e = _latestEvent!;
+                _latestEvent = default;
+                targetSubscriber = _targetSubscriber;
+                _targetSubscriber = null;
+                _targetListener = null;
+                _state = State.Idle;
+            }
+
+            targetSubscriber.Dispose();
+            Next.React( e );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void ClearTargetReferences()
+        internal void OnTargetDisposed(TargetEventListener listener, DisposalSource source)
         {
-            _targetSubscriber = null;
-            _targetListener = null;
-        }
+            using ( AcquireLock() )
+            {
+                if ( _state >= State.Disposing || ! ReferenceEquals( _targetListener, listener ) )
+                    return;
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void DisposeSubscriber()
-        {
+                _targetSubscriber = null;
+                _targetListener = null;
+                if ( source == DisposalSource.Subscriber )
+                    return;
+
+                _state = State.Disposing;
+            }
+
             _subscriber.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
+        }
+
+        private enum State : byte
+        {
+            Idle = 0,
+            WaitingForTarget = 1,
+            Disposing = 2,
+            Disposed = 3
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private EventListener? _sourceListener;
-        private TEvent? _sourceEvent;
+        private readonly EventListener _sourceListener;
+        private readonly LazyDisposable<IEventSubscriber> _subscriber;
 
-        internal TargetEventListener(EventListener sourceListener, TEvent sourceEvent)
+        internal TargetEventListener(EventListener sourceListener, LazyDisposable<IEventSubscriber> subscriber)
         {
             _sourceListener = sourceListener;
-            _sourceEvent = sourceEvent;
+            _subscriber = subscriber;
         }
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
-            _sourceListener.OnTargetEvent( _sourceEvent! );
+            _sourceListener.OnTargetEvent( this );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _sourceEvent = default;
-            Assume.IsNotNull( _sourceListener );
-            _sourceListener.ClearTargetReferences();
-
-            if ( source == DisposalSource.EventSource )
-                _sourceListener.DisposeSubscriber();
-
-            _sourceListener = null;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void UpdateEvent(TEvent @event)
-        {
-            _sourceEvent = @event;
+            _subscriber.Dispose();
+            _sourceListener.OnTargetDisposed( this, source );
         }
     }
 }

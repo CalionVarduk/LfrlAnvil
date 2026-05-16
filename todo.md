@@ -77,10 +77,10 @@ Low priority/probably won't do:
 
 ### Reactive: Refinements
 
-Might do:
-- after upgrade to dotnet10, take a look at Source vs ConcurrentSource etc.
-  - lock everything? decorators may be a bit of an issue
-  - currently, there is a risk of deadlocks since e.g. Publish holds the lock while invoking subscriber callbacks
+probably won't do:
+- Reactive.State, variables aren't thread-safe
+  - and naive locking on them could lead to deadlocks due to their event callbacks
+  - can probably be resolved by making variables implement their own event sources, sort of inlined, using the same lock etc.
 
 ### Computable.Expressions: Refinements
 

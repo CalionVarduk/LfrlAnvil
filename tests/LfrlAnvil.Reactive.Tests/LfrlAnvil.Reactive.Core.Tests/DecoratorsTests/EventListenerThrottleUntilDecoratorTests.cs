@@ -72,7 +72,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         Assertion.All(
                 next.TestReceivedCalls( x => x.React( sourceEvent ), 1 ),
                 subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
-                target.Subscribers.Count.TestEquals( 1 ) )
+                target.Subscribers.Length.TestEquals( 1 ) )
             .Go();
     }
 
@@ -178,7 +178,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void Decorate_ShouldCreateListenerThatAfterReactDisposesSubscriber_WhenTargetIsAlreadyDisposed()
+    public void Decorate_ShouldEmitEventAndDisposeSubscriber_WhenTargetIsAlreadyDisposed()
     {
         var sourceEvent = 1;
         var target = new EventPublisher<string>();
@@ -191,7 +191,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         listener.React( sourceEvent );
 
         Assertion.All(
-                next.TestDidNotReceiveCall( x => x.React( sourceEvent ) ),
+                next.TestReceivedCall( x => x.React( sourceEvent ) ),
                 subscriber.TestReceivedCall( x => x.Dispose() ),
                 target.HasSubscribers.TestFalse() )
             .Go();

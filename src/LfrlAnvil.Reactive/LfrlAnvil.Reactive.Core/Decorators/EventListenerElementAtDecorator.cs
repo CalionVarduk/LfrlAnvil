@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -42,14 +44,14 @@ public class EventListenerElementAtDecorator<TEvent> : IEventListenerDecorator<T
     {
         private readonly IEventSubscriber _subscriber;
         private readonly int _index;
-        private int _currentIndex;
+        private InterlockedInt32 _currentIndex;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, int index)
             : base( next )
         {
             _subscriber = subscriber;
             _index = index;
-            _currentIndex = -1;
+            _currentIndex = new InterlockedInt32( -1 );
 
             if ( _index < 0 )
                 _subscriber.Dispose();
@@ -57,11 +59,17 @@ public class EventListenerElementAtDecorator<TEvent> : IEventListenerDecorator<T
 
         public override void React(TEvent @event)
         {
-            if ( ++_currentIndex < _index )
+            if ( _currentIndex.Increment() != _index )
                 return;
 
-            Next.React( @event );
-            _subscriber.Dispose();
+            try
+            {
+                Next.React( @event );
+            }
+            finally
+            {
+                _subscriber.Dispose();
+            }
         }
     }
 }

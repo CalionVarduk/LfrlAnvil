@@ -21,10 +21,12 @@ namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent>
 {
+    private readonly object _sync = new object();
     private readonly TaskCompletionSource<TEvent?> _completionSource;
     private readonly LazyDisposable<CancellationTokenRegistration> _cancellationTokenRegistration;
+    private CancellationToken? _cancelledToken;
     private TEvent? _value;
-    private InterlockedBoolean _cancelled;
+    private bool _isDisposed;
 
     internal TaskCompletionEventListener(
         TaskCompletionSource<TEvent?> completionSource,
@@ -32,34 +34,53 @@ internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent
     {
         _completionSource = completionSource;
         _cancellationTokenRegistration = cancellationTokenRegistration;
-        _value = default;
-        _cancelled = new InterlockedBoolean( false );
     }
 
     public override void React(TEvent @event)
     {
-        _value = @event;
+        using ( AcquireLock() )
+        {
+            if ( ! _isDisposed )
+                _value = @event;
+        }
     }
 
     public override void OnDispose(DisposalSource source)
     {
-        _cancellationTokenRegistration.Dispose();
-
-        var lastValue = _value;
-        _value = default;
-
-        if ( _cancelled.Value )
+        TEvent? lastValue;
+        CancellationToken? cancelledToken;
+        using ( AcquireLock() )
         {
-            _completionSource.SetCanceled();
-            return;
+            if ( _isDisposed )
+                return;
+
+            _isDisposed = true;
+            lastValue = _value;
+            _value = default;
+            cancelledToken = _cancelledToken;
+            _cancelledToken = null;
         }
 
-        _completionSource.SetResult( lastValue );
+        _cancellationTokenRegistration.Dispose();
+        if ( cancelledToken is not null )
+            _completionSource.SetCanceled( cancelledToken.Value );
+        else
+            _completionSource.SetResult( lastValue );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void MarkAsCancelled()
+    internal void MarkAsCancelled(CancellationToken cancellationToken)
     {
-        _cancelled.WriteTrue();
+        using ( AcquireLock() )
+        {
+            if ( ! _isDisposed )
+                _cancelledToken = cancellationToken;
+        }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.Enter( _sync );
     }
 }

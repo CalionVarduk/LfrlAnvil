@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -57,9 +58,11 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly IEventSubscriber _targetSubscriber;
+        internal readonly LazyDisposable<IEventSubscriber> TargetSubscriber;
+        private readonly object _sync = new object();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly HashSet<TKey> _keySet;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<TEvent> next,
@@ -70,35 +73,58 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
         {
             _keySelector = keySelector;
             _keySet = new HashSet<TKey>( equalityComparer );
+            TargetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this );
-            _targetSubscriber = target.Listen( targetListener );
+            TargetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            if ( _keySet.Add( _keySelector( @event ) ) )
-                Next.React( @event );
+            var key = _keySelector( @event );
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed || ! _keySet.Add( key ) )
+                    return;
+            }
+
+            Next.React( @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _targetSubscriber.Dispose();
-            _keySet.Clear();
-            _keySet.TrimExcess();
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
+                _isDisposed = true;
+                _keySet.Clear();
+            }
+
+            TargetSubscriber.Dispose();
             base.OnDispose( source );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnTargetEvent()
         {
-            _keySet.Clear();
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposed )
+                    _keySet.Clear();
+            }
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private EventListener? _sourceListener;
+        private readonly EventListener _sourceListener;
 
         internal TargetEventListener(EventListener sourceListener)
         {
@@ -107,15 +133,13 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener );
+            _sourceListener.TargetSubscriber.Dispose();
             _sourceListener.OnTargetEvent();
-            _sourceListener = null;
         }
     }
 }

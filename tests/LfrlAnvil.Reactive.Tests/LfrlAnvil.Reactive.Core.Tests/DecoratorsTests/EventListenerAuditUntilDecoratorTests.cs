@@ -71,7 +71,7 @@ public class EventListenerAuditUntilDecoratorTests : TestsBase
         Assertion.All(
                 next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ),
                 subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
-                target.Subscribers.Count.TestEquals( 1 ) )
+                target.Subscribers.Length.TestEquals( 1 ) )
             .Go();
     }
 

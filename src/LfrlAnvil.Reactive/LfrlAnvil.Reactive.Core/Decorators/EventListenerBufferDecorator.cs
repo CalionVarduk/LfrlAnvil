@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,12 @@
 // limitations under the License.
 
 using System;
+using System.Buffers;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -46,8 +51,10 @@ public sealed class EventListenerBufferDecorator<TEvent> : IEventListenerDecorat
 
     private sealed class EventListener : DecoratedEventListener<TEvent, ReadOnlyMemory<TEvent>>
     {
-        private int _count;
+        private readonly object _sync = new object();
         private readonly TEvent[] _buffer;
+        private int _count;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<ReadOnlyMemory<TEvent>> next, int bufferLength)
             : base( next )
@@ -58,28 +65,73 @@ public sealed class EventListenerBufferDecorator<TEvent> : IEventListenerDecorat
 
         public override void React(TEvent @event)
         {
-            _buffer[_count] = @event;
+            ArrayPoolToken<TEvent> poolToken = default;
+            try
+            {
+                Memory<TEvent> events;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed )
+                        return;
 
-            if ( ++_count < _buffer.Length )
-                return;
+                    _buffer[_count] = @event;
+                    if ( ++_count < _buffer.Length )
+                        return;
 
-            Next.React( _buffer.AsMemory() );
+                    poolToken = ArrayPool<TEvent>.Shared.RentToken( _count, clearArray: true );
+                    events = poolToken.AsMemory();
+                    _buffer.AsMemory().CopyTo( events );
 
-            _count = 0;
-            Array.Clear( _buffer, 0, _buffer.Length );
+                    Array.Clear( _buffer, 0, _count );
+                    _count = 0;
+                }
+
+                Next.React( events );
+            }
+            finally
+            {
+                poolToken.Dispose();
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            if ( _count > 0 )
+            ArrayPoolToken<TEvent> poolToken = default;
+            try
             {
-                Next.React( _buffer.AsMemory( 0, _count ) );
+                var events = Memory<TEvent>.Empty;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed )
+                        return;
 
-                _count = 0;
-                Array.Clear( _buffer, 0, _buffer.Length );
+                    _isDisposed = true;
+                    if ( _count > 0 )
+                    {
+                        poolToken = ArrayPool<TEvent>.Shared.RentToken( _count, clearArray: true );
+                        events = poolToken.AsMemory();
+                        _buffer.AsMemory( 0, _count ).CopyTo( events );
+
+                        Array.Clear( _buffer, 0, _count );
+                        _count = 0;
+                    }
+                }
+
+                if ( events.Length > 0 )
+                    Next.React( events );
+            }
+            finally
+            {
+                poolToken.Dispose();
             }
 
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

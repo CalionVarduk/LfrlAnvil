@@ -171,7 +171,7 @@ public class EventListenerSkipUntilDecoratorTests : TestsBase
             sut.Publish( e );
 
         Assertion.All(
-                sut.Subscribers.Count.TestEquals( 1 ),
+                sut.Subscribers.Length.TestEquals( 1 ),
                 actualEvents.TestSequence( sourceEvents ) )
             .Go();
     }

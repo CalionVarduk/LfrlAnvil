@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -45,28 +46,33 @@ public class EventListenerSkipWhileDecorator<TEvent> : IEventListenerDecorator<T
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
         private readonly Func<TEvent, bool> _predicate;
-        private bool _isDone;
+        private InterlockedBoolean _isDone;
 
         internal EventListener(IEventListener<TEvent> next, Func<TEvent, bool> predicate)
             : base( next )
         {
-            _isDone = false;
+            _isDone = InterlockedBoolean.False;
             _predicate = predicate;
         }
 
         public override void React(TEvent @event)
         {
-            if ( _isDone )
+            if ( _isDone.Value )
             {
                 Next.React( @event );
                 return;
             }
 
             if ( _predicate( @event ) )
-                return;
-
-            _isDone = true;
-            Next.React( @event );
+            {
+                if ( _isDone.Value )
+                    Next.React( @event );
+            }
+            else
+            {
+                _isDone.WriteTrue();
+                Next.React( @event );
+            }
         }
     }
 }

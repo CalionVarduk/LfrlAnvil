@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -31,29 +32,52 @@ public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDec
 
     private sealed class EventListener : DecoratedEventListener<IEventStream<TEvent>, TEvent>
     {
-        private IEventSubscriber? _activeInnerSubscriber;
+        private readonly object _sync = new object();
+        private LazyDisposable<IEventSubscriber>? _innerSubscriber;
+        private InnerEventListener? _innerListener;
+        private State _state;
 
         internal EventListener(IEventListener<TEvent> next)
             : base( next )
         {
-            _activeInnerSubscriber = null;
+            _state = State.Idle;
         }
 
         public override void React(IEventStream<TEvent> @event)
         {
-            if ( _activeInnerSubscriber is not null )
-                return;
+            LazyDisposable<IEventSubscriber> innerSubscriber;
+            InnerEventListener innerListener;
+            using ( AcquireLock() )
+            {
+                if ( _state != State.Idle )
+                    return;
 
-            var activeInnerListener = new InnerEventListener( this );
-            _activeInnerSubscriber = @event.Listen( activeInnerListener );
+                Assume.IsNull( _innerSubscriber );
+                _state = State.Active;
+                _innerSubscriber = new LazyDisposable<IEventSubscriber>();
+                innerSubscriber = _innerSubscriber;
+                _innerListener = new InnerEventListener( this, _innerSubscriber );
+                innerListener = _innerListener;
+            }
 
-            if ( activeInnerListener.IsMarkedAsDisposed() )
-                _activeInnerSubscriber = null;
+            innerSubscriber.Assign( @event.Listen( innerListener ) );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _activeInnerSubscriber?.Dispose();
+            LazyDisposable<IEventSubscriber>? innerSubscriber;
+            using ( AcquireLock() )
+            {
+                if ( _state == State.Disposed )
+                    return;
+
+                _state = State.Disposed;
+                innerSubscriber = _innerSubscriber;
+                _innerSubscriber = null;
+                _innerListener = null;
+            }
+
+            innerSubscriber?.Dispose();
             base.OnDispose( source );
         }
 
@@ -64,38 +88,58 @@ public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDec
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void OnInnerDisposed()
+        internal void OnInnerDisposed(InnerEventListener listener)
         {
-            _activeInnerSubscriber = null;
+            LazyDisposable<IEventSubscriber>? innerSubscriber;
+            using ( AcquireLock() )
+            {
+                if ( _state == State.Disposed || ! ReferenceEquals( _innerListener, listener ) )
+                    return;
+
+                Assume.Equals( _state, State.Active );
+                _state = State.Idle;
+                innerSubscriber = _innerSubscriber;
+                _innerSubscriber = null;
+                _innerListener = null;
+            }
+
+            innerSubscriber?.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
+        }
+
+        private enum State : byte
+        {
+            Idle = 0,
+            Active = 1,
+            Disposed = 2
         }
     }
 
     private sealed class InnerEventListener : EventListener<TEvent>
     {
-        private EventListener? _outerListener;
+        private readonly EventListener _outerListener;
+        private readonly LazyDisposable<IEventSubscriber> _subscriber;
 
-        internal InnerEventListener(EventListener outerListener)
+        internal InnerEventListener(EventListener outerListener, LazyDisposable<IEventSubscriber> subscriber)
         {
             _outerListener = outerListener;
+            _subscriber = subscriber;
         }
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerEvent( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _outerListener );
-            _outerListener.OnInnerDisposed();
-            _outerListener = null;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal bool IsMarkedAsDisposed()
-        {
-            return _outerListener is null;
+            _subscriber.Dispose();
+            _outerListener.OnInnerDisposed( this );
         }
     }
 }

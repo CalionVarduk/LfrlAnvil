@@ -38,7 +38,7 @@ public class TimerTaskCollectionTests : TestsBase
         var result = source.RegisterTasks( tasks );
 
         Assertion.All(
-                source.Subscribers.Count.TestEquals( 1 ),
+                source.Subscribers.Length.TestEquals( 1 ),
                 result.FirstTimestamp.TestNull(),
                 result.LastTimestamp.TestNull(),
                 result.EventCount.TestEquals( 0 ),

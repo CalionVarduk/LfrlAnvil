@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Reactive.Tests.HistoryEventPublisherTests;
@@ -46,7 +47,8 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
 
-        foreach ( var @event in events ) sut.Publish( @event );
+        foreach ( var @event in events )
+            sut.Publish( @event );
 
         sut.History.TestSequence( events ).Go();
     }
@@ -57,7 +59,8 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 2 );
 
-        foreach ( var @event in events ) sut.Publish( @event );
+        foreach ( var @event in events )
+            sut.Publish( @event );
 
         sut.History.TestSequence( [ events[1], events[2] ] ).Go();
     }
@@ -81,7 +84,8 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var listener = Substitute.For<IEventListener<TEvent>>();
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
-        foreach ( var @event in events ) sut.Publish( @event );
+        foreach ( var @event in events )
+            sut.Publish( @event );
 
         sut.Listen( listener );
 
@@ -89,6 +93,29 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
                 listener.TestReceivedCall( x => x.React( events[0] ) ),
                 listener.TestReceivedCall( x => x.React( events[1] ) ) )
             .Go();
+    }
+
+    [Fact]
+    public void Listen_ShouldCallListenerReactImmediatelyForEachHistoryEntry_AndBufferEventsEmittedDuringReplaying()
+    {
+        var events = Fixture.CreateManyDistinct<TEvent>( count: 4 );
+        var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
+        var caughtEvents = new List<TEvent>();
+        var listener = EventListener.Create<TEvent>( e =>
+        {
+            caughtEvents.Add( e );
+            if ( caughtEvents.Count == 1 )
+                sut.Publish( events[2] );
+            else if ( caughtEvents.Count == 3 )
+                sut.Publish( events[3] );
+        } );
+
+        foreach ( var @event in events.Take( 2 ) )
+            sut.Publish( @event );
+
+        sut.Listen( listener );
+
+        caughtEvents.TestSequence( events ).Go();
     }
 
     [Fact]
@@ -126,7 +153,8 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
     {
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
-        foreach ( var @event in events ) sut.Publish( @event );
+        foreach ( var @event in events )
+            sut.Publish( @event );
 
         sut.Dispose();
 

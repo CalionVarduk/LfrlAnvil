@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,43 +12,83 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 {
-    private Action<EventSubscriber<TEvent>>? _disposer;
-    private InterlockedBoolean _isDisposed;
+    private readonly object _sync = new object();
+    private EventSource<TEvent>? _owner;
+    private InterlockedRef<IEventListener<TEvent>> _listener;
 
-    internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
+    internal EventSubscriber(EventSource<TEvent> owner, IEventListener<TEvent> listener)
     {
-        _disposer = disposer;
-        Listener = listener;
-        _isDisposed = new InterlockedBoolean( false );
+        _owner = owner;
+        _listener = new InterlockedRef<IEventListener<TEvent>>( listener );
     }
 
-    internal IEventListener<TEvent> Listener { get; set; }
-    public bool IsDisposed => _isDisposed.Value;
+    internal IEventListener<TEvent> Listener
+    {
+        get => _listener.Value;
+        set => _listener.Write( value );
+    }
+
+    public bool IsDisposed
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return ! HasOwnerUnsafe();
+        }
+    }
 
     public void Dispose()
     {
-        if ( ! _isDisposed.WriteTrue() )
-            return;
+        EventSource<TEvent> owner;
+        using ( AcquireLock() )
+        {
+            if ( ! HasOwnerUnsafe() )
+                return;
 
-        _disposer?.Invoke( this );
-        _disposer = null;
+            owner = _owner!;
+            RemoveOwnerUnsafe();
+        }
 
+        owner.RemoveSubscriber( this );
         Listener.OnDispose( DisposalSource.Subscriber );
     }
 
     internal bool MarkAsDisposed()
     {
-        if ( ! _isDisposed.WriteTrue() )
-            return false;
+        using ( AcquireLock() )
+        {
+            if ( ! HasOwnerUnsafe() )
+                return false;
 
-        _disposer = null;
-        return true;
+            RemoveOwnerUnsafe();
+            return true;
+        }
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal bool HasOwnerUnsafe()
+    {
+        return _owner is not null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal void RemoveOwnerUnsafe()
+    {
+        _owner = null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal ExclusiveLock AcquireLock()
+    {
+        return ExclusiveLock.Enter( _sync );
     }
 }

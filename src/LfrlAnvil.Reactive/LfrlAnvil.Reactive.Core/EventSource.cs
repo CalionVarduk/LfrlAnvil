@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,11 +13,15 @@
 // limitations under the License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
 
@@ -26,60 +30,73 @@ namespace LfrlAnvil.Reactive;
 /// <inheritdoc cref="IEventSource{TEvent}" />
 public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
-    private readonly List<EventSubscriber<TEvent>> _subscribers;
-    private SubscriberPool _subscriberPool;
-    private InterlockedBoolean _isDisposed;
+    private readonly object _sync = new object();
+    private ListSlim<EventSubscriber<TEvent>> _subscribers;
+    private bool _isDisposed;
 
     /// <summary>
     /// Creates a new <see cref="EventSource{TEvent}"/> instance.
     /// </summary>
     protected EventSource()
     {
-        _isDisposed = new InterlockedBoolean( false );
-        _subscribers = new List<EventSubscriber<TEvent>>();
-        _subscriberPool = SubscriberPool.Create();
+        _subscribers = ListSlim<EventSubscriber<TEvent>>.Create();
+        _isDisposed = false;
     }
 
     /// <inheritdoc />
-    public bool IsDisposed => _isDisposed.Value;
-
-    /// <inheritdoc />
-    public IReadOnlyCollection<IEventSubscriber> Subscribers => _subscribers;
-
-    /// <inheritdoc />
-    public bool HasSubscribers => _subscribers.Count > 0;
-
-    /// <inheritdoc />
-    public void Dispose()
+    public bool IsDisposed
     {
-        if ( ! _isDisposed.WriteTrue() )
-            return;
-
-        var (subscribers, count) = _subscriberPool.Rent( _subscribers );
-        _subscribers.Clear();
-
-        try
+        get
         {
-            for ( var i = 0; i < count; ++i )
+            using ( AcquireLock() )
+                return _isDisposed;
+        }
+    }
+
+    /// <inheritdoc cref="IEventSource{TEvent}.Subscribers" />
+    public IEventSubscriber[] Subscribers
+    {
+        get
+        {
+            using ( AcquireLock() )
             {
-                var subscriber = subscribers[i];
-                if ( subscriber.MarkAsDisposed() )
-                    subscriber.Listener.OnDispose( DisposalSource.EventSource );
+                if ( _subscribers.IsEmpty )
+                    return Array.Empty<IEventSubscriber>();
+
+                var i = 0;
+                var result = new IEventSubscriber[_subscribers.Count];
+                foreach ( var s in _subscribers )
+                    result[i++] = s;
+
+                return result;
             }
         }
-        finally
-        {
-            _subscriberPool.Return( count );
-        }
+    }
 
-        OnDispose();
+    /// <inheritdoc />
+    public bool HasSubscribers
+    {
+        get
+        {
+            using ( AcquireLock() )
+                return ! _subscribers.IsEmpty;
+        }
+    }
+
+    IReadOnlyCollection<IEventSubscriber> IEventSource.Subscribers => Subscribers;
+
+    /// <inheritdoc />
+    public virtual void Dispose()
+    {
+        if ( DisposeCore( out var exceptions ) && exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     /// <inheritdoc />
     public IEventSubscriber Listen(IEventListener<TEvent> listener)
     {
-        var subscriber = new EventSubscriber<TEvent>( RemoveSubscriber, listener );
-        return ListenInternal( subscriber );
+        var subscriber = new EventSubscriber<TEvent>( this, listener );
+        return ListenCore( subscriber );
     }
 
     /// <inheritdoc />
@@ -94,149 +111,248 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
     /// </summary>
     /// <param name="subscriber">Attached event subscriber.</param>
     /// <param name="listener">Event listener attached to the event subscriber.</param>
-    protected virtual void OnSubscriberAdded(IEventSubscriber subscriber, IEventListener<TEvent> listener) { }
+    /// <remarks>This method call is not thread-safe by default.</remarks>
+    protected virtual void OnSubscriberAddedUnsafe(IEventSubscriber subscriber, IEventListener<TEvent> listener) { }
 
     /// <summary>
-    /// Allows to override the event listener.
+    /// Allows to override an event listener.
     /// </summary>
     /// <param name="subscriber">Event subscriber.</param>
     /// <param name="listener">Event listener to override.</param>
     /// <returns><see cref="IEventListener{TEvent}"/> instance.</returns>
-    protected virtual IEventListener<TEvent> OverrideListener(IEventSubscriber subscriber, IEventListener<TEvent> listener)
+    /// <remarks>This method call is not thread-safe by default.</remarks>
+    protected virtual IEventListener<TEvent> OverrideListenerUnsafe(IEventSubscriber subscriber, IEventListener<TEvent> listener)
     {
         return listener;
+    }
+
+    /// <summary>
+    /// Allows to override an event listener after subscriber has been registered.
+    /// </summary>
+    /// <param name="subscriber">Event subscriber.</param>
+    /// <param name="listener">Event listener to override.</param>
+    /// <returns><see cref="IEventListener{TEvent}"/> instance.</returns>
+    protected virtual IEventListener<TEvent> OnSubscriberRegistered(IEventSubscriber subscriber, IEventListener<TEvent> listener)
+    {
+        return listener;
+    }
+
+    /// <summary>
+    /// Performs safe disposal and cleans up all subscribers.
+    /// </summary>
+    /// <param name="exceptions">
+    /// <b>out</b> parameter which returns all caught exceptions. Will always be empty when this method returns <b>false</b>.
+    /// </param>
+    /// <returns><b>false</b> when this event source was already disposed, otherwise <b>true</b>.</returns>
+    protected bool DisposeCore(out Chain<Exception> exceptions)
+    {
+        ArrayPoolToken<IEventSubscriber> poolToken = default;
+        exceptions = Chain<Exception>.Empty;
+        try
+        {
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return false;
+
+                poolToken = GetCurrentSubscribersUnsafe();
+                _subscribers.Clear();
+                _isDisposed = true;
+            }
+
+            var subscribers = poolToken.AsSpan();
+            foreach ( var s in subscribers )
+            {
+                try
+                {
+                    var subscriber = ReinterpretCast.To<EventSubscriber<TEvent>>( s );
+                    if ( subscriber.MarkAsDisposed() )
+                        subscriber.Listener.OnDispose( DisposalSource.EventSource );
+                }
+                catch ( Exception exc )
+                {
+                    exceptions = exceptions.Extend( exc );
+                }
+            }
+        }
+        finally
+        {
+            poolToken.Dispose();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets all currently active subscribers and stores them into an array pool token.
+    /// </summary>
+    /// <returns>Array pool token containing all currently active subscribers.</returns>
+    /// <remarks>This method call is not thread-safe by default.</remarks>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected ArrayPoolToken<IEventSubscriber> GetCurrentSubscribersUnsafe()
+    {
+        if ( _subscribers.IsEmpty )
+            return default;
+
+        var token = ArrayPool<IEventSubscriber>.Shared.RentToken( _subscribers.Count, clearArray: true );
+        var subscribers = token.AsSpan();
+
+        var i = 0;
+        foreach ( var s in _subscribers )
+            subscribers[i++] = s;
+
+        return token;
+    }
+
+    /// <summary>
+    /// Allows to notify all provided listeners via array pool <paramref name="token"/> that an event has occurred.
+    /// </summary>
+    /// <param name="token">
+    /// Array pool token containing subscribers to notify.
+    /// This should be a token returned by <see cref="GetCurrentSubscribersUnsafe"/> method.
+    /// </param>
+    /// <param name="event">Event to notify with.</param>
+    /// <returns>Collection of all caught exceptions.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected Chain<Exception> NotifyListeners(ArrayPoolToken<IEventSubscriber> token, TEvent @event)
+    {
+        var subscribers = token.AsSpan();
+        var exceptions = Chain<Exception>.Empty;
+        foreach ( var s in subscribers )
+        {
+            try
+            {
+                var subscriber = ReinterpretCast.To<EventSubscriber<TEvent>>( s );
+                if ( ! subscriber.IsDisposed )
+                    subscriber.Listener.React( @event );
+            }
+            catch ( Exception exc )
+            {
+                exceptions = exceptions.Extend( exc );
+            }
+        }
+
+        return exceptions;
     }
 
     /// <summary>
     /// Allows to notify all current event listeners that an event has occurred.
     /// </summary>
     /// <param name="event">Event to notify with.</param>
-    protected void NotifyListeners(TEvent @event)
+    /// <returns><b>false</b> when this event source was disposed and listeners were not notified, otherwise <b>true</b>.</returns>
+    protected bool TryNotifyListeners(TEvent @event)
     {
-        var (subscribers, count) = _subscriberPool.Rent( _subscribers );
-
+        ArrayPoolToken<IEventSubscriber> poolToken = default;
         try
         {
-            for ( var i = 0; i < count; ++i )
+            using ( AcquireLock() )
             {
-                var subscriber = subscribers[i];
-                if ( subscriber.IsDisposed )
-                    continue;
+                if ( _isDisposed )
+                    return false;
 
-                subscriber.Listener.React( @event );
+                poolToken = GetCurrentSubscribersUnsafe();
             }
+
+            var exceptions = NotifyListeners( poolToken, @event );
+            if ( exceptions.Count > 0 )
+                exceptions.Consolidate()?.Rethrow();
         }
         finally
         {
-            _subscriberPool.Return( count );
+            poolToken.Dispose();
         }
-    }
 
-    /// <summary>
-    /// Allows to provide custom disposal implementation.
-    /// </summary>
-    protected virtual void OnDispose() { }
+        return true;
+    }
 
     /// <summary>
     /// Throws an exception when this event source has been disposed.
     /// </summary>
     /// <exception cref="ObjectDisposedException">When this event source has been disposed.</exception>
-    protected void EnsureNotDisposed()
+    /// <remarks>This method call is not thread-safe by default.</remarks>
+    [DoesNotReturn]
+    protected void ThrowDisposedException()
     {
-        if ( IsDisposed )
-            ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.DisposedEventSource ) );
+        ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.DisposedEventSource ) );
     }
 
-    internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)
+    /// <summary>
+    /// Acquires this event source's exclusive lock.
+    /// </summary>
+    /// <returns>Entered <see cref="ExclusiveLock"/> of this event source.</returns>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected ExclusiveLock AcquireLock()
     {
-        _subscribers.Remove( subscriber );
+        return ExclusiveLock.Enter( _sync );
+    }
+
+    /// <summary>
+    /// Specifies whether this event stream has been disposed.
+    /// </summary>
+    /// <returns><b>true</b> when this event stream has been disposed, otherwise <b>false</b>.</returns>
+    /// <remarks>This method call is not thread-safe by default.</remarks>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected bool IsDisposedUnsafe()
+    {
+        return _isDisposed;
     }
 
     [Pure]
     internal EventSubscriber<TEvent> CreateSubscriber()
     {
-        return new EventSubscriber<TEvent>( RemoveSubscriber, EventListener<TEvent>.Empty );
+        return new EventSubscriber<TEvent>( this, EventListener<TEvent>.Empty );
+    }
+
+    internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)
+    {
+        using ( AcquireLock() )
+        {
+            for ( var i = 0; i < _subscribers.Count; ++i )
+            {
+                if ( ReferenceEquals( _subscribers[i], subscriber ) )
+                {
+                    _subscribers.RemoveAt( i );
+                    break;
+                }
+            }
+        }
     }
 
     internal IEventSubscriber Listen(IEventListener<TEvent> listener, EventSubscriber<TEvent> subscriber)
     {
         subscriber.Listener = listener;
-        return ListenInternal( subscriber );
+        return ListenCore( subscriber );
     }
 
-    internal IEventSubscriber ListenInternal(EventSubscriber<TEvent> subscriber)
+    private EventSubscriber<TEvent> ListenCore(EventSubscriber<TEvent> subscriber)
     {
-        subscriber.Listener = OverrideListener( subscriber, subscriber.Listener );
+        subscriber.Listener = OverrideListenerUnsafe( subscriber, subscriber.Listener );
 
-        if ( subscriber.IsDisposed )
+        DisposalSource? disposalSource = null;
+        using ( AcquireLock() )
+        using ( subscriber.AcquireLock() )
         {
-            subscriber.Listener.OnDispose( DisposalSource.Subscriber );
-            return subscriber;
-        }
-
-        _subscribers.Add( subscriber );
-        if ( IsDisposed )
-        {
-            if ( subscriber.MarkAsDisposed() )
+            if ( ! subscriber.HasOwnerUnsafe() )
+                disposalSource = DisposalSource.Subscriber;
+            else if ( _isDisposed )
             {
-                RemoveSubscriber( subscriber );
-                subscriber.Listener.OnDispose( DisposalSource.EventSource );
+                disposalSource = DisposalSource.EventSource;
+                subscriber.RemoveOwnerUnsafe();
             }
-
-            return subscriber;
+            else
+            {
+                _subscribers.Add( subscriber );
+                subscriber.Listener = OnSubscriberRegistered( subscriber, subscriber.Listener );
+            }
         }
 
-        OnSubscriberAdded( subscriber, subscriber.Listener );
+        if ( disposalSource is null )
+            OnSubscriberAddedUnsafe( subscriber, subscriber.Listener );
+        else
+            subscriber.Listener.OnDispose( disposalSource.Value );
+
         return subscriber;
-    }
-
-    private struct SubscriberPool
-    {
-        private EventSubscriber<TEvent>[][] _buffer;
-        private int _level;
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal static SubscriberPool Create()
-        {
-            return new SubscriberPool
-            {
-                _buffer = Array.Empty<EventSubscriber<TEvent>[]>(),
-                _level = -1
-            };
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal (EventSubscriber<TEvent>[] Buffer, int Count) Rent(List<EventSubscriber<TEvent>> subscribers)
-        {
-            if ( ++_level >= _buffer.Length )
-            {
-                var newBuffer = new EventSubscriber<TEvent>[_level + 1][];
-                for ( var i = 0; i < _buffer.Length; ++i )
-                    newBuffer[i] = _buffer[i];
-
-                newBuffer[^1] = Array.Empty<EventSubscriber<TEvent>>();
-                _buffer = newBuffer;
-            }
-
-            var count = subscribers.Count;
-            var result = _buffer[_level];
-            if ( count > result.Length )
-            {
-                result = new EventSubscriber<TEvent>[count];
-                _buffer[_level] = result;
-            }
-
-            subscribers.CopyTo( result );
-            return (result, count);
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Return(int count)
-        {
-            var buffer = _buffer[_level--];
-            Array.Clear( buffer, 0, count );
-        }
     }
 
     IEventSubscriber IEventStream.Listen(IEventListener listener)

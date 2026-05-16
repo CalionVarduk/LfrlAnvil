@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -43,8 +46,10 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly int _count;
         private ListSlim<TEvent> _buffer;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, int count)
             : base( next )
@@ -55,19 +60,37 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
 
         public override void React(TEvent @event)
         {
-            _buffer.Add( @event );
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposed )
+                    _buffer.Add( @event );
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            var count = _buffer.Count - _count;
-            for ( var i = 0; i < count; ++i )
-                Next.React( _buffer[i] );
+            ReadOnlySpan<TEvent> events;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
-            _buffer.Clear();
-            _buffer.ResetCapacity();
+                _isDisposed = true;
+                var count = _buffer.Count - _count;
+                events = count > 0 ? _buffer.AsSpan().Slice( 0, count ) : ReadOnlySpan<TEvent>.Empty;
+                _buffer = ListSlim<TEvent>.Create();
+            }
+
+            foreach ( var e in events )
+                Next.React( e );
 
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

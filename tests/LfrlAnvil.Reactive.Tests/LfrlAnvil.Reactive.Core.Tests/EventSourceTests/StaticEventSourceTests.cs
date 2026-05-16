@@ -6,6 +6,6 @@ public class StaticEventSourceTests : TestsBase
     public void Disposed_ShouldReturnDisposedSource()
     {
         var sut = EventSource.Disposed<int>();
-        sut.IsDisposed.TestTrue().Go();
+        Assertion.All( sut.IsDisposed.TestTrue(), sut.Subscribers.TestEmpty() ).Go();
     }
 }

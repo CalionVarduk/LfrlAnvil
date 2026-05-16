@@ -35,7 +35,7 @@ public sealed class EventExchange : IMutableEventExchange
     public EventExchange()
     {
         _publishers = new ConcurrentDictionary<Type, IEventPublisher>();
-        _isDisposed = new InterlockedBoolean( false );
+        _isDisposed = InterlockedBoolean.False;
     }
 
     /// <inheritdoc />
@@ -144,7 +144,7 @@ public sealed class EventExchange : IMutableEventExchange
 
     private sealed class DisposalListener<TEvent> : EventListener<TEvent>
     {
-        private EventExchange? _exchange;
+        private readonly EventExchange _exchange;
 
         internal DisposalListener(EventExchange exchange)
         {
@@ -155,7 +155,6 @@ public sealed class EventExchange : IMutableEventExchange
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _exchange );
             if ( _exchange.IsDisposed )
                 return;
 
@@ -163,7 +162,6 @@ public sealed class EventExchange : IMutableEventExchange
                 throw new InvalidEventPublisherDisposalException();
 
             _exchange.RemovePublisher( typeof( TEvent ) );
-            _exchange = null;
         }
     }
 }

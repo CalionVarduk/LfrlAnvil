@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -46,8 +48,10 @@ public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEv
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
+        private readonly object _sync = new object();
         private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
         private Optional<TEvent> _argument;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<TNextEvent> next,
@@ -60,13 +64,25 @@ public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEv
 
         public override void React(TEvent @event)
         {
-            _argument = new Optional<TEvent>( @event );
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposed )
+                    _argument = new Optional<TEvent>( @event );
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            var argument = _argument;
-            _argument = Optional<TEvent>.Empty;
+            Optional<TEvent> argument;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                _isDisposed = true;
+                argument = _argument;
+                _argument = Optional<TEvent>.Empty;
+            }
 
             if ( ! argument.HasValue )
             {
@@ -76,6 +92,12 @@ public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEv
 
             var continuationStream = _continuationFactory( argument.Event! );
             continuationStream.Listen( Next );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

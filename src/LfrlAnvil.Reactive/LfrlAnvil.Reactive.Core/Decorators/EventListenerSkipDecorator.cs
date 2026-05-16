@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -42,6 +44,7 @@ public class EventListenerSkipDecorator<TEvent> : IEventListenerDecorator<TEvent
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly int _count;
         private int _skipped;
 
@@ -49,18 +52,26 @@ public class EventListenerSkipDecorator<TEvent> : IEventListenerDecorator<TEvent
             : base( next )
         {
             _count = count;
-            _skipped = 0;
         }
 
         public override void React(TEvent @event)
         {
-            if ( _skipped == _count )
+            using ( AcquireLock() )
             {
-                Next.React( @event );
-                return;
+                if ( _skipped < _count )
+                {
+                    ++_skipped;
+                    return;
+                }
             }
 
-            ++_skipped;
+            Next.React( @event );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -49,11 +51,13 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
+        private readonly object _sync = new object();
         private readonly IEventSubscriber _subscriber;
-        private readonly IEventSubscriber _targetSubscriber;
+        private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
         private readonly Func<TEvent, TTargetEvent, TNextEvent> _selector;
         private QueueSlim<TEvent> _sourceEvents;
         private QueueSlim<TTargetEvent> _targetEvents;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<TNextEvent> next,
@@ -67,41 +71,95 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
             _sourceEvents = QueueSlim<TEvent>.Create();
             _targetEvents = QueueSlim<TTargetEvent>.Create();
 
-            _targetSubscriber = target.Listen(
-                Reactive.EventListener.Create<TTargetEvent>(
-                    e =>
-                    {
-                        if ( _sourceEvents.TryDequeue( out var sourceEvent ) )
-                        {
-                            Next.React( _selector( sourceEvent, e ) );
-                            return;
-                        }
-
-                        _targetEvents.Enqueue( e );
-                    },
-                    _ => _subscriber.Dispose() ) );
+            _targetSubscriber = new LazyDisposable<IEventSubscriber>();
+            var targetListener = new TargetEventListener( this );
+            _targetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            if ( _targetEvents.TryDequeue( out var targetEvent ) )
+            TTargetEvent? targetEvent;
+            using ( AcquireLock() )
             {
-                Next.React( _selector( @event, targetEvent ) );
-                return;
+                if ( _isDisposed )
+                    return;
+
+                if ( ! _targetEvents.TryDequeue( out targetEvent ) )
+                {
+                    _sourceEvents.Enqueue( @event );
+                    return;
+                }
             }
 
-            _sourceEvents.Enqueue( @event );
+            Next.React( _selector( @event, targetEvent ) );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _targetSubscriber.Dispose();
-            _sourceEvents.Clear();
-            _sourceEvents.ResetCapacity();
-            _targetEvents.Clear();
-            _targetEvents.ResetCapacity();
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
+                _isDisposed = true;
+                _sourceEvents = QueueSlim<TEvent>.Create();
+                _targetEvents = QueueSlim<TTargetEvent>.Create();
+            }
+
+            _targetSubscriber.Dispose();
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTargetEvent(TTargetEvent @event)
+        {
+            TEvent? sourceEvent;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                if ( ! _sourceEvents.TryDequeue( out sourceEvent ) )
+                {
+                    _targetEvents.Enqueue( @event );
+                    return;
+                }
+            }
+
+            Next.React( _selector( sourceEvent, @event ) );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void OnTargetDisposed()
+        {
+            _targetSubscriber.Dispose();
+            _subscriber.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
+        }
+    }
+
+    private sealed class TargetEventListener : EventListener<TTargetEvent>
+    {
+        private readonly EventListener _parent;
+
+        internal TargetEventListener(EventListener parent)
+        {
+            _parent = parent;
+        }
+
+        public override void React(TTargetEvent @event)
+        {
+            _parent.OnTargetEvent( @event );
+        }
+
+        public override void OnDispose(DisposalSource _)
+        {
+            _parent.OnTargetDisposed();
         }
     }
 }

@@ -68,7 +68,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
     private sealed class EventListener : DecoratedEventListener<TEvent, WithInterval<TEvent>>
     {
-        private IntervalEventSource? _timeout;
+        private readonly IntervalEventSource _timeout;
 
         internal EventListener(IEventListener<WithInterval<TEvent>> next, IntervalEventSource timeout)
             : base( next )
@@ -78,16 +78,13 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _timeout );
             var timerListener = new TimerListener( this, @event );
             _timeout.Listen( timerListener );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            Assume.IsNotNull( _timeout );
             _timeout.Dispose();
-            _timeout = null;
             base.OnDispose( source );
         }
 
@@ -101,8 +98,8 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
     private sealed class TimerListener : EventListener<WithInterval<long>>
     {
-        private EventListener? _mainListener;
-        private TEvent? _event;
+        private readonly EventListener _mainListener;
+        private readonly TEvent _event;
 
         internal TimerListener(EventListener mainListener, TEvent @event)
         {
@@ -112,14 +109,9 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
 
         public override void React(WithInterval<long> @event)
         {
-            Assume.IsNotNull( _mainListener );
-            _mainListener.OnTimerReact( _event!, @event );
+            _mainListener.OnTimerReact( _event, @event );
         }
 
-        public override void OnDispose(DisposalSource source)
-        {
-            _mainListener = null;
-            _event = default;
-        }
+        public override void OnDispose(DisposalSource _) { }
     }
 }

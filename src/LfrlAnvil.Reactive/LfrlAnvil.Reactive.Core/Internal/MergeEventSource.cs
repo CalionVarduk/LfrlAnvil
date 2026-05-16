@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.Reactive.Internal;
 
@@ -28,7 +32,7 @@ namespace LfrlAnvil.Reactive.Internal;
 /// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
 {
-    private readonly IEventStream<TEvent>[] _streams;
+    private IEventStream<TEvent>[] _streams;
     private readonly int _maxConcurrency;
 
     internal MergeEventSource(IEnumerable<IEventStream<TEvent>> streams, int maxConcurrency)
@@ -39,45 +43,65 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
     }
 
     /// <inheritdoc />
-    protected override void OnDispose()
+    public override void Dispose()
     {
-        base.OnDispose();
-        Array.Clear( _streams, 0, _streams.Length );
+        if ( DisposeCore( out var exceptions ) )
+        {
+            using ( AcquireLock() )
+                _streams = [ ];
+        }
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     /// <inheritdoc />
-    protected override IEventListener<TEvent> OverrideListener(IEventSubscriber subscriber, IEventListener<TEvent> listener)
+    protected override IEventListener<TEvent> OverrideListenerUnsafe(IEventSubscriber subscriber, IEventListener<TEvent> listener)
     {
-        return IsDisposed ? listener : new EventListener( listener, subscriber, _streams, _maxConcurrency );
+        IEventStream<TEvent>[] streams;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposedUnsafe() )
+                return listener;
+
+            streams = _streams;
+        }
+
+        return new EventListener( listener, subscriber, streams, _maxConcurrency );
     }
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly LinkedList<IEventSubscriber?> _innerSubscribers;
-        private readonly IReadOnlyList<IEventStream<TEvent>> _streams;
+        private readonly object _sync = new object();
+        private readonly ReadOnlyArray<IEventStream<TEvent>> _streams;
         private readonly IEventSubscriber _subscriber;
+        private InnerSubscribersCollection _innerSubscribers;
+        private readonly int _maxConcurrency;
         private int _nextStreamIndex;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<TEvent> next,
             IEventSubscriber subscriber,
-            IReadOnlyList<IEventStream<TEvent>> streams,
+            ReadOnlyArray<IEventStream<TEvent>> streams,
             int maxConcurrency)
             : base( next )
         {
-            _innerSubscribers = new LinkedList<IEventSubscriber?>();
+            _innerSubscribers = new InnerSubscribersCollection( Math.Min( maxConcurrency, streams.Count ) );
             _streams = streams;
             _subscriber = subscriber;
             _nextStreamIndex = 0;
+            _maxConcurrency = maxConcurrency;
 
             if ( _streams.Count == 0 )
             {
+                _isDisposed = true;
                 _subscriber.Dispose();
                 return;
             }
 
-            while ( _nextStreamIndex < _streams.Count && _innerSubscribers.Count < maxConcurrency )
-                StartListeningToNextInnerStream();
+            while ( TryReserveNextStream( out var nodeId, out var stream ) )
+                StartListeningToNextInnerStream( nodeId, stream );
         }
 
         public override void React(TEvent @event)
@@ -87,12 +111,27 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
 
         public override void OnDispose(DisposalSource source)
         {
-            _nextStreamIndex = _streams.Count;
+            ArrayPoolToken<IEventSubscriber?> subscribersToken = default;
+            try
+            {
+                ReadOnlySpan<IEventSubscriber?> subscribers;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed )
+                        return;
 
-            foreach ( var subscriber in _innerSubscribers )
-                subscriber?.Dispose();
+                    _isDisposed = true;
+                    _nextStreamIndex = _streams.Count;
+                    subscribers = _innerSubscribers.Clear( out subscribersToken );
+                }
 
-            _innerSubscribers.Clear();
+                foreach ( var s in subscribers )
+                    s?.Dispose();
+            }
+            finally
+            {
+                subscribersToken.Dispose();
+            }
 
             base.OnDispose( source );
         }
@@ -103,58 +142,93 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
             React( @event );
         }
 
-        internal void OnInnerDisposed(LinkedListNode<IEventSubscriber?> node)
+        internal void OnInnerDisposed(int nodeId)
         {
-            if ( _subscriber.IsDisposed )
-                return;
-
-            _innerSubscribers.Remove( node );
-
-            if ( _nextStreamIndex == _streams.Count )
+            var dispose = false;
+            using ( AcquireLock() )
             {
-                if ( _innerSubscribers.Count == 0 )
-                    _subscriber.Dispose();
+                if ( _isDisposed )
+                    return;
 
+                _innerSubscribers.Remove( nodeId );
+                if ( _nextStreamIndex == _streams.Count && _innerSubscribers.Count == 0 )
+                {
+                    dispose = true;
+                    _isDisposed = true;
+                    _innerSubscribers.Clear();
+                }
+            }
+
+            if ( dispose )
+            {
+                _subscriber.Dispose();
                 return;
             }
 
-            StartListeningToNextInnerStream();
+            if ( TryReserveNextStream( out var nextNodeId, out var nextStream ) )
+                StartListeningToNextInnerStream( nextNodeId, nextStream );
         }
 
-        private void StartListeningToNextInnerStream()
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
         {
-            var stream = _streams[_nextStreamIndex++];
+            return ExclusiveLock.Enter( _sync );
+        }
 
-            var innerSubscriberNode = _innerSubscribers.AddLast( ( IEventSubscriber? )null );
-            var innerListener = new InnerEventListener( this, innerSubscriberNode );
+        private bool TryReserveNextStream(out int nodeId, [MaybeNullWhen( false )] out IEventStream<TEvent> stream)
+        {
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed || _nextStreamIndex >= _streams.Count || _innerSubscribers.Count >= _maxConcurrency )
+                {
+                    nodeId = 0;
+                    stream = null;
+                    return false;
+                }
 
+                nodeId = _innerSubscribers.Reserve();
+                stream = _streams[_nextStreamIndex++];
+                return true;
+            }
+        }
+
+        private void StartListeningToNextInnerStream(int nodeId, IEventStream<TEvent> stream)
+        {
+            var innerListener = new InnerEventListener( this, nodeId );
             var innerSubscriber = stream.Listen( innerListener );
-            innerSubscriberNode.Value = innerSubscriber;
+
+            bool disposed;
+            using ( AcquireLock() )
+            {
+                disposed = _isDisposed;
+                if ( ! disposed )
+                    _innerSubscribers.Set( nodeId, innerSubscriber );
+            }
+
+            if ( disposed )
+                innerSubscriber.Dispose();
         }
     }
 
     private sealed class InnerEventListener : EventListener<TEvent>
     {
-        private readonly LinkedListNode<IEventSubscriber?> _subscriberNode;
-        private EventListener? _outerListener;
+        private readonly int _nodeId;
+        private readonly EventListener _outerListener;
 
-        internal InnerEventListener(EventListener outerListener, LinkedListNode<IEventSubscriber?> subscriberNode)
+        internal InnerEventListener(EventListener outerListener, int nodeId)
         {
-            _subscriberNode = subscriberNode;
+            _nodeId = nodeId;
             _outerListener = outerListener;
         }
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerEvent( @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _outerListener );
-            _outerListener.OnInnerDisposed( _subscriberNode );
-            _outerListener = null;
+            _outerListener.OnInnerDisposed( _nodeId );
         }
     }
 }

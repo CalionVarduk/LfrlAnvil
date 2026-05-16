@@ -162,7 +162,7 @@ public class EventListenerDistinctUntilDecoratorTests : TestsBase
 
         Assertion.All(
                 actualEvents.TestSequence( sourceEvents ),
-                sut.Subscribers.Count.TestEquals( 2 ) )
+                sut.Subscribers.Length.TestEquals( 2 ) )
             .Go();
     }
 }

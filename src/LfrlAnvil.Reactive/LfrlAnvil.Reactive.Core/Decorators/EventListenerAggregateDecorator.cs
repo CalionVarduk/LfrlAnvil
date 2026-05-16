@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -57,30 +59,55 @@ public sealed class EventListenerAggregateDecorator<TEvent> : IEventListenerDeco
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly Func<TEvent, TEvent, TEvent> _func;
         private Optional<TEvent> _result;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, Func<TEvent, TEvent, TEvent> func, Optional<TEvent> seed)
             : base( next )
         {
             _result = seed;
             _func = func;
-            _result.TryForward( Next );
+            seed.TryForward( Next );
         }
 
         public override void React(TEvent @event)
         {
-            _result = _result.HasValue
-                ? new Optional<TEvent>( _func( _result.Event!, @event ) )
-                : new Optional<TEvent>( @event );
+            Optional<TEvent> result;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
-            Next.React( _result.Event! );
+                _result = _result.HasValue
+                    ? new Optional<TEvent>( _func( _result.Event!, @event ) )
+                    : new Optional<TEvent>( @event );
+
+                result = _result;
+            }
+
+            Next.React( result.Event! );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _result = Optional<TEvent>.Empty;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                _isDisposed = true;
+                _result = Optional<TEvent>.Empty;
+            }
+
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

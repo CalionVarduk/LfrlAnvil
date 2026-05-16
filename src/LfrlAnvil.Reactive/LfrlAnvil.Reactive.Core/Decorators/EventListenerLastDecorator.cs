@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -30,7 +32,9 @@ public class EventListenerLastDecorator<TEvent> : IEventListenerDecorator<TEvent
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private Optional<TEvent> _value;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next)
             : base( next )
@@ -40,15 +44,34 @@ public class EventListenerLastDecorator<TEvent> : IEventListenerDecorator<TEvent
 
         public override void React(TEvent @event)
         {
-            _value = new Optional<TEvent>( @event );
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposed )
+                    _value = new Optional<TEvent>( @event );
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _value.TryForward( Next );
-            _value = Optional<TEvent>.Empty;
+            Optional<TEvent> value;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
+                _isDisposed = true;
+                value = _value;
+                _value = Optional<TEvent>.Empty;
+            }
+
+            value.TryForward( Next );
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

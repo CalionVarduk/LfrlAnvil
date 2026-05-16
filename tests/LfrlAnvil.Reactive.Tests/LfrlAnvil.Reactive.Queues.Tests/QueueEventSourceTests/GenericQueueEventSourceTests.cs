@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Queues.Composites;
 
 namespace LfrlAnvil.Reactive.Queues.Tests.QueueEventSourceTests;
@@ -60,18 +59,6 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
                     new FromQueue<TEvent, long, int>( thirdEnqueued, thirdDequeuePoint, delta )
                 ] ) )
             .Go();
-    }
-
-    [Fact]
-    public void Move_ShouldThrowObjectDisposedException_WhenEventSourceIsDisposed()
-    {
-        var queue = new MockEventQueue( Fixture.Create<long>() );
-        var sut = new QueueEventSource<TEvent, long, int>( queue );
-        sut.Dispose();
-
-        var action = Lambda.Of( () => sut.Move( Fixture.Create<int>() ) );
-
-        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]

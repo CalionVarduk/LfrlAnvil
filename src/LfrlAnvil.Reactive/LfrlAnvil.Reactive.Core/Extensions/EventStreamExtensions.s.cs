@@ -854,77 +854,6 @@ public static class EventStreamExtensions
     }
 
     /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<TEvent> Concurrent<TEvent>(this IEventStream<TEvent> source)
-    {
-        var decorator = new EventListenerConcurrentDecorator<TEvent>( null );
-        return source.Decorate( decorator );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="sync">Synchronization object.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<TEvent> Concurrent<TEvent>(this IEventStream<TEvent> source, object sync)
-    {
-        var decorator = new EventListenerConcurrentDecorator<TEvent>( sync );
-        return source.Decorate( decorator );
-    }
-
-    /// <summary>
-    /// Decorates both event streams with <see cref="EventListenerConcurrentDecorator{TEvent}"/>, with the same synchronization object.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="target">Target event stream.</param>
-    /// <param name="resultSelector">Result selector.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <typeparam name="TTargetEvent">Target event type.</typeparam>
-    /// <typeparam name="TResult">Result type.</typeparam>
-    /// <returns>Selected result.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static TResult ShareConcurrencyWith<TEvent, TTargetEvent, TResult>(
-        this IEventStream<TEvent> source,
-        IEventStream<TTargetEvent> target,
-        Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector)
-    {
-        return source.ShareConcurrencyWith( target, resultSelector, new object() );
-    }
-
-    /// <summary>
-    /// Decorates both event streams with <see cref="EventListenerConcurrentDecorator{TEvent}"/>, with the same synchronization object.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="target">Target event stream.</param>
-    /// <param name="resultSelector">Result selector.</param>
-    /// <param name="sync">Synchronization object.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <typeparam name="TTargetEvent">Target event type.</typeparam>
-    /// <typeparam name="TResult">Result type.</typeparam>
-    /// <returns>Selected result.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static TResult ShareConcurrencyWith<TEvent, TTargetEvent, TResult>(
-        this IEventStream<TEvent> source,
-        IEventStream<TTargetEvent> target,
-        Func<IEventStream<TEvent>, IEventStream<TTargetEvent>, TResult> resultSelector,
-        object sync)
-    {
-        return resultSelector( source.Concurrent( sync ), target.Concurrent( sync ) );
-    }
-
-    /// <summary>
     /// Decorates the event stream with <see cref="EventListenerAuditUntilDecorator{TEvent,TTargetEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
@@ -1077,66 +1006,6 @@ public static class EventStreamExtensions
     }
 
     /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentAllDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ConcurrentAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
-    {
-        var decorator = new EventListenerConcurrentAllDecorator<TEvent>( null );
-        return source.Decorate( decorator );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentAllDecorator{TEvent}"/>.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="sync">Shared synchronization object.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ConcurrentAll<TEvent>(this IEventStream<IEventStream<TEvent>> source, object sync)
-    {
-        var decorator = new EventListenerConcurrentAllDecorator<TEvent>( sync );
-        return source.Decorate( decorator );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentDecorator{TEvent}"/>
-    /// and <see cref="EventListenerConcurrentAllDecorator{TEvent}"/>, with the same synchronization object.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ShareConcurrencyWithAll<TEvent>(this IEventStream<IEventStream<TEvent>> source)
-    {
-        return source.ShareConcurrencyWithAll( new object() );
-    }
-
-    /// <summary>
-    /// Decorates the event stream with <see cref="EventListenerConcurrentDecorator{TEvent}"/>
-    /// and <see cref="EventListenerConcurrentAllDecorator{TEvent}"/>, with the same synchronization object.
-    /// </summary>
-    /// <param name="source">Source event stream.</param>
-    /// <param name="sync">Shared synchronization object.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>Decorated <see cref="IEventStream{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventStream<IEventStream<TEvent>> ShareConcurrencyWithAll<TEvent>(
-        this IEventStream<IEventStream<TEvent>> source,
-        object sync)
-    {
-        return source.Concurrent( sync ).ConcurrentAll( sync );
-    }
-
-    /// <summary>
     /// Decorates the event stream with <see cref="EventListenerUseSynchronizationContextDecorator{TEvent}"/>.
     /// </summary>
     /// <param name="source">Source event stream.</param>
@@ -1169,45 +1038,6 @@ public static class EventStreamExtensions
     }
 
     /// <summary>
-    /// Creates a new <see cref="ConcurrentEventSource{TEvent,TSource}"/> with the provided underlying event source.
-    /// </summary>
-    /// <param name="source">Underlying event source.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>New <see cref="ConcurrentEventSource{TEvent,TSource}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventSource<TEvent> ToConcurrent<TEvent>(this EventSource<TEvent> source)
-    {
-        return new ConcurrentEventSource<TEvent, EventSource<TEvent>>( source );
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="ConcurrentEventPublisher{TEvent,TSource}"/> with the provided underlying event publisher.
-    /// </summary>
-    /// <param name="source">Underlying event publisher.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>New <see cref="ConcurrentEventPublisher{TEvent,TSource}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IEventPublisher<TEvent> ToConcurrent<TEvent>(this EventPublisher<TEvent> source)
-    {
-        return new ConcurrentEventPublisher<TEvent, EventPublisher<TEvent>>( source );
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="ConcurrentHistoryEventPublisher{TEvent,TSource}"/> with the provided underlying history event publisher.
-    /// </summary>
-    /// <param name="source">Underlying history event publisher.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>New <see cref="ConcurrentHistoryEventPublisher{TEvent,TSource}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IHistoryEventPublisher<TEvent> ToConcurrent<TEvent>(this HistoryEventPublisher<TEvent> source)
-    {
-        return new ConcurrentHistoryEventPublisher<TEvent, HistoryEventPublisher<TEvent>>( source );
-    }
-
-    /// <summary>
     /// Creates a new <see cref="Task{TResult}"/> instance from the provided event <paramref name="source"/>, that completes
     /// when the event source subscriber is disposed, with the last emitted event as its result.
     /// </summary>
@@ -1228,19 +1058,15 @@ public static class EventStreamExtensions
         var listener = new TaskCompletionEventListener<TEvent>( completionSource, cancellationTokenRegistration );
         var subscriber = source.Listen( listener );
 
-        if ( ! subscriber.IsDisposed )
-        {
-            var actualCancellationTokenRegistration = cancellationToken.UnsafeRegister(
-                _ =>
-                {
-                    listener.MarkAsCancelled();
-                    subscriber.Dispose();
-                },
-                null );
+        var actualCancellationTokenRegistration = cancellationToken.UnsafeRegister(
+            (_, ct) =>
+            {
+                listener.MarkAsCancelled( ct );
+                subscriber.Dispose();
+            },
+            null );
 
-            cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
-        }
-
+        cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
         return completionSource.Task;
     }
 

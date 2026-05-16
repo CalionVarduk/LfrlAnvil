@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -43,28 +44,27 @@ public sealed class EventListenerDefaultIfEmptyDecorator<TEvent> : IEventListene
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private bool _shouldEmitDefault;
-        private TEvent? _defaultValue;
+        private InterlockedBoolean _shouldEmitDefault;
+        private readonly TEvent _defaultValue;
 
         internal EventListener(IEventListener<TEvent> next, TEvent defaultValue)
             : base( next )
         {
-            _shouldEmitDefault = true;
+            _shouldEmitDefault = InterlockedBoolean.True;
             _defaultValue = defaultValue;
         }
 
         public override void React(TEvent @event)
         {
-            _shouldEmitDefault = false;
+            _shouldEmitDefault = InterlockedBoolean.False;
             Next.React( @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            if ( _shouldEmitDefault )
-                Next.React( _defaultValue! );
+            if ( _shouldEmitDefault.Value )
+                Next.React( _defaultValue );
 
-            _defaultValue = default;
             base.OnDispose( source );
         }
     }

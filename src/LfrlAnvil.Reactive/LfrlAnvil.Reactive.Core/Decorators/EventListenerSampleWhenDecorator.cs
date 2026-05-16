@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -46,72 +47,93 @@ public sealed class EventListenerSampleWhenDecorator<TEvent, TTargetEvent> : IEv
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly IEventSubscriber _subscriber;
-        private readonly IEventSubscriber _targetSubscriber;
-        private readonly TargetEventListener _targetListener;
+        private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
+        private Optional<TEvent> _sample;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
             : base( next )
         {
             _subscriber = subscriber;
-            _targetListener = new TargetEventListener( this );
-            _targetSubscriber = target.Listen( _targetListener );
+            _sample = Optional<TEvent>.Empty;
+            _targetSubscriber = new LazyDisposable<IEventSubscriber>();
+            var targetListener = new TargetEventListener( this );
+            _targetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            _targetListener.UpdateSample( @event );
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposed )
+                    _sample = new Optional<TEvent>( @event );
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                _isDisposed = true;
+                _sample = Optional<TEvent>.Empty;
+            }
+
             _targetSubscriber.Dispose();
             base.OnDispose( source );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void OnTargetEvent(Optional<TEvent> sample)
+        internal void OnTargetEvent()
         {
+            Optional<TEvent> sample;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                sample = _sample;
+                _sample = Optional<TEvent>.Empty;
+            }
+
             sample.TryForward( Next );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void DisposeSubscriber()
+        internal void OnTargetDisposed()
         {
+            _targetSubscriber.Dispose();
             _subscriber.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private Optional<TEvent> _sample;
-        private EventListener? _sourceListener;
+        private readonly EventListener _sourceListener;
 
         internal TargetEventListener(EventListener sourceListener)
         {
-            _sample = Optional<TEvent>.Empty;
             _sourceListener = sourceListener;
         }
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
-            _sourceListener.OnTargetEvent( _sample );
-            _sample = Optional<TEvent>.Empty;
+            _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener );
-            _sample = Optional<TEvent>.Empty;
-            _sourceListener.DisposeSubscriber();
-            _sourceListener = null;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void UpdateSample(TEvent @event)
-        {
-            _sample = new Optional<TEvent>( @event );
+            _sourceListener.OnTargetDisposed();
         }
     }
 }

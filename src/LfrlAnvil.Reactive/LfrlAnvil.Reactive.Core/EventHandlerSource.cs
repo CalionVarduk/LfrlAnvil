@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive;
@@ -23,7 +24,7 @@ namespace LfrlAnvil.Reactive;
 /// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventHandlerSource<TEvent> : EventSource<WithSender<TEvent>>
 {
-    internal Action<EventHandler<TEvent>>? Teardown;
+    private Action<EventHandler<TEvent>>? _teardown;
 
     /// <summary>
     /// Creates a new <see cref="EventHandlerSource{TEvent}"/> instance.
@@ -33,25 +34,38 @@ public sealed class EventHandlerSource<TEvent> : EventSource<WithSender<TEvent>>
     public EventHandlerSource(Action<EventHandler<TEvent>> setup, Action<EventHandler<TEvent>> teardown)
     {
         setup( Handle );
-        Teardown = teardown;
-    }
-
-    internal EventHandlerSource()
-    {
-        Teardown = null;
+        _teardown = teardown;
     }
 
     /// <inheritdoc />
-    protected override void OnDispose()
+    public override void Dispose()
     {
-        Assume.IsNotNull( Teardown );
-        base.OnDispose();
-        Teardown( Handle );
-        Teardown = null;
+        if ( DisposeCore( out var exceptions ) )
+        {
+            Action<EventHandler<TEvent>>? teardown;
+            using ( AcquireLock() )
+            {
+                teardown = _teardown;
+                _teardown = null;
+            }
+
+            try
+            {
+                teardown?.Invoke( Handle );
+            }
+            catch ( Exception exc )
+            {
+                exceptions = exceptions.Extend( exc );
+            }
+        }
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
-    internal void Handle(object? sender, TEvent args)
+    private void Handle(object? sender, TEvent args)
     {
-        NotifyListeners( new WithSender<TEvent>( sender, args ) );
+        if ( ! TryNotifyListeners( new WithSender<TEvent>( sender, args ) ) )
+            ThrowDisposedException();
     }
 }

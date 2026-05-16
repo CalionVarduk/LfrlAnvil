@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Queues.Composites;
 
 namespace LfrlAnvil.Reactive.Queues;
@@ -41,6 +42,16 @@ public class ReorderableQueueEventSource<TEvent, TPoint, TPointDelta> : EventSou
     /// </summary>
     public IReorderableEventQueue<TEvent, TPoint, TPointDelta> Queue => _queue;
 
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        if ( DisposeCore( out var exceptions ) )
+            _queue.Clear();
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
+    }
+
     /// <summary>
     /// Moves the <see cref="IReadOnlyEventQueue{TEvent,TPoint,TPointDelta}.CurrentPoint"/> of the <see cref="Queue"/> forward
     /// and emits events for all dequeued events.
@@ -50,22 +61,16 @@ public class ReorderableQueueEventSource<TEvent, TPoint, TPointDelta> : EventSou
     /// </param>
     public void Move(TPointDelta delta)
     {
-        EnsureNotDisposed();
         _queue.Move( delta );
 
         var @event = _queue.Dequeue();
         while ( @event is not null )
         {
             var nextEvent = new FromQueue<TEvent, TPoint, TPointDelta>( @event.Value, _queue.CurrentPoint, delta );
-            NotifyListeners( nextEvent );
+            if ( ! TryNotifyListeners( nextEvent ) )
+                ThrowDisposedException();
+
             @event = _queue.Dequeue();
         }
-    }
-
-    /// <inheritdoc />
-    protected override void OnDispose()
-    {
-        _queue.Clear();
-        base.OnDispose();
     }
 }

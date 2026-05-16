@@ -41,19 +41,15 @@ internal sealed class AsyncEnumerableStream<TEvent> : IAsyncEnumerable<AsyncEnum
         var listener = new AsyncEnumerableEventListener<TEvent>( cancellationTokenRegistration, _maxBufferSize, _discardLatest );
         var subscriber = _stream.Listen( listener );
 
-        if ( ! subscriber.IsDisposed )
-        {
-            var actualCancellationTokenRegistration = cancellationToken.UnsafeRegister(
-                (_, ct) =>
-                {
-                    listener.Cancel( ct );
-                    subscriber.Dispose();
-                },
-                null );
+        var actualCancellationTokenRegistration = cancellationToken.UnsafeRegister(
+            (_, ct) =>
+            {
+                listener.Cancel( ct );
+                subscriber.Dispose();
+            },
+            null );
 
-            cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
-        }
-
+        cancellationTokenRegistration.Assign( actualCancellationTokenRegistration );
         return new Enumerator( listener, subscriber );
     }
 
@@ -82,8 +78,8 @@ internal sealed class AsyncEnumerableStream<TEvent> : IAsyncEnumerable<AsyncEnum
             if ( Current.IsDisposal )
                 return false;
 
-            Current = await _listener.GetTask().ConfigureAwait( false );
             _listener.Reset();
+            Current = await _listener.GetTask().ConfigureAwait( false );
             return true;
         }
     }

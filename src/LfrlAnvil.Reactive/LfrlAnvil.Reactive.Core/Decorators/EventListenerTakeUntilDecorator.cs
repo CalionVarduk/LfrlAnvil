@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -43,24 +44,34 @@ public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEve
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
         private readonly IEventSubscriber _subscriber;
-        private readonly IEventSubscriber _targetSubscriber;
+        private InterlockedBoolean _isDisposing;
+        private InterlockedBoolean _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, IEventStream<TTargetEvent> target)
             : base( next )
         {
+            _isDisposing = InterlockedBoolean.False;
+            _isDisposed = InterlockedBoolean.False;
             _subscriber = subscriber;
+            _targetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this );
-            _targetSubscriber = target.Listen( targetListener );
+            _targetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            Next.React( @event );
+            if ( ! _isDisposing.Value )
+                Next.React( @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
+            _isDisposing.WriteTrue();
+            if ( ! _isDisposed.WriteTrue() )
+                return;
+
             _targetSubscriber.Dispose();
             base.OnDispose( source );
         }
@@ -68,13 +79,16 @@ public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEve
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnTargetEvent()
         {
-            _subscriber.Dispose();
+            var dispose = _isDisposing.WriteTrue();
+            _targetSubscriber.Dispose();
+            if ( dispose )
+                _subscriber.Dispose();
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private EventListener? _sourceListener;
+        private readonly EventListener _sourceListener;
 
         internal TargetEventListener(EventListener sourceListener)
         {
@@ -83,15 +97,12 @@ public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEve
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
-            _sourceListener = null;
         }
     }
 }

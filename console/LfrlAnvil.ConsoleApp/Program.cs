@@ -6,7 +6,6 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive;
 using LfrlAnvil.Reactive.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
-using LfrlAnvil.Reactive.Extensions;
 
 {
     var interval = Duration.FromMilliseconds( 1000 / 60.0 );
@@ -22,6 +21,7 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
     Console.WriteLine( $"===== TIMER '{name}' STARTED (for {duration}) (TID: {Thread.CurrentThread.ManagedThreadId})" );
     Console.WriteLine();
 
+    var sync = new object();
     var count = 0;
     long last = -1;
     var minInterval = Duration.MaxValue;
@@ -29,10 +29,11 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
     var intervalMean = 0.0;
     var intervalVarianceBase = 0.0;
 
-    timer.Concurrent()
-        .Listen(
-            EventListener.Create<WithInterval<long>>(
-                e =>
+    timer.Listen(
+        EventListener.Create<WithInterval<long>>(
+            e =>
+            {
+                lock ( sync )
                 {
                     ++count;
                     last = e.Event;
@@ -41,11 +42,12 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
                     intervalVarianceBase += (e.Interval.Ticks - prevMean) * (e.Interval.Ticks - intervalMean);
                     minInterval = minInterval.Min( e.Interval );
                     maxInterval = maxInterval.Max( e.Interval );
+                }
 
-                    Console.WriteLine(
-                        $"[{e.Timestamp.UtcValue:HH:mm:ss.fffffff} ({e.Interval})] {e.Event} (TID: {Thread.CurrentThread.ManagedThreadId})" );
-                },
-                d => { Console.WriteLine( $"Disposed: {d} (TID: {Thread.CurrentThread.ManagedThreadId})" ); } ) );
+                Console.WriteLine(
+                    $"[{e.Timestamp.UtcValue:HH:mm:ss.fffffff} ({e.Interval})] {e.Event} (TID: {Thread.CurrentThread.ManagedThreadId})" );
+            },
+            d => { Console.WriteLine( $"Disposed: {d} (TID: {Thread.CurrentThread.ManagedThreadId})" ); } ) );
 
     starter();
 

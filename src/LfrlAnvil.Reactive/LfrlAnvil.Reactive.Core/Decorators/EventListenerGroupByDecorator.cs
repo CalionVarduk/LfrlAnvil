@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,9 +13,14 @@
 // limitations under the License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -52,8 +57,10 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
 
     private sealed class EventListener : DecoratedEventListener<TEvent, EventGrouping<TKey, TEvent>>
     {
+        private readonly object _sync = new object();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly Dictionary<TKey, ListSlim<TEvent>> _groups;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<EventGrouping<TKey, TEvent>> next,
@@ -68,26 +75,53 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
         public override void React(TEvent @event)
         {
             var key = _keySelector( @event );
+            ArrayPoolToken<TEvent> poolToken = default;
+            try
+            {
+                Memory<TEvent> events;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed )
+                        return;
 
-            ref var group = ref CollectionsMarshal.GetValueRefOrAddDefault( _groups, key, out var exists );
-            if ( ! exists )
-                group = ListSlim<TEvent>.Create();
+                    ref var group = ref CollectionsMarshal.GetValueRefOrAddDefault( _groups, key, out var exists );
+                    if ( ! exists )
+                        group = ListSlim<TEvent>.Create();
 
-            group.Add( @event );
+                    group.Add( @event );
 
-            var eventGrouping = new EventGrouping<TKey, TEvent>( key, @event, group.AsMemory() );
-            Next.React( eventGrouping );
+                    poolToken = ArrayPool<TEvent>.Shared.RentToken( group.Count, clearArray: true );
+                    events = poolToken.AsMemory();
+                    group.AsMemory().CopyTo( events );
+                }
+
+                var eventGrouping = new EventGrouping<TKey, TEvent>( key, @event, events );
+                Next.React( eventGrouping );
+            }
+            finally
+            {
+                poolToken.Dispose();
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            foreach ( var (_, group) in _groups )
-                group.Clear();
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
-            _groups.Clear();
-            _groups.TrimExcess();
+                _isDisposed = true;
+                _groups.Clear();
+            }
 
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -44,24 +45,28 @@ public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEve
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
         private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
+        private InterlockedInt32 _state;
 
         internal EventListener(IEventListener<TEvent> next, IEventStream<TTargetEvent> target)
             : base( next )
         {
+            _state = new InterlockedInt32( ( int )State.Skipping );
             _targetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this );
-            var actualTargetSubscriber = target.Listen( targetListener );
-            _targetSubscriber.Assign( actualTargetSubscriber );
+            _targetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            if ( _targetSubscriber.IsDisposed )
+            if ( ( State )_state.Value == State.Forwarding )
                 Next.React( @event );
         }
 
         public override void OnDispose(DisposalSource source)
         {
+            if ( ! _state.Write( ( int )State.Disposed ) )
+                return;
+
             _targetSubscriber.Dispose();
             base.OnDispose( source );
         }
@@ -70,12 +75,20 @@ public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEve
         internal void OnTargetEvent()
         {
             _targetSubscriber.Dispose();
+            _state.Write( ( int )State.Forwarding, ( int )State.Skipping );
+        }
+
+        private enum State : byte
+        {
+            Skipping = 0,
+            Forwarding = 1,
+            Disposed = 2
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private EventListener? _sourceListener;
+        private readonly EventListener _sourceListener;
 
         internal TargetEventListener(EventListener sourceListener)
         {
@@ -84,15 +97,12 @@ public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEve
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
-            _sourceListener = null;
         }
     }
 }

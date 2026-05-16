@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Tests.EventHandlerSourceTests;
@@ -66,6 +67,22 @@ public abstract class GenericEventHandlerSourceTests<TEvent> : TestsBase
         Assertion.All(
                 actualValues.Select( v => v.Event ).TestSequence( values ),
                 actualValues.Select( v => v.Sender ).TestAll( (s, _) => s.TestRefEquals( sender ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void TeardownFailure_ShouldBeHandledGracefully()
+    {
+        var exception = new Exception( "foo" );
+        var target = new Target();
+        var sut = new EventHandlerSource<TEvent>( h => target.Handler += h, _ => throw exception );
+
+        var disposeAction = Lambda.Of( () => sut.Dispose() );
+        var emitAction = Lambda.Of( () => target.Emit( target, Fixture.Create<TEvent>() ) );
+
+        disposeAction.Test( exc => Assertion.All(
+                exc.TestRefEquals( exception ),
+                emitAction.Test( exc2 => exc2.TestType().AssignableTo<ObjectDisposedException>() ) ) )
             .Go();
     }
 

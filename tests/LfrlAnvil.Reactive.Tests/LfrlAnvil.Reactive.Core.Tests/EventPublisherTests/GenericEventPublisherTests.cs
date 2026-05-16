@@ -164,6 +164,27 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     }
 
     [Fact]
+    public void Publish_ShouldCollectAndRethrowAllExceptionsThrownBySubscribers()
+    {
+        var exception1 = new Exception( "foo" );
+        var exception2 = new Exception( "bar" );
+        var sut = new EventPublisher<TEvent>();
+        var listener1 = EventListener.Create<TEvent>( _ => throw exception1 );
+        var listener2 = EventListener.Create<TEvent>( _ => throw exception2 );
+        var subscriber1 = sut.Listen( listener1 );
+        var subscriber2 = sut.Listen( listener2 );
+
+        var action = Lambda.Of( () => sut.Publish( Fixture.Create<TEvent>() ) );
+
+        action.Test( exc =>
+                Assertion.All(
+                    exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exception1, exception2 ] ) ),
+                    subscriber1.IsDisposed.TestFalse(),
+                    subscriber2.IsDisposed.TestFalse() ) )
+            .Go();
+    }
+
+    [Fact]
     public void Dispose_ShouldDisposeAllSubscribers()
     {
         var sut = new EventPublisher<TEvent>();
@@ -224,6 +245,27 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
         var action = Lambda.Of( () => sut.Dispose() );
 
         action.Test( exc => exc.TestNull() ).Go();
+    }
+
+    [Fact]
+    public void Dispose_ShouldCollectAndRethrowAllExceptionsThrownBySubscribers()
+    {
+        var exception1 = new Exception( "foo" );
+        var exception2 = new Exception( "bar" );
+        var sut = new EventPublisher<TEvent>();
+        var listener1 = EventListener.Create<TEvent>( _ => { }, _ => throw exception1 );
+        var listener2 = EventListener.Create<TEvent>( _ => { }, _ => throw exception2 );
+        var subscriber1 = sut.Listen( listener1 );
+        var subscriber2 = sut.Listen( listener2 );
+
+        var action = Lambda.Of( () => sut.Dispose() );
+
+        action.Test( exc =>
+                Assertion.All(
+                    exc.TestType().Exact<AggregateException>( e => e.InnerExceptions.TestSequence( [ exception1, exception2 ] ) ),
+                    subscriber1.IsDisposed.TestTrue(),
+                    subscriber2.IsDisposed.TestTrue() ) )
+            .Go();
     }
 
     [Fact]

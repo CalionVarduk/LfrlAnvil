@@ -39,6 +39,7 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
         Assume.IsGreaterThanOrEqualTo( maxBufferSize, 0 );
         _cancellationTokenRegistration = cancellationTokenRegistration;
         _next = new ManualResetValueTaskSource<AsyncEnumerableEvent<TEvent>>();
+        _next.SetResult( default );
         _buffer = QueueSlim<AsyncEnumerableEvent<TEvent>>.Create();
         _maxBufferSize = maxBufferSize;
         _discardLatest = discardLatest;

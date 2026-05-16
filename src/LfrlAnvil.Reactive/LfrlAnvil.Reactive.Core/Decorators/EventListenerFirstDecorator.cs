@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -29,17 +31,28 @@ public class EventListenerFirstDecorator<TEvent> : IEventListenerDecorator<TEven
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
         private readonly IEventSubscriber _subscriber;
+        private InterlockedBoolean _done;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber)
             : base( next )
         {
             _subscriber = subscriber;
+            _done = InterlockedBoolean.False;
         }
 
         public override void React(TEvent @event)
         {
-            Next.React( @event );
-            _subscriber.Dispose();
+            if ( ! _done.WriteTrue() )
+                return;
+
+            try
+            {
+                Next.React( @event );
+            }
+            finally
+            {
+                _subscriber.Dispose();
+            }
         }
     }
 }

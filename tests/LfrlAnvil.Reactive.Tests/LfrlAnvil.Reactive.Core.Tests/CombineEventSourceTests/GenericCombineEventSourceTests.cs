@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Tests.CombineEventSourceTests;
@@ -155,9 +156,11 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var sut = new CombineEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        foreach ( var e in thirdStreamValues ) thirdStream.Publish( e );
+        foreach ( var e in thirdStreamValues )
+            thirdStream.Publish( e );
 
-        foreach ( var e in firstStreamValues ) firstStream.Publish( e );
+        foreach ( var e in firstStreamValues )
+            firstStream.Publish( e );
 
         firstStream.Dispose();
 
@@ -331,6 +334,54 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
                 subscriber.IsDisposed.TestFalse(),
                 result.Count.TestEquals( expectedResult.Length ),
                 result.TestAll( (events, i) => events.TestSequence( expectedResult[i] ) ) )
+            .Go();
+    }
+
+    [Fact]
+    public void Listen_ShouldCreateActiveSubscriberThatResetsStateAndPropagatesException_WhenNextThrows()
+    {
+        var exception = new Exception( "foo" );
+        var firstStream = new EventPublisher<int>();
+        var secondStream = new EventPublisher<int>();
+        var next = Substitute.For<IEventListener<ReadOnlyMemory<int>>>();
+        next.When( x => x.React( Arg.Any<ReadOnlyMemory<int>>() ) ).Do( _ => throw exception );
+
+        var sut = new CombineEventSource<int>( new[] { firstStream, secondStream } );
+        var subscriber = sut.Listen( next );
+
+        firstStream.Publish( 1 );
+        var action = Lambda.Of( () => secondStream.Publish( 2 ) );
+
+        action.Test( exc => Assertion.All( exc.TestRefEquals( exception ), subscriber.IsDisposed.TestFalse() ) ).Go();
+    }
+
+    [Fact]
+    public void ConcurrentUpdateDuringEmission_UsesPendingBuffer()
+    {
+        var stream1 = new EventPublisher<int>();
+        var stream2 = new EventPublisher<int>();
+        var stream3 = new EventPublisher<int>();
+
+        var result = new List<int[]>();
+        var listener = EventListener.Create<ReadOnlyMemory<int>>( e =>
+        {
+            result.Add( e.ToArray() );
+            if ( result.Count == 1 )
+            {
+                stream2.Publish( 4 );
+                stream3.Publish( 5 );
+            }
+        } );
+
+        var sut = new CombineEventSource<int>( new[] { stream1, stream2, stream3 } );
+        sut.Listen( listener );
+
+        stream1.Publish( 1 );
+        stream2.Publish( 2 );
+        stream3.Publish( 3 );
+
+        result.TestCount( count => count.TestEquals( 2 ) )
+            .Then( e => Assertion.All( "result", e[0].TestSequence( [ 1, 2, 3 ] ), e[1].TestSequence( [ 1, 4, 5 ] ) ) )
             .Go();
     }
 }

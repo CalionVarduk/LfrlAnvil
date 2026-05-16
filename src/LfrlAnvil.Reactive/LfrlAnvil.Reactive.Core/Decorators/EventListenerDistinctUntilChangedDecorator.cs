@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -49,9 +51,11 @@ public sealed class EventListenerDistinctUntilChangedDecorator<TEvent, TKey> : I
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
+        private readonly object _sync = new object();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly IEqualityComparer<TKey> _equalityComparer;
         private Optional<TKey> _lastKey;
+        private bool _isDisposed;
 
         internal EventListener(IEventListener<TEvent> next, Func<TEvent, TKey> keySelector, IEqualityComparer<TKey> equalityComparer)
             : base( next )
@@ -64,17 +68,38 @@ public sealed class EventListenerDistinctUntilChangedDecorator<TEvent, TKey> : I
         public override void React(TEvent @event)
         {
             var key = _keySelector( @event );
+            Optional<TKey> lastKey;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
-            if ( ! _lastKey.HasValue || ! _equalityComparer.Equals( _lastKey.Event!, key ) )
+                lastKey = _lastKey;
+                _lastKey = new Optional<TKey>( key );
+            }
+
+            if ( ! lastKey.HasValue || ! _equalityComparer.Equals( lastKey.Event!, key ) )
                 Next.React( @event );
-
-            _lastKey = new Optional<TKey>( key );
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _lastKey = Optional<TKey>.Empty;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
+
+                _isDisposed = true;
+                _lastKey = Optional<TKey>.Empty;
+            }
+
             base.OnDispose( source );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 }

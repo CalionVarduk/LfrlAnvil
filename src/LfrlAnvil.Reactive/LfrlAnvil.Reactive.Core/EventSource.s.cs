@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,22 +69,6 @@ public static class EventSource
         Action<EventHandler<TEvent>> teardown)
     {
         return new EventHandlerSource<TEvent>( setup, teardown );
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="ConcurrentEventHandlerSource{TEvent}"/> instance.
-    /// </summary>
-    /// <param name="setup">Delegate that handles initialization of this event source.</param>
-    /// <param name="teardown">Delegate that handles disposal of this event source.</param>
-    /// <typeparam name="TEvent">Event type.</typeparam>
-    /// <returns>New <see cref="ConcurrentEventHandlerSource{TEvent}"/> instance.</returns>
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ConcurrentEventHandlerSource<TEvent> ConcurrentFromEvent<TEvent>(
-        Action<EventHandler<TEvent>> setup,
-        Action<EventHandler<TEvent>> teardown)
-    {
-        return new ConcurrentEventHandlerSource<TEvent>( setup, teardown );
     }
 
     /// <summary>
@@ -244,10 +228,10 @@ public static class EventSource
     [Pure]
     public static IEventSource<TEvent> Disposed<TEvent>()
     {
-        return DisposedStore<TEvent>.Instance;
+        return DisposedSource<TEvent>.Instance;
     }
 
-    private static class DisposedStore<TEvent>
+    private static class DisposedSource<TEvent>
     {
         internal static readonly IEventSource<TEvent> Instance = CreateDisposed();
 

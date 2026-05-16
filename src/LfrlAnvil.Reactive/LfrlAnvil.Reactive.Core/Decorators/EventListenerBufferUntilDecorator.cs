@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,12 @@
 // limitations under the License.
 
 using System;
+using System.Buffers;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -46,9 +50,12 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
 
     private sealed class EventListener : DecoratedEventListener<TEvent, ReadOnlyMemory<TEvent>>
     {
-        private readonly IEventSubscriber _targetSubscriber;
+        internal readonly LazyDisposable<IEventSubscriber> TargetSubscriber;
+        private readonly object _sync = new object();
         private readonly IEventSubscriber _subscriber;
         private ListSlim<TEvent> _buffer;
+        private bool _isDisposing;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<ReadOnlyMemory<TEvent>> next,
@@ -58,41 +65,98 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
         {
             _subscriber = subscriber;
             _buffer = ListSlim<TEvent>.Create();
+            TargetSubscriber = new LazyDisposable<IEventSubscriber>();
             var targetListener = new TargetEventListener( this );
-            _targetSubscriber = target.Listen( targetListener );
+            TargetSubscriber.Assign( target.Listen( targetListener ) );
         }
 
         public override void React(TEvent @event)
         {
-            _buffer.Add( @event );
+            using ( AcquireLock() )
+            {
+                if ( ! _isDisposing )
+                    _buffer.Add( @event );
+            }
         }
 
         public override void OnDispose(DisposalSource source)
         {
-            _targetSubscriber.Dispose();
-            _buffer.Clear();
-            _buffer.ResetCapacity();
+            ReadOnlyMemory<TEvent> events;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed )
+                    return;
 
+                _isDisposing = true;
+                _isDisposed = true;
+                events = _buffer.AsMemory();
+                _buffer = ListSlim<TEvent>.Create();
+            }
+
+            if ( events.Length > 0 )
+                Next.React( events );
+
+            TargetSubscriber.Dispose();
             base.OnDispose( source );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnTargetEvent()
         {
-            Next.React( _buffer.AsMemory() );
-            _buffer.Clear();
+            ArrayPoolToken<TEvent> poolToken = default;
+            try
+            {
+                var events = Memory<TEvent>.Empty;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposing )
+                        return;
+
+                    if ( ! _buffer.IsEmpty )
+                    {
+                        poolToken = ArrayPool<TEvent>.Shared.RentToken( _buffer.Count, clearArray: true );
+                        events = poolToken.AsMemory();
+                        _buffer.AsMemory().CopyTo( events );
+                        _buffer.Clear();
+                    }
+                }
+
+                Next.React( events );
+            }
+            finally
+            {
+                poolToken.Dispose();
+            }
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void DisposeSubscriber()
+        internal void OnTargetDisposed()
         {
+            ReadOnlyMemory<TEvent> events;
+            using ( AcquireLock() )
+            {
+                if ( _isDisposing )
+                    return;
+
+                _isDisposing = true;
+                events = _buffer.AsMemory();
+                _buffer = ListSlim<TEvent>.Create();
+            }
+
+            Next.React( events );
             _subscriber.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 
     private sealed class TargetEventListener : EventListener<TTargetEvent>
     {
-        private EventListener? _sourceListener;
+        private readonly EventListener _sourceListener;
 
         internal TargetEventListener(EventListener sourceListener)
         {
@@ -101,16 +165,13 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
 
         public override void React(TTargetEvent _)
         {
-            Assume.IsNotNull( _sourceListener );
             _sourceListener.OnTargetEvent();
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _sourceListener );
-            _sourceListener.OnTargetEvent();
-            _sourceListener.DisposeSubscriber();
-            _sourceListener = null;
+            _sourceListener.TargetSubscriber.Dispose();
+            _sourceListener.OnTargetDisposed();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
+using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Decorators;
 
@@ -29,7 +32,7 @@ namespace LfrlAnvil.Reactive.Internal;
 /// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
 {
-    private readonly IEventStream<TEvent>[] _streams;
+    private IEventStream<TEvent>[] _streams;
 
     internal WhenAnyEventSource(IEnumerable<IEventStream<TEvent>> streams)
     {
@@ -38,31 +41,49 @@ public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
     }
 
     /// <inheritdoc />
-    protected override void OnDispose()
+    public override void Dispose()
     {
-        base.OnDispose();
-        Array.Clear( _streams, 0, _streams.Length );
+        if ( DisposeCore( out var exceptions ) )
+        {
+            using ( AcquireLock() )
+                _streams = [ ];
+        }
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     /// <inheritdoc />
-    protected override IEventListener<WithIndex<TEvent>> OverrideListener(
+    protected override IEventListener<WithIndex<TEvent>> OverrideListenerUnsafe(
         IEventSubscriber subscriber,
         IEventListener<WithIndex<TEvent>> listener)
     {
-        return IsDisposed ? listener : new EventListener( listener, subscriber, _streams );
+        IEventStream<TEvent>[] streams;
+        using ( AcquireLock() )
+        {
+            if ( IsDisposedUnsafe() )
+                return listener;
+
+            streams = _streams;
+        }
+
+        return new EventListener( listener, subscriber, streams );
     }
 
     private sealed class EventListener : DecoratedEventListener<WithIndex<TEvent>, WithIndex<TEvent>>
     {
+        private readonly object _sync = new object();
         private readonly IEventSubscriber _subscriber;
-        private readonly IEventSubscriber?[] _innerSubscribers;
         private readonly int _streamCount;
+        private InnerSubscribersCollection _innerSubscribers;
         private int _disposedCount;
+        private bool _emitted;
+        private bool _isDisposed;
 
         internal EventListener(
             IEventListener<WithIndex<TEvent>> next,
             IEventSubscriber subscriber,
-            IReadOnlyList<IEventStream<TEvent>> streams)
+            ReadOnlyArray<IEventStream<TEvent>> streams)
             : base( next )
         {
             _subscriber = subscriber;
@@ -71,20 +92,40 @@ public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
 
             if ( _streamCount == 0 )
             {
-                _innerSubscribers = Array.Empty<IEventSubscriber?>();
+                _isDisposed = true;
+                _innerSubscribers = new InnerSubscribersCollection( 0 );
                 _subscriber.Dispose();
                 return;
             }
 
-            _innerSubscribers = new IEventSubscriber?[_streamCount];
-
+            _innerSubscribers = new InnerSubscribersCollection( _streamCount );
             for ( var i = 0; i < _streamCount; ++i )
             {
-                if ( _subscriber.IsDisposed )
-                    break;
+                int nodeId;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed || _emitted )
+                        break;
+
+                    nodeId = _innerSubscribers.Reserve();
+                }
 
                 var innerListener = new InnerEventListener( this, i );
-                _innerSubscribers[i] = streams[i].Listen( innerListener );
+                var innerSubscriber = streams[i].Listen( innerListener );
+
+                bool disposed;
+                using ( AcquireLock() )
+                {
+                    disposed = _isDisposed || _emitted;
+                    if ( ! disposed )
+                        _innerSubscribers.Set( nodeId, innerSubscriber );
+                }
+
+                if ( disposed )
+                {
+                    innerSubscriber.Dispose();
+                    break;
+                }
             }
         }
 
@@ -95,33 +136,74 @@ public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
 
         public override void OnDispose(DisposalSource source)
         {
-            foreach ( var subscriber in _innerSubscribers )
-                subscriber?.Dispose();
+            ArrayPoolToken<IEventSubscriber?> subscribersToken = default;
+            try
+            {
+                ReadOnlySpan<IEventSubscriber?> subscribers;
+                using ( AcquireLock() )
+                {
+                    if ( _isDisposed )
+                        return;
 
-            Array.Clear( _innerSubscribers, 0, _innerSubscribers.Length );
+                    _isDisposed = true;
+                    subscribers = _innerSubscribers.Clear( out subscribersToken );
+                }
+
+                foreach ( var s in subscribers )
+                    s?.Dispose();
+            }
+            finally
+            {
+                subscribersToken.Dispose();
+            }
+
             base.OnDispose( source );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnInnerEvent(int index, TEvent @event)
         {
+            using ( AcquireLock() )
+            {
+                if ( _isDisposed || _emitted )
+                    return;
+
+                _emitted = true;
+            }
+
             var nextEvent = new WithIndex<TEvent>( @event, index );
-            React( nextEvent );
-            _subscriber.Dispose();
+            try
+            {
+                React( nextEvent );
+            }
+            finally
+            {
+                _subscriber.Dispose();
+            }
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal void OnInnerDisposed()
         {
-            if ( ++_disposedCount == _streamCount )
+            bool dispose;
+            using ( AcquireLock() )
+                dispose = ! _isDisposed && ++_disposedCount == _streamCount;
+
+            if ( dispose )
                 _subscriber.Dispose();
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private ExclusiveLock AcquireLock()
+        {
+            return ExclusiveLock.Enter( _sync );
         }
     }
 
     private sealed class InnerEventListener : EventListener<TEvent>
     {
         private readonly int _index;
-        private EventListener? _outerListener;
+        private readonly EventListener _outerListener;
 
         internal InnerEventListener(EventListener outerListener, int index)
         {
@@ -131,15 +213,12 @@ public sealed class WhenAnyEventSource<TEvent> : EventSource<WithIndex<TEvent>>
 
         public override void React(TEvent @event)
         {
-            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerEvent( _index, @event );
         }
 
         public override void OnDispose(DisposalSource _)
         {
-            Assume.IsNotNull( _outerListener );
             _outerListener.OnInnerDisposed();
-            _outerListener = null;
         }
     }
 }

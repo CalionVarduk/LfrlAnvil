@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
@@ -46,20 +47,20 @@ public sealed class EventListenerWithIntervalDecorator<TEvent> : IEventListenerD
     private sealed class EventListener : DecoratedEventListener<TEvent, WithInterval<TEvent>>
     {
         private readonly ITimestampProvider _timestampProvider;
-        private Timestamp? _lastTimestamp;
+        private InterlockedInt64 _lastTimestamp;
 
         internal EventListener(IEventListener<WithInterval<TEvent>> next, ITimestampProvider timestampProvider)
             : base( next )
         {
             _timestampProvider = timestampProvider;
-            _lastTimestamp = null;
+            _lastTimestamp = new InterlockedInt64( long.MinValue );
         }
 
         public override void React(TEvent @event)
         {
             var timestamp = _timestampProvider.GetNow();
-            var interval = _lastTimestamp is null ? Duration.FromTicks( -1 ) : timestamp - _lastTimestamp.Value;
-            _lastTimestamp = timestamp;
+            var lastTimestamp = _lastTimestamp.Exchange( timestamp.UnixEpochTicks );
+            var interval = lastTimestamp == long.MinValue ? Duration.FromTicks( -1 ) : timestamp - new Timestamp( lastTimestamp );
 
             var nextEvent = new WithInterval<TEvent>( @event, timestamp, interval );
             Next.React( nextEvent );

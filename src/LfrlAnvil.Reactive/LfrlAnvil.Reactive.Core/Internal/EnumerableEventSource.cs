@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Reactive.Internal;
 
@@ -25,7 +25,7 @@ namespace LfrlAnvil.Reactive.Internal;
 /// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EnumerableEventSource<TEvent> : EventSource<TEvent>
 {
-    private readonly TEvent[] _values;
+    private TEvent[] _values;
 
     internal EnumerableEventSource(IEnumerable<TEvent> values)
     {
@@ -33,18 +33,28 @@ public sealed class EnumerableEventSource<TEvent> : EventSource<TEvent>
     }
 
     /// <inheritdoc />
-    protected override void OnDispose()
+    public override void Dispose()
     {
-        base.OnDispose();
-        Array.Clear( _values, 0, _values.Length );
+        if ( DisposeCore( out var exceptions ) )
+        {
+            using ( AcquireLock() )
+                _values = [ ];
+        }
+
+        if ( exceptions.Count > 0 )
+            exceptions.Consolidate()?.Rethrow();
     }
 
     /// <inheritdoc />
-    protected override void OnSubscriberAdded(IEventSubscriber subscriber, IEventListener<TEvent> listener)
+    protected override void OnSubscriberAddedUnsafe(IEventSubscriber subscriber, IEventListener<TEvent> listener)
     {
-        base.OnSubscriberAdded( subscriber, listener );
+        base.OnSubscriberAddedUnsafe( subscriber, listener );
 
-        foreach ( var value in _values )
+        TEvent[] values;
+        using ( AcquireLock() )
+            values = _values;
+
+        foreach ( var value in values )
         {
             if ( subscriber.IsDisposed )
                 return;
