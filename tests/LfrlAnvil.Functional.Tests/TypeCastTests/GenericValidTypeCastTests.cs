@@ -10,7 +10,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     where TDestination : notnull
 {
     [Theory]
-    [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericValidTypeCastTestsData<,>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
         var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;
@@ -309,7 +309,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericValidTypeCastTestsData<,>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
         var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;
@@ -321,7 +321,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericValidTypeCastTestsData<,>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
         var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;

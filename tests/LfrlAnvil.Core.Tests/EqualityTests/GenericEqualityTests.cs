@@ -6,7 +6,7 @@ namespace LfrlAnvil.Tests.EqualityTests;
 public abstract class GenericEqualityTests<T> : TestsBase
 {
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateCtorTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateCtorTestData ) )]
     public void Create_ShouldCreateWithCorrectProperties(T first, T second, bool expected)
     {
         var sut = Equality.Create( first, second );
@@ -28,7 +28,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateCtorTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateCtorTestData ) )]
     public void Ctor_ShouldCreateWithCorrectResult(T first, T second, bool expected)
     {
         var sut = new Equality<T>( first, second );
@@ -36,7 +36,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(T first1, T second1, T first2, T second2, bool expected)
     {
         var a = new Equality<T>( first1, second1 );
@@ -48,7 +48,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateConversionOperatorTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateConversionOperatorTestData ) )]
     public void BoolConversionOperator_ShouldReturnUnderlyingResult(T first, T second)
     {
         var sut = new Equality<T>( first, second );
@@ -59,7 +59,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateConversionOperatorTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateConversionOperatorTestData ) )]
     public void NegateOperator_ShouldReturnNegatedUnderlyingResult(T first, T second)
     {
         var sut = new Equality<T>( first, second );
@@ -70,7 +70,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(T first1, T second1, T first2, T second2, bool expected)
     {
         var a = new Equality<T>( first1, second1 );
@@ -82,7 +82,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEqualityTestsData<T>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEqualityTestsData<>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(T first1, T second1, T first2, T second2, bool expected)
     {
         var a = new Equality<T>( first1, second1 );

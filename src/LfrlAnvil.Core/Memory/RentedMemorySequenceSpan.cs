@@ -90,7 +90,7 @@ public readonly ref struct RentedMemorySequenceSpan<T>
     [Pure]
     public override string ToString()
     {
-        return $"{nameof( RentedMemorySequenceSpan<T> )}<{typeof( T ).Name}>[{Length}]";
+        return $"{nameof( RentedMemorySequenceSpan<> )}<{typeof( T ).Name}>[{Length}]";
     }
 
     /// <summary>

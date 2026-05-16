@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -277,14 +277,14 @@ internal static class ClosureHelpers
 
         return parameterIndex switch
         {
-            0 => nameof( LambdaClosure<int>._1 ),
-            1 => nameof( LambdaClosure<int, int>._2 ),
-            2 => nameof( LambdaClosure<int, int, int>._3 ),
-            3 => nameof( LambdaClosure<int, int, int, int>._4 ),
-            4 => nameof( LambdaClosure<int, int, int, int, int>._5 ),
-            5 => nameof( LambdaClosure<int, int, int, int, int, int>._6 ),
-            6 => nameof( LambdaClosure<int, int, int, int, int, int, int>._7 ),
-            _ => nameof( LambdaClosure<int, int, int, int, int, int, int, int>._8 ),
+            0 => nameof( LambdaClosure<>._1 ),
+            1 => nameof( LambdaClosure<,>._2 ),
+            2 => nameof( LambdaClosure<,,>._3 ),
+            3 => nameof( LambdaClosure<,,,>._4 ),
+            4 => nameof( LambdaClosure<,,,,>._5 ),
+            5 => nameof( LambdaClosure<,,,,,>._6 ),
+            6 => nameof( LambdaClosure<,,,,,,>._7 ),
+            _ => nameof( LambdaClosure<,,,,,,,>._8 ),
         };
     }
 

@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
     [Pure]
     public override string ToString()
     {
-        return $"{nameof( RentedMemorySequenceSegmentCollection<T> )}<{typeof( T ).Name}>[{Length}]";
+        return $"{nameof( RentedMemorySequenceSegmentCollection<> )}<{typeof( T ).Name}>[{Length}]";
     }
 
     /// <summary>

@@ -65,7 +65,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMaybeTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMaybeTestsData<>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(T? value1, bool hasValue1, T? value2, bool hasValue2, bool expected)
     {
         var a = hasValue1 ? Maybe.Some( value1 ) : Maybe<T>.None;
@@ -92,7 +92,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => sut.GetValue() );
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<T>.Value ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<>.Value ) ) ) ).Go();
     }
 
     [Fact]
@@ -562,11 +562,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => ( T )sut );
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<T>.Value ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<>.Value ) ) ) ).Go();
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMaybeTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMaybeTestsData<>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(T? value1, bool hasValue1, T? value2, bool hasValue2, bool expected)
     {
         var a = hasValue1 ? Maybe.Some( value1 ) : Maybe<T>.None;
@@ -578,7 +578,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMaybeTestsData<T>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMaybeTestsData<>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(T? value1, bool hasValue1, T? value2, bool hasValue2, bool expected)
     {
         var a = hasValue1 ? Maybe.Some( value1 ) : Maybe<T>.None;

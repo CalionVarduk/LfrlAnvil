@@ -89,7 +89,7 @@ public static class SqlStatementExpressionFactoryExtensions
             SqlQueryReaderCreationOptions.Default
                 .EnableAlwaysTestingForNull( alwaysTestForNull )
                 .SetResultSetFieldsPersistenceMode( resultSetFieldsPersistenceMode )
-                .With( SqlQueryMemberConfiguration.From( nameof( Value<T>.Item ), fieldName ) ) );
+                .With( SqlQueryMemberConfiguration.From( nameof( Value<>.Item ), fieldName ) ) );
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public static class SqlStatementExpressionFactoryExtensions
             SqlQueryReaderCreationOptions.Default
                 .EnableAlwaysTestingForNull( alwaysTestForNull )
                 .SetResultSetFieldsPersistenceMode( resultSetFieldsPersistenceMode )
-                .With( SqlQueryMemberConfiguration.From( nameof( Value<T>.Item ), fieldName ) ) );
+                .With( SqlQueryMemberConfiguration.From( nameof( Value<>.Item ), fieldName ) ) );
     }
 
     /// <summary>
@@ -350,7 +350,7 @@ public static class SqlStatementExpressionFactoryExtensions
                 .With(
                     SqlParameterConfiguration.From(
                         parameterName,
-                        nameof( Value<T>.Item ),
+                        nameof( Value<>.Item ),
                         isIgnoredWhenNull: ignoreNullValue,
                         parameterIndex: isParameterPositional ? 0 : null ) ) );
     }

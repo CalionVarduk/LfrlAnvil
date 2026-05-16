@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetNullableHasValueProperty(Type type)
     {
-        var result = type.GetProperty( nameof( Nullable<int>.HasValue ) );
+        var result = type.GetProperty( nameof( Nullable<>.HasValue ) );
         Assume.IsNotNull( result );
         return result;
     }
@@ -89,7 +89,7 @@ internal static class TypeHelpers
     [Pure]
     internal static PropertyInfo GetNullableValueProperty(Type type)
     {
-        var result = type.GetProperty( nameof( Nullable<int>.Value ) );
+        var result = type.GetProperty( nameof( Nullable<>.Value ) );
         Assume.IsNotNull( result );
         return result;
     }
@@ -117,7 +117,7 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetStringHashSetContainsMethod()
     {
-        var result = typeof( HashSet<string> ).GetMethod( nameof( HashSet<string>.Contains ), PublicMember, new[] { typeof( string ) } );
+        var result = typeof( HashSet<string> ).GetMethod( nameof( HashSet<>.Contains ), PublicMember, new[] { typeof( string ) } );
         Assume.IsNotNull( result );
         return result;
     }
@@ -157,7 +157,7 @@ internal static class TypeHelpers
     [Pure]
     internal static MethodInfo GetListAddMethod(Type type, Type elementType)
     {
-        var result = type.GetMethod( nameof( List<int>.Add ), PublicMember, new[] { elementType } );
+        var result = type.GetMethod( nameof( List<>.Add ), PublicMember, new[] { elementType } );
         Assume.IsNotNull( result?.DeclaringType );
         return result;
     }
@@ -189,7 +189,7 @@ internal static class TypeHelpers
             {
                 if ( m.IsGenericMethod
                     || m.ReturnType != typeof( object )
-                    || m.Name != nameof( ISqlColumnTypeDefinition<int>.ToParameterValue ) )
+                    || m.Name != nameof( ISqlColumnTypeDefinition<>.ToParameterValue ) )
                     continue;
 
                 var parameters = m.GetParameters();

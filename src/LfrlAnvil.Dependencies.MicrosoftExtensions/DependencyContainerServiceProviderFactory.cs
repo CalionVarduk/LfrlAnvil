@@ -205,7 +205,7 @@ public sealed class DependencyContainerServiceProviderFactory : IServiceProvider
         {
             var locatorHelperType = typeof( LocatorHelper<> ).MakeGenericType( keyType );
             var getLocatorMethod = locatorHelperType.GetMethod(
-                nameof( LocatorHelper<object>.GetLocator ),
+                nameof( LocatorHelper<>.GetLocator ),
                 BindingFlags.Static | BindingFlags.NonPublic );
 
             Assume.IsNotNull( getLocatorMethod );

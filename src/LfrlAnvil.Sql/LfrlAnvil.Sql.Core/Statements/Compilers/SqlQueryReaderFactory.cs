@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1315,7 +1315,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         {
             Assume.IsNotNull( _readerReplacement );
             Assume.Equals( node.Member.MemberType, MemberTypes.Property );
-            Assume.Equals( node.Member.Name, nameof( ISqlDataRecordFacade<IDataReader>.Record ) );
+            Assume.Equals( node.Member.Name, nameof( ISqlDataRecordFacade<>.Record ) );
             return _readerReplacement;
         }
 
@@ -1330,7 +1330,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             Assume.IsNotNull( fieldName );
             var ordinal = _readerCallsToolbox.Ordinals.GetOrAddOrdinal( fieldName );
 
-            if ( node.Method.Name == nameof( ISqlDataRecordFacade<IDataReader>.GetOrdinal ) )
+            if ( node.Method.Name == nameof( ISqlDataRecordFacade<>.GetOrdinal ) )
             {
                 Assume.ContainsExactly( node.Arguments, 1 );
                 Assume.False( node.Method.IsGenericMethod );
@@ -1338,7 +1338,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             }
 
             var factory = _readerCallsToolbox.Factory;
-            if ( node.Method.Name == nameof( ISqlDataRecordFacade<IDataReader>.IsNull ) )
+            if ( node.Method.Name == nameof( ISqlDataRecordFacade<>.IsNull ) )
             {
                 Assume.ContainsExactly( node.Arguments, 1 );
                 Assume.False( node.Method.IsGenericMethod );
@@ -1358,7 +1358,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 return body;
             }
 
-            Assume.Equals( node.Method.Name, nameof( ISqlDataRecordFacade<IDataReader>.GetNullable ) );
+            Assume.Equals( node.Method.Name, nameof( ISqlDataRecordFacade<>.GetNullable ) );
             var ifNull = node.Arguments.Count == 1 ? Expression.Default( valueType ) : base.Visit( node.Arguments[1] );
             Assume.Equals( ifNull.Type, valueType );
             return factory._toolbox.CreateNullableRead( ordinal, ifNull, body );

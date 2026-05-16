@@ -367,14 +367,14 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedPassData ) )]
+    [GenericMethodData( nameof( GenericEnsureTestsData<>.GetIsOrderedPassData ) )]
     public void IsOrdered_ShouldPass_ForOrderedCollection(IEnumerable<T> param)
     {
         ShouldPass( () => Ensure.IsOrdered( param ) );
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnsureTestsData<T>.GetIsOrderedThrowData ) )]
+    [GenericMethodData( nameof( GenericEnsureTestsData<>.GetIsOrderedThrowData ) )]
     public void IsOrdered_ShouldThrowArgumentException_ForUnorderedCollection(IEnumerable<T> param)
     {
         ShouldThrowArgumentException( () => Ensure.IsOrdered( param ) );

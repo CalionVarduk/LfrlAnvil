@@ -123,7 +123,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryMinData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryMinData ) )]
     public void TryMin_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMin();
@@ -139,7 +139,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryMaxData ) )]
     public void TryMax_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMax();
@@ -174,7 +174,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryMaxData ) )]
     public void TryMaxBy_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -191,7 +191,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryMinData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryMinData ) )]
     public void TryMinBy_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -382,7 +382,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryElementAtWithTooLargeIndexData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryElementAtWithTooLargeIndexData ) )]
     public void TryElementAt_ShouldReturnNone_WhenIndexIsGreaterThanOrEqualToElementCount_AndSourceImplementsIReadOnlyList(
         IReadOnlyList<T> sut,
         int index)
@@ -392,7 +392,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryElementAtData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryElementAtData ) )]
     public void TryElementAt_ShouldReturnWithCorrectValue_WhenSourceHasElement_AndImplementsIReadOnlyList(
         IReadOnlyList<T> sut,
         int index,
@@ -403,7 +403,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryElementAtWithTooLargeIndexData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryElementAtWithTooLargeIndexData ) )]
     public void TryElementAt_ShouldReturnNone_WhenIndexIsGreaterThanOrEqualToElementCount(
         IEnumerable<T> sut,
         int index)
@@ -414,7 +414,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetTryElementAtData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetTryElementAtData ) )]
     public void TryElementAt_ShouldReturnWithCorrectValue_WhenSourceHasElement(
         IEnumerable<T> sut,
         int index,

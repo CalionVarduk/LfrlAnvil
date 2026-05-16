@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,28 +24,28 @@ internal static class Resources
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingFirstEitherValue<T1, T2>()
     {
-        return $"{GetEitherName<T1, T2>()} instance doesn't have the {nameof( Either<T1, T2>.First )} value.";
+        return $"{GetEitherName<T1, T2>()} instance doesn't have the {nameof( Either<,>.First )} value.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingSecondEitherValue<T1, T2>()
     {
-        return $"{GetEitherName<T1, T2>()} instance doesn't have the {nameof( Either<T1, T2>.Second )} value.";
+        return $"{GetEitherName<T1, T2>()} instance doesn't have the {nameof( Either<,>.Second )} value.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingErraticValue<T>()
     {
-        return $"{GetErraticName<T>()} instance doesn't contain a {nameof( Erratic<T>.Value )}.";
+        return $"{GetErraticName<T>()} instance doesn't contain a {nameof( Erratic<>.Value )}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string MissingErraticError<T>()
     {
-        return $"{GetErraticName<T>()} instance doesn't contain an {nameof( Erratic<T>.Error )}.";
+        return $"{GetErraticName<T>()} instance doesn't contain an {nameof( Erratic<>.Error )}.";
     }
 
     [Pure]
@@ -53,7 +53,7 @@ internal static class Resources
     internal static string MissingMaybeValue<T>()
         where T : notnull
     {
-        return $"{GetMaybeName<T>()} instance doesn't contain a {nameof( Maybe<T>.Value )}.";
+        return $"{GetMaybeName<T>()} instance doesn't contain a {nameof( Maybe<>.Value )}.";
     }
 
     [Pure]
@@ -61,7 +61,7 @@ internal static class Resources
     internal static string MissingTypeCastResult<TSource, TDestination>()
     {
         return
-            $"{GetTypeCastName<TSource, TDestination>()} instance doesn't contain a valid {nameof( TypeCast<TSource, TDestination>.Result )}.";
+            $"{GetTypeCastName<TSource, TDestination>()} instance doesn't contain a valid {nameof( TypeCast<,>.Result )}.";
     }
 
     [Pure]

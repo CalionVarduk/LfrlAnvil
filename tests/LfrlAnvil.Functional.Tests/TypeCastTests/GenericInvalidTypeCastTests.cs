@@ -10,7 +10,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
     where TDestination : notnull
 {
     [Theory]
-    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<,>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(TSource value1, TSource value2, bool expected)
     {
         var a = ( TypeCast<TSource, TDestination> )value1;
@@ -30,7 +30,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         var action = Lambda.Of( () => sut.GetResult() );
 
         action.Test( exc => exc.TestType()
-                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
+                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<,>.Result ) ) ) )
             .Go();
     }
 
@@ -305,12 +305,12 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         var action = Lambda.Of( () => ( TDestination )sut );
 
         action.Test( exc => exc.TestType()
-                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<TSource, TDestination>.Result ) ) ) )
+                .Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( TypeCast<,>.Result ) ) ) )
             .Go();
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<,>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(TSource value1, TSource value2, bool expected)
     {
         var a = ( TypeCast<TSource, TDestination> )value1;
@@ -322,7 +322,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<TSource, TDestination>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericInvalidTypeCastTestsData<,>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(TSource value1, TSource value2, bool expected)
     {
         var a = ( TypeCast<TSource, TDestination> )value1;

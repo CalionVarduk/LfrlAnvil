@@ -171,7 +171,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     public void GetDebugString_ShouldReturnCorrectResult_ForNonByRefParameter()
     {
         var parameter = typeof( Dictionary<int, string> )
-            .GetMethod( nameof( Dictionary<int, string>.TryGetValue ) )!
+            .GetMethod( nameof( Dictionary<,>.TryGetValue ) )!
             .GetParameters()[0];
 
         var result = parameter.GetDebugString();
@@ -182,7 +182,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     public void GetDebugString_ShouldReturnCorrectResult_ForOutParameter()
     {
         var parameter = typeof( Dictionary<int, string> )
-            .GetMethod( nameof( Dictionary<int, string>.TryGetValue ) )!
+            .GetMethod( nameof( Dictionary<,>.TryGetValue ) )!
             .GetParameters()[1];
 
         var result = parameter.GetDebugString();

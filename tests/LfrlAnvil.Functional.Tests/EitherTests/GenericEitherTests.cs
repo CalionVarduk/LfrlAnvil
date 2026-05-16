@@ -47,7 +47,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEitherTestsData<,>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
     {
         var a = ( Either<T1, T2> )(hasFirst1 ? ( T1 )value1 : ( T2 )value1);
@@ -760,7 +760,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T1 )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<T1, T2>.First ) ) ) )
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<,>.First ) ) ) )
             .Go();
     }
 
@@ -783,12 +783,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T2 )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<T1, T2>.Second ) ) ) )
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<,>.Second ) ) ) )
             .Go();
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEitherTestsData<,>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
     {
         var a = ( Either<T1, T2> )(hasFirst1 ? ( T1 )value1 : ( T2 )value1);
@@ -800,7 +800,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericEitherTestsData<,>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(
         object value1,
         bool hasFirst1,

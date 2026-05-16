@@ -169,7 +169,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetExceptWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetExceptWithData ) )]
     public void ExceptWith_ShouldModifySetCorrectly(IEnumerable<T> items, IEnumerable<T> other, IEnumerable<T> expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -195,7 +195,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetUnionWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetUnionWithData ) )]
     public void UnionWith_ShouldModifySetCorrectly(IEnumerable<T> items, IEnumerable<T> other, IEnumerable<T> expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -221,7 +221,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIntersectWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIntersectWithData ) )]
     public void IntersectWith_ShouldModifySetCorrectly(IEnumerable<T> items, IEnumerable<T> other, IEnumerable<T> expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -234,7 +234,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIntersectWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIntersectWithData ) )]
     public void IntersectWith_ShouldModifySetCorrectly_WhenOtherIsHashSet(
         IEnumerable<T> items,
         IEnumerable<T> other,
@@ -252,7 +252,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIntersectWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIntersectWithData ) )]
     public void IntersectWith_ShouldModifySetCorrectly_WhenOtherIsSequentialHashSet(
         IEnumerable<T> items,
         IEnumerable<T> other,
@@ -285,7 +285,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSymmetricExceptWithData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetSymmetricExceptWithData ) )]
     public void SymmetricExceptWith_ShouldModifySetCorrectly(IEnumerable<T> items, IEnumerable<T> other, IEnumerable<T> expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -311,7 +311,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetOverlapsData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetOverlapsData ) )]
     public void Overlaps_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -337,7 +337,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -350,7 +350,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -365,7 +365,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
         IEnumerable<T> items,
         IEnumerable<T> other,
@@ -398,7 +398,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsSupersetOfData ) )]
     public void IsSupersetOf_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -424,7 +424,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsProperSupersetOfData ) )]
     public void IsProperSupersetOf_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -450,7 +450,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsSubsetOfData ) )]
     public void IsSubsetOf_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -463,7 +463,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsSubsetOfData ) )]
     public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -478,7 +478,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsSubsetOfData ) )]
     public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
         IEnumerable<T> items,
         IEnumerable<T> other,
@@ -511,7 +511,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsProperSubsetOfData ) )]
     public void IsProperSubsetOf_ShouldReturnCorrectResult(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -524,7 +524,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsProperSubsetOfData ) )]
     public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> items, IEnumerable<T> other, bool expected)
     {
         var sut = new SequentialHashSet<T>();
@@ -539,7 +539,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericSequentialHashSetTestsData<>.GetIsProperSubsetOfData ) )]
     public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsSequentialHashSet(
         IEnumerable<T> items,
         IEnumerable<T> other,

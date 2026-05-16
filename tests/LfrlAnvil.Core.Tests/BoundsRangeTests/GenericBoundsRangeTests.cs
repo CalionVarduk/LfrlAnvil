@@ -133,7 +133,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetToStringData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetToStringData ) )]
     public void ToString_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, string expected)
     {
         var sut = BoundsRange.Create( range );
@@ -142,7 +142,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetGetHashCodeData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetGetHashCodeData ) )]
     public void GetHashCode_ShouldReturnMixOfAllContainedBounds(IEnumerable<Bounds<T>> range)
     {
         var sut = BoundsRange.Create( range );
@@ -154,7 +154,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetEqualsData ) )]
     public void Equals_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range1, IEnumerable<Bounds<T>> range2, bool expected)
     {
         var sut = BoundsRange.Create( range1 );
@@ -187,7 +187,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetFindBoundsIndexData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetFindBoundsIndexData ) )]
     public void FindBoundsIndex_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, T value, int expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -196,7 +196,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetFindBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetFindBoundsData ) )]
     public void FindBounds_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, T value, Bounds<T>? expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -205,7 +205,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetContainsWithSingleValueData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetContainsWithSingleValueData ) )]
     public void Contains_WithSingleValue_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, T value, bool expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -214,7 +214,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetContainsWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetContainsWithBoundsData ) )]
     public void Contains_WithBounds_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, Bounds<T> value, bool expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -223,7 +223,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetContainsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetContainsData ) )]
     public void Contains_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, IEnumerable<Bounds<T>> otherRange, bool expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -233,7 +233,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetIntersectsWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetIntersectsWithBoundsData ) )]
     public void Intersects_WithBounds_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, Bounds<T> value, bool expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -242,7 +242,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetIntersectsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetIntersectsData ) )]
     public void Intersects_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, IEnumerable<Bounds<T>> otherRange, bool expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -252,7 +252,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetGetIntersectionWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetGetIntersectionWithBoundsData ) )]
     public void GetIntersection_WithBounds_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         Bounds<T> value,
@@ -264,7 +264,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetGetIntersectionData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetGetIntersectionData ) )]
     public void GetIntersection_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         IEnumerable<Bounds<T>> otherRange,
@@ -277,7 +277,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetMergeWithWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetMergeWithWithBoundsData ) )]
     public void MergeWith_WithBounds_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         Bounds<T> value,
@@ -289,7 +289,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetMergeWithData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetMergeWithData ) )]
     public void MergeWith_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         IEnumerable<Bounds<T>> otherRange,
@@ -302,7 +302,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetRemoveWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetRemoveWithBoundsData ) )]
     public void Remove_WithBounds_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         Bounds<T> value,
@@ -314,7 +314,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetRemoveData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetRemoveData ) )]
     public void Remove_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         IEnumerable<Bounds<T>> otherRange,
@@ -327,7 +327,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetComplementData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetComplementData ) )]
     public void Complement_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range, IEnumerable<Bounds<T>> expected)
     {
         var sut = new BoundsRange<T>( range );
@@ -336,7 +336,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetComplementWithBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetComplementWithBoundsData ) )]
     public void Complement_WithBounds_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         Bounds<T> container,
@@ -348,7 +348,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetComplementWithRangeData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetComplementWithRangeData ) )]
     public void Complement_WithRange_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range,
         IEnumerable<Bounds<T>> container,
@@ -381,7 +381,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetEqualsData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(IEnumerable<Bounds<T>> range1, IEnumerable<Bounds<T>> range2, bool expected)
     {
         var sut = BoundsRange.Create( range1 );
@@ -393,7 +393,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsRangeTestsData<T>.GetNotEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsRangeTestsData<>.GetNotEqualsData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(
         IEnumerable<Bounds<T>> range1,
         IEnumerable<Bounds<T>> range2,

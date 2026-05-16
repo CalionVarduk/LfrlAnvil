@@ -70,7 +70,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericPairTestsData<T1, T2>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericPairTestsData<,>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(T1 first1, T2 second1, T1 first2, T2 second2, bool expected)
     {
         var a = new Pair<T1, T2>( first1, second1 );
@@ -82,7 +82,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericPairTestsData<T1, T2>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericPairTestsData<,>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(T1 first1, T2 second1, T1 first2, T2 second2, bool expected)
     {
         var a = new Pair<T1, T2>( first1, second1 );
@@ -94,7 +94,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericPairTestsData<T1, T2>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericPairTestsData<,>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(T1 first1, T2 second1, T1 first2, T2 second2, bool expected)
     {
         var a = new Pair<T1, T2>( first1, second1 );

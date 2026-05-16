@@ -107,7 +107,7 @@ public class TypeExtensionsBasicTests : TestsBase
     public void GetDebugString_ShouldReturnCorrectResult_ForByRefType()
     {
         var type = typeof( Dictionary<int, string> )
-            .GetMethod( nameof( Dictionary<int, string>.TryGetValue ) )!
+            .GetMethod( nameof( Dictionary<,>.TryGetValue ) )!
             .GetParameters()[1]
             .ParameterType;
 

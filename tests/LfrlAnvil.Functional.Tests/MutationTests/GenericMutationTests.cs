@@ -89,7 +89,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMutationTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMutationTestsData<>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(T oldValue1, T value1, T oldValue2, T value2, bool expected)
     {
         var a = new Mutation<T>( oldValue1, value1 );
@@ -608,7 +608,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMutationTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMutationTestsData<>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(T oldValue1, T value1, T oldValue2, T value2, bool expected)
     {
         var a = new Mutation<T>( oldValue1, value1 );
@@ -620,7 +620,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMutationTestsData<T>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericMutationTestsData<>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(T oldValue1, T value1, T oldValue2, T value2, bool expected)
     {
         var a = new Mutation<T>( oldValue1, value1 );

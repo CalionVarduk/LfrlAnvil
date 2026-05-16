@@ -81,7 +81,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetEqualsData ) )]
     public void Equals_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var a = new Bounds<T>( min1, max1 );
@@ -93,7 +93,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetClampData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetClampData ) )]
     public void Clamp_ShouldReturnCorrectResult(T min, T max, T value, T expected)
     {
         var sut = new Bounds<T>( min, max );
@@ -102,7 +102,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetContainsData ) )]
     public void Contains_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
     {
         var sut = new Bounds<T>( min, max );
@@ -111,7 +111,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsExclusivelyData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetContainsExclusivelyData ) )]
     public void ContainsExclusively_ShouldReturnCorrectResult(T min, T max, T value, bool expected)
     {
         var sut = new Bounds<T>( min, max );
@@ -120,7 +120,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsForBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetContainsForBoundsData ) )]
     public void Contains_ForBounds_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -132,7 +132,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetContainsExclusivelyForBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetContainsExclusivelyForBoundsData ) )]
     public void ContainsExclusively_ForBounds_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -144,7 +144,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetIntersectsForBoundsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetIntersectsForBoundsData ) )]
     public void Intersects_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -156,7 +156,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetIntersectionData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetIntersectionData ) )]
     public void GetIntersection_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expected)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -168,7 +168,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetMergeWithData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetMergeWithData ) )]
     public void MergeWith_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expected)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -180,7 +180,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetSplitAtData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetSplitAtData ) )]
     public void SplitAt_ShouldReturnCorrectResult(T min, T max, T value, Bounds<T> expectedFirst, Bounds<T>? expectedSecond)
     {
         var sut = new Bounds<T>( min, max );
@@ -194,7 +194,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetRemoveData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetRemoveData ) )]
     public void Remove_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, Bounds<T>? expectedFirst, Bounds<T>? expectedSecond)
     {
         var sut = new Bounds<T>( min1, max1 );
@@ -209,7 +209,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetEqualsData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var a = new Bounds<T>( min1, max1 );
@@ -221,7 +221,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericBoundsTestsData<T>.GetNotEqualsData ) )]
+    [GenericMethodData( nameof( GenericBoundsTestsData<>.GetNotEqualsData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(T min1, T max1, T min2, T max2, bool expected)
     {
         var a = new Bounds<T>( min1, max1 );

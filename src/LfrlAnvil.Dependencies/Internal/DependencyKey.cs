@@ -47,7 +47,7 @@ internal sealed class DependencyKey : IInternalDependencyKey
         {
             var dependencyKeyType = typeof( DependencyKey<> ).MakeGenericType( keyType );
             var providerMethod = dependencyKeyType.GetMethod(
-                nameof( DependencyKey<object>.CreateTypeErased ),
+                nameof( DependencyKey<>.CreateTypeErased ),
                 BindingFlags.NonPublic | BindingFlags.Static );
 
             Assume.IsNotNull( providerMethod );

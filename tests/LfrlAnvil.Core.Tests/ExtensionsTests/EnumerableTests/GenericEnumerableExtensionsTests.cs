@@ -46,7 +46,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsEmptyData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetIsEmptyData ) )]
     public void IsNullOrEmpty_ShouldReturnFalse_WhenSourceHasSomeElements(int count)
     {
         var sut = Fixture.CreateMany<T>( count );
@@ -63,7 +63,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsEmptyData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetIsEmptyData ) )]
     public void IsEmpty_ShouldReturnFalse_WhenSourceHasSomeElements(int count)
     {
         var sut = Fixture.CreateMany<T>( count );
@@ -72,7 +72,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtLeastData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsAtLeastData ) )]
     public void ContainsAtLeast_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
@@ -81,7 +81,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtLeastData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsAtLeastData ) )]
     public void ContainsAtLeast_WithMaterializedSource_ShouldReturnCorrectResult(int sourceCount, int minCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
@@ -90,7 +90,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsAtMostData ) )]
     public void ContainsAtMost_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
@@ -99,7 +99,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsAtMostData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsAtMostData ) )]
     public void ContainsAtMost_WithMaterializedSource_ShouldReturnCorrectResult(int sourceCount, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
@@ -108,7 +108,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
     {
         var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
@@ -120,7 +120,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
     {
         var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
@@ -132,7 +132,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForZeroMinCountData ) )]
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsZero(int count, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
@@ -141,7 +141,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForZeroMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForZeroMinCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnCorrectResult_WhenMinCountIsZero(int count, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
@@ -150,7 +150,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForNegativeMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForNegativeMinCountData ) )]
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsNegative(int count, int maxCount, bool expected)
     {
         var minCount = -Fixture.Create<int>( x => x > 0 );
@@ -162,7 +162,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForNegativeMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForNegativeMinCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnCorrectResult_WhenMinCountIsNegative(
         int count,
         int maxCount,
@@ -177,7 +177,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountLessThanMinCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenSourceCountIsLessThanMinCount(int count, int minCount)
     {
         var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
@@ -186,7 +186,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountLessThanMinCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountLessThanMinCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenSourceCountIsLessThanMinCount(int count, int minCount)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
@@ -195,7 +195,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( count ).Where( _ => true );
@@ -204,7 +204,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountGreaterThanMaxCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
@@ -213,7 +213,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
     public void ContainsInRange_ShouldReturnTrue_WhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
@@ -222,7 +222,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsInRangeForCountBetweenMinAndMaxData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnTrue_WhenSourceCountIsBetweenMinAndMaxCount(
         int sourceCount,
         int minCount,
@@ -234,7 +234,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsExactlyForNegativeCountData ) )]
     public void ContainsExactly_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
     {
         var count = -Fixture.Create<int>( x => x > 0 );
@@ -246,7 +246,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsExactlyForNegativeCountData ) )]
     public void ContainsExactly_WithMaterializedSource_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
     {
         var count = -Fixture.Create<int>( x => x > 0 );
@@ -258,7 +258,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsExactlyForNonNegativeCountData ) )]
     public void ContainsExactly_ShouldReturnCorrectResult_WhenCountIsNotNegative(int sourceCount, int count, bool expected)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).Where( _ => true );
@@ -267,7 +267,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNonNegativeCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsExactlyForNonNegativeCountData ) )]
     public void ContainsExactly_WithMaterializedSource_ShouldReturnCorrectResult_WhenCountIsNotNegative(
         int sourceCount,
         int count,
@@ -279,7 +279,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetFlattenData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetFlattenData ) )]
     public void Flatten_ShouldReturnCorrectResult(IReadOnlyList<Pair<T, IEnumerable<T>>> data, IEnumerable<Pair<T, T>> expected)
     {
         var sut = data.Select( d => d.First );
@@ -310,7 +310,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinData ) )]
     public void TryMin_ShouldReturnTrueAndCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMin( out var min );
@@ -335,7 +335,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMaxData ) )]
     public void TryMax_ShouldReturnTrueAndCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMax( out var max );
@@ -355,7 +355,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void MinMax_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expectedMin, T expectedMax)
     {
         var result = sut.MinMax();
@@ -375,7 +375,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void TryMinMax_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expectedMin, T expectedMax)
     {
         var result = sut.TryMinMax();
@@ -391,7 +391,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsDuplicatesData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetContainsDuplicatesData ) )]
     public void ContainsDuplicates_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, bool expected)
     {
         var result = sut.ContainsDuplicates();
@@ -410,7 +410,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForZeroOrOneCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetRepeatForZeroOrOneCountData ) )]
     public void Repeat_ShouldReturnEmpty_WhenCountIsZero(int sourceCount)
     {
         var sut = Fixture.CreateMany<T>( sourceCount );
@@ -419,7 +419,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForZeroOrOneCountData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetRepeatForZeroOrOneCountData ) )]
     public void Repeat_ShouldReturnSource_WhenCountIsOne(int sourceCount)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
@@ -428,7 +428,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForCountGreaterThanOneData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetRepeatForCountGreaterThanOneData ) )]
     public void Repeat_ShouldReturnCorrectResult_WhenCountIsGreaterThanOne(IEnumerable<T> sut, int count, IEnumerable<T> expected)
     {
         var result = sut.Repeat( count );
@@ -436,7 +436,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
     public void Repeat_ShouldNotEvaluateSource_WhenCountIsGreaterThanOne_BeforeResultIsEvaluated(int count)
     {
         var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -449,7 +449,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetRepeatForMemoizationWithCountGreaterThanOneData ) )]
     public void Repeat_ShouldMemoizeSource_WhenCountIsGreaterThanOne(int count)
     {
         var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -501,7 +501,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMemoizeData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMemoizeData ) )]
     public void Memoize_ShouldMaterializeSourceAfterFirstEnumeration(int sourceCount, int iterationCount)
     {
         var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
@@ -583,7 +583,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
     {
         var result = sut.SetEquals( other );
@@ -591,7 +591,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenSourceIsHashSet(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
     {
         sut = new HashSet<T>( sut );
@@ -600,7 +600,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsHashSet(IEnumerable<T> sut, IEnumerable<T> other, bool expected)
     {
         other = new HashSet<T>( other );
@@ -609,7 +609,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenSourceAndOtherAreHashSet(
         IEnumerable<T> sut,
         IEnumerable<T> other,
@@ -776,7 +776,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void MinMaxBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expectedMin, T expectedMax)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -789,7 +789,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void MinMaxBy_WithCustomComparer_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(
         IEnumerable<T> values,
         T expectedMin,
@@ -818,7 +818,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMaxData ) )]
     public void TryMaxBy_ShouldReturnTrueAndCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -845,7 +845,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinData ) )]
     public void TryMinBy_ShouldReturnTrueAndCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expected)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -867,7 +867,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void TryMinMaxBy_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> values, T expectedMin, T expectedMax)
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
@@ -884,7 +884,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetMinMaxData ) )]
     public void TryMinMaxBy_WithDifferentSelectors_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(
         IEnumerable<T> values,
         T expectedMin,
@@ -931,7 +931,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetSliceData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetSliceData ) )]
     public void Slice_ShouldReturnCorrectResult(IEnumerable<T> values, int startIndex, int length, T[] expected)
     {
         var result = values.Slice( startIndex, length );
@@ -955,7 +955,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetIsOrderedData ) )]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<>.GetIsOrderedData ) )]
     public void IsOrdered_ShouldReturnCorrectResult_WhenSourceHasMoreThanOneElement(IEnumerable<T> sut, bool expected)
     {
         var result = sut.IsOrdered();

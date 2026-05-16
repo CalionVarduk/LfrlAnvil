@@ -9,7 +9,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ListTests;
 public abstract class GenericListExtensionsTests<T> : TestsBase
 {
     [Theory]
-    [GenericMethodData( nameof( GenericListExtensionsTestsData<T>.CreateSwapItemsTestData ) )]
+    [GenericMethodData( nameof( GenericListExtensionsTestsData<>.CreateSwapItemsTestData ) )]
     public void SwapItems_ShouldSwapTwoItemsCorrectly(IList<T> source, int index1, int index2, IReadOnlyList<T> expected)
     {
         source.SwapItems( index1, index2 );

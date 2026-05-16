@@ -90,7 +90,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
     [Pure]
     public override string ToString()
     {
-        return $"{nameof( RentedMemorySequence<T> )}<{typeof( T ).Name}>[{Length}]";
+        return $"{nameof( RentedMemorySequence<> )}<{typeof( T ).Name}>[{Length}]";
     }
 
     /// <summary>

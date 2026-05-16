@@ -83,7 +83,7 @@ public abstract class GenericErraticTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericErraticTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericErraticTestsData<>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
         var a = ( Erratic<T> )(isOk1 ? ( T )value1 : ( Exception )value1);
@@ -113,7 +113,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetValue() );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<>.Value ) ) ) ).Go();
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetError() );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<>.Error ) ) ) ).Go();
     }
 
     [Fact]
@@ -741,7 +741,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( T )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<>.Value ) ) ) ).Go();
     }
 
     [Fact]
@@ -763,11 +763,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( Exception )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ).Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<>.Error ) ) ) ).Go();
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericErraticTestsData<T>.CreateEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericErraticTestsData<>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
         var a = ( Erratic<T> )(isOk1 ? ( T )value1 : ( Exception )value1);
@@ -779,7 +779,7 @@ public abstract class GenericErraticTests<T> : TestsBase
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericErraticTestsData<T>.CreateNotEqualsTestData ) )]
+    [GenericMethodData( nameof( GenericErraticTestsData<>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
         var a = ( Erratic<T> )(isOk1 ? ( T )value1 : ( Exception )value1);

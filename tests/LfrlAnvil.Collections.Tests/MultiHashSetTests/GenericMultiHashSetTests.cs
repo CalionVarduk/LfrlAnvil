@@ -401,7 +401,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetExceptWithData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetExceptWithData ) )]
     public void ExceptWith_ShouldModifySetCorrectly(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -430,7 +430,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetUnionWithData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetUnionWithData ) )]
     public void UnionWith_ShouldModifySetCorrectly(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -459,7 +459,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIntersectWithData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIntersectWithData ) )]
     public void IntersectWith_ShouldModifySetCorrectly(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -475,7 +475,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIntersectWithData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIntersectWithData ) )]
     public void IntersectWith_ShouldModifySetCorrectly_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -508,7 +508,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSymmetricExceptWithData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetSymmetricExceptWithData ) )]
     public void SymmetricExceptWith_ShouldModifySetCorrectly(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -537,7 +537,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetOverlapsData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetOverlapsData ) )]
     public void Overlaps_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
     {
         var sut = new MultiHashSet<T>();
@@ -563,7 +563,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
     {
         var sut = new MultiHashSet<T>();
@@ -576,7 +576,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetSetEqualsData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetSetEqualsData ) )]
     public void SetEquals_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -609,7 +609,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsSupersetOfData ) )]
     public void IsSupersetOf_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
     {
         var sut = new MultiHashSet<T>();
@@ -622,7 +622,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsSupersetOfData ) )]
     public void IsSupersetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -655,7 +655,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsProperSupersetOfData ) )]
     public void IsProperSupersetOf_ShouldReturnCorrectResult(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -671,7 +671,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSupersetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsProperSupersetOfData ) )]
     public void IsProperSupersetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -704,7 +704,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsSubsetOfData ) )]
     public void IsSubsetOf_ShouldReturnCorrectResult(IEnumerable<Pair<T, int>> items, IEnumerable<Pair<T, int>> other, bool expected)
     {
         var sut = new MultiHashSet<T>();
@@ -717,7 +717,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsSubsetOfData ) )]
     public void IsSubsetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -750,7 +750,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsProperSubsetOfData ) )]
     public void IsProperSubsetOf_ShouldReturnCorrectResult(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -766,7 +766,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetIsProperSubsetOfData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetIsProperSubsetOfData ) )]
     public void IsProperSubsetOf_ShouldReturnCorrectResult_WhenOtherIsMultiSet(
         IEnumerable<Pair<T, int>> items,
         IEnumerable<Pair<T, int>> other,
@@ -810,7 +810,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetContainsData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetContainsData ) )]
     public void Contains_WithItemAndMultiplicity_ShouldReturnTrue_WhenItemExistsWithCorrectMultiplicity(
         int existingMultiplicity,
         int checkedMultiplicity,
@@ -840,7 +840,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     }
 
     [Theory]
-    [GenericMethodData( nameof( GenericMultiHashSetTestsData<T>.GetContainsData ) )]
+    [GenericMethodData( nameof( GenericMultiHashSetTestsData<>.GetContainsData ) )]
     public void Contains_WithPair_ShouldReturnTrue_WhenItemExistsWithCorrectMultiplicity(
         int existingMultiplicity,
         int checkedMultiplicity,
