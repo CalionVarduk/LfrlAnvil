@@ -46,4 +46,4 @@ Following is the list of all individual projects, in no particular order
 There's also the [TODO](./todo.md) file that contains chaotic scribbles about more doodads that I may or may not work on in the future.
 I might at some point convert that into a proper list of GitHub issues.
 
-<sub><sup>[Logo](./assets/logo.png) by [The Sleeping Forest](https://thesleepingforest.wixsite.com/main).</sup></sub>
+<sub><sup>[Logo](./assets/logo.png) by [The Sleeping Forest](https://ko-fi.com/tsforest).</sup></sub>
