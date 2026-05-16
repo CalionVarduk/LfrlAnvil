@@ -158,11 +158,11 @@ public class ReactiveSchedulerBatchTests : TestsBase
         var scheduler = new ReactiveScheduler<int>( timestamps );
         var sut = new Batch( scheduler, 123, Duration.FromTicks( 123 ), 5 );
         sut.OnProcessCallback = () => completion.Complete();
-        scheduler.Start();
 
         sut.Add( "foo" );
-        await Task.Delay( 15 );
         sut.Add( "bar" );
+
+        scheduler.Start();
         await completion.Task;
         var state = scheduler.TryGetTaskState( 123 );
 
@@ -170,7 +170,7 @@ public class ReactiveSchedulerBatchTests : TestsBase
                 state.TestNotNull( s => Assertion.All(
                     "state",
                     s.State.TotalInvocations.TestEquals( 1 ),
-                    s.State.LastInvocationTimestamp.TestEquals( new Timestamp( 226 ) ),
+                    s.State.LastInvocationTimestamp.TestEquals( new Timestamp( 225 ) ),
                     s.NextTimestamp.TestEquals( new Timestamp( long.MaxValue ) ) ) ),
                 sut.Events.TestSequence( [ "Process(disposing=False):'foo','bar'" ] ) )
             .Go();
