@@ -1,4 +1,4 @@
-([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
+﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://img.shields.io/nuget/v/LfrlAnvil.Dependencies.MicrosoftExtensions.svg)](https://www.nuget.org/packages/LfrlAnvil.Dependencies.MicrosoftExtensions/)
 
 # [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Dependencies.MicrosoftExtensions](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Dependencies.MicrosoftExtensions)

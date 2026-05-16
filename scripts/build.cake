@@ -159,7 +159,7 @@ Task("Pack")
         ArgumentCustomization = args => args.Append($"/p:PackageVersion={version}")
     };
     foreach (var project in projects)
-        DotNetPack(project.FullPath, settings);
+        DotNetPackWithReadmeLogoFix(project.FullPath, settings);
 });
 
 Task("Push")
@@ -190,3 +190,54 @@ Task("Push")
 //////////////////////////////////////////////////////////////////////
 
 RunTarget(target);
+
+void DotNetPackWithReadmeLogoFix(string projectPath, DotNetPackSettings settings)
+{
+    Information(projectPath);
+    var readmePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(projectPath), ".docs", "readme.md");
+    if (!System.IO.File.Exists(readmePath))
+        throw new Exception($"Readme {readmePath} does not exist!");
+
+    var projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath);
+    var readmeEncoding = GetFileEncoding(readmePath);
+    var originalReadmeContents = System.IO.File.ReadAllText(readmePath);
+    var nugetLink = @"https://www.nuget.org/packages/" + projectName + "/";
+
+    var logoRegex = new System.Text.RegularExpressions.Regex(
+        @"(?:\.\.\/)*assets\/logo\.png",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    var logoMatches = logoRegex.Matches(originalReadmeContents);
+    if (logoMatches.Count < 2)
+        throw new Exception($"Readme {readmePath} has invalid logo setup!");
+
+    var readmeContents = new StringBuilder(originalReadmeContents.Length);
+    var lastIndex = 0;
+    for (var i = 0; i < logoMatches.Count; ++i)
+    {
+        var match = logoMatches[i];
+        readmeContents.Append(originalReadmeContents.Substring(lastIndex, match.Index - lastIndex));
+        if (i == 0)
+            readmeContents.Append("logo.png");
+        else if (i == 1)
+            readmeContents.Append(nugetLink);
+        else
+            readmeContents.Append(match.Value);
+
+        lastIndex = match.Index + match.Length;
+    }
+
+    readmeContents.Append(originalReadmeContents.Substring(lastIndex));
+    System.IO.File.WriteAllText(readmePath, readmeContents.ToString(), readmeEncoding);
+
+    DotNetPack(projectPath, settings);
+
+    System.IO.File.WriteAllText(readmePath, originalReadmeContents, readmeEncoding);
+}
+
+Encoding GetFileEncoding(string file)
+{
+    using var reader = new System.IO.StreamReader(file, detectEncodingFromByteOrderMarks: true);
+    reader.Peek();
+    return reader.CurrentEncoding ?? System.Text.Encoding.UTF8;
+}
