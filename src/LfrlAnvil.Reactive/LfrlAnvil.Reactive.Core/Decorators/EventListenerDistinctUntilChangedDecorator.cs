@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -51,7 +51,7 @@ public sealed class EventListenerDistinctUntilChangedDecorator<TEvent, TKey> : I
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly IEqualityComparer<TKey> _equalityComparer;
         private Optional<TKey> _lastKey;
@@ -97,9 +97,9 @@ public sealed class EventListenerDistinctUntilChangedDecorator<TEvent, TKey> : I
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

@@ -15,7 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -48,7 +48,7 @@ public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEv
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
         private Optional<TEvent> _argument;
         private bool _isDisposed;
@@ -95,9 +95,9 @@ public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEv
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

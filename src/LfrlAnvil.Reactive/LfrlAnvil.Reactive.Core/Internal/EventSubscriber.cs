@@ -14,13 +14,14 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private EventSource<TEvent>? _owner;
     private InterlockedRef<IEventListener<TEvent>> _listener;
 
@@ -87,8 +88,8 @@ internal sealed class EventSubscriber<TEvent> : IEventSubscriber
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 }

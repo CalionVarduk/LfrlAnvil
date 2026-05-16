@@ -17,7 +17,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Client.Events;
@@ -33,6 +32,7 @@ public sealed class MessageBrokerListener
 {
     internal readonly CancellationTokenSource CancellationSource;
     internal MessageEmitter MessageEmitter;
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource _disposed;
     private MessageBrokerListenerState _state;
     private bool _autoDisposed;
@@ -433,9 +433,9 @@ public sealed class MessageBrokerListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _disposed );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

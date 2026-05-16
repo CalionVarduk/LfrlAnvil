@@ -15,7 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -46,7 +46,7 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly int _count;
         private ListSlim<TEvent> _buffer;
         private bool _isDisposed;
@@ -88,9 +88,9 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

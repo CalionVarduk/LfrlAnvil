@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Composites;
@@ -57,7 +57,7 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
 
     private sealed class EventListener : DecoratedEventListener<TEvent, EventGrouping<TKey, TEvent>>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly Dictionary<TKey, ListSlim<TEvent>> _groups;
         private bool _isDisposed;
@@ -119,9 +119,9 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

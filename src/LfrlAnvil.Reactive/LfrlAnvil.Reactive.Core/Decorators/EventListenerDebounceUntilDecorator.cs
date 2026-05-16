@@ -14,7 +14,7 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -47,7 +47,7 @@ public sealed class EventListenerDebounceUntilDecorator<TEvent, TTargetEvent> : 
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly IEventStream<TTargetEvent> _target;
         private readonly IEventSubscriber _subscriber;
         private LazyDisposable<IEventSubscriber>? _targetSubscriber;
@@ -147,9 +147,9 @@ public sealed class EventListenerDebounceUntilDecorator<TEvent, TTargetEvent> : 
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 

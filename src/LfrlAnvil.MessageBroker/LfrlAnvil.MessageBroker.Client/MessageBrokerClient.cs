@@ -56,6 +56,7 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     internal readonly MemoryPool<byte> MemoryPool;
     internal readonly MessageBrokerClientLogger Logger;
 
+    private readonly Lock _lock = new Lock();
     private readonly ITimestampProvider _timestamps;
     private readonly TcpClient _tcp;
     private readonly TaskCompletionSource _disposed;
@@ -636,13 +637,13 @@ public sealed partial class MessageBrokerClient : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _tcp );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerClientDisposedException? exception)
+    internal Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerClientDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! ShouldCancel )

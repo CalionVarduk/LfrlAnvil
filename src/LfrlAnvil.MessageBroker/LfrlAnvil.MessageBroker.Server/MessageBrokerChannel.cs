@@ -14,8 +14,8 @@
 
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Exceptions;
@@ -33,6 +33,7 @@ public sealed class MessageBrokerChannel
     internal readonly MessageBrokerChannelLogger Logger;
     internal readonly ServerStorage.Channel Storage;
 
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource _disposed;
     private MessageBrokerChannelState _state;
     private ulong _nextTraceId;
@@ -349,9 +350,9 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _disposed );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -388,7 +389,7 @@ public sealed class MessageBrokerChannel
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerChannelDisposedException? exception)
+    private Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerChannelDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsDisposed )

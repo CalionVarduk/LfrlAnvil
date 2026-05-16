@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
@@ -22,7 +23,7 @@ namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEvent>
 {
-    private readonly object _lock = new object();
+    private readonly Lock _lock = new Lock();
     private readonly LazyDisposable<CancellationTokenRegistration> _cancellationTokenRegistration;
     private readonly ManualResetValueTaskSource<AsyncEnumerableEvent<TEvent>> _next;
     private QueueSlim<AsyncEnumerableEvent<TEvent>> _buffer;
@@ -47,7 +48,7 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
 
     public override void React(TEvent @event)
     {
-        using ( ExclusiveLock.Enter( _lock ) )
+        using ( AcquireLock() )
         {
             if ( _discarded )
                 return;
@@ -76,7 +77,7 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
     {
         _cancellationTokenRegistration.Dispose();
 
-        using ( ExclusiveLock.Enter( _lock ) )
+        using ( AcquireLock() )
         {
             if ( _discarded )
                 return;
@@ -96,13 +97,13 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
 
     internal void Discard()
     {
-        using ( ExclusiveLock.Enter( _lock ) )
+        using ( AcquireLock() )
             _discarded = true;
     }
 
     internal void Cancel(CancellationToken cancellationToken)
     {
-        using ( ExclusiveLock.Enter( _lock ) )
+        using ( AcquireLock() )
         {
             if ( _discarded )
                 return;
@@ -115,7 +116,7 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
 
     internal void Reset()
     {
-        using ( ExclusiveLock.Enter( _lock ) )
+        using ( AcquireLock() )
         {
             _next.Reset();
             if ( _cancellationSource is not null )
@@ -126,5 +127,11 @@ internal sealed class AsyncEnumerableEventListener<TEvent> : EventListener<TEven
             else if ( _buffer.TryDequeue( out var e ) )
                 _next.SetResult( e );
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

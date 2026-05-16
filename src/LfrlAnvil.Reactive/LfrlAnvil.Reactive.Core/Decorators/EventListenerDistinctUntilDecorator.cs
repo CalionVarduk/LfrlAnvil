@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -59,7 +59,7 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
         internal readonly LazyDisposable<IEventSubscriber> TargetSubscriber;
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly Func<TEvent, TKey> _keySelector;
         private readonly HashSet<TKey> _keySet;
         private bool _isDisposed;
@@ -116,9 +116,9 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 

@@ -20,7 +20,6 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -34,6 +33,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public sealed class MessageBrokerRemoteClientConnector
 {
+    private readonly Lock _lock = new Lock();
     private readonly TcpClient _tcp;
     private readonly TaskCompletionSource _completed;
     private CancellationTokenSource _cancellationSource;
@@ -218,13 +218,13 @@ public sealed class MessageBrokerRemoteClientConnector
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _tcp );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireActiveLock(ulong serverTraceId, out MessageBrokerRemoteClientConnectorDisposedException? exception)
+    private Lock.Scope AcquireActiveLock(ulong serverTraceId, out MessageBrokerRemoteClientConnectorDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! ShouldCancel )

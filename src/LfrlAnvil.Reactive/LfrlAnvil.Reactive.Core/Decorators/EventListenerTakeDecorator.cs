@@ -14,7 +14,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -44,7 +44,7 @@ public class EventListenerTakeDecorator<TEvent> : IEventListenerDecorator<TEvent
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly IEventSubscriber _subscriber;
         private readonly int _count;
         private int _taken;
@@ -98,9 +98,9 @@ public class EventListenerTakeDecorator<TEvent> : IEventListenerDecorator<TEvent
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

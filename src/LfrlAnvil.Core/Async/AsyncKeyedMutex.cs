@@ -30,6 +30,7 @@ namespace LfrlAnvil.Async;
 public sealed class AsyncKeyedMutex<TKey>
     where TKey : notnull
 {
+    private readonly Lock _lock = new Lock();
     private readonly Dictionary<TKey, Entry> _entries;
     private StackSlim<Entry> _entryCache;
 
@@ -170,9 +171,9 @@ public sealed class AsyncKeyedMutex<TKey>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _entries );
+        return _lock.EnterScope();
     }
 
     internal sealed class Entry

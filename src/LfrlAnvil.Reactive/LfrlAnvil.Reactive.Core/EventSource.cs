@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
@@ -30,7 +30,7 @@ namespace LfrlAnvil.Reactive;
 /// <inheritdoc cref="IEventSource{TEvent}" />
 public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private ListSlim<EventSubscriber<TEvent>> _subscribers;
     private bool _isDisposed;
 
@@ -279,11 +279,11 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
     /// <summary>
     /// Acquires this event source's exclusive lock.
     /// </summary>
-    /// <returns>Entered <see cref="ExclusiveLock"/> of this event source.</returns>
+    /// <returns>Entered <see cref="Lock.Scope"/> of this event source.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    protected ExclusiveLock AcquireLock()
+    protected Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     /// <summary>

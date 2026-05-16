@@ -14,9 +14,9 @@
 
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
@@ -26,6 +26,7 @@ namespace LfrlAnvil.Reactive.Chrono.Internal;
 internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInterval<long>>
     where TKey : notnull
 {
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource _disposed;
     private TimerTaskContainer<TKey>[] _taskContainers;
     private TimerTaskCollection<TKey>? _owner;
@@ -48,7 +49,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
     {
         get
         {
-            using ( ExclusiveLock.Enter( this ) )
+            using ( AcquireLock() )
                 return _firstTimestamp;
         }
     }
@@ -57,7 +58,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
     {
         get
         {
-            using ( ExclusiveLock.Enter( this ) )
+            using ( AcquireLock() )
                 return _lastTimestamp;
         }
     }
@@ -66,7 +67,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
     {
         get
         {
-            using ( ExclusiveLock.Enter( this ) )
+            using ( AcquireLock() )
                 return _eventCount;
         }
     }
@@ -74,7 +75,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
     public override void React(WithInterval<long> @event)
     {
         TimerTaskContainer<TKey>[] taskContainers;
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _owner is null )
                 return;
@@ -97,7 +98,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         TaskCompletionSource disposed;
         Duration taskDisposalTimeout;
 
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _owner is null )
                 return;
@@ -134,7 +135,7 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         IEventSubscriber? subscriber;
         TaskCompletionSource disposed;
 
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             disposed = _disposed;
             if ( _owner is null )
@@ -232,5 +233,11 @@ internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInte
         }
 
         return errors;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

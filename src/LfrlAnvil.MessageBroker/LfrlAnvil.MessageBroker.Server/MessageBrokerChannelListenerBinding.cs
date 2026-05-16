@@ -16,8 +16,8 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.Exceptions;
@@ -36,7 +36,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 public sealed class MessageBrokerChannelListenerBinding
 {
     internal QueueBindingCollection QueueBindingCollection;
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
 
     private TaskCompletionSource? _deactivated;
     private MessageBrokerChannelListenerBindingState _state;
@@ -740,9 +740,9 @@ public sealed class MessageBrokerChannelListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     private async ValueTask DeleteAsyncCore(ulong clientTraceId)

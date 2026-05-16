@@ -16,7 +16,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
@@ -140,7 +140,7 @@ public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>, IHistoryEve
 
     private sealed class HistoryListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private ArrayPoolToken<TEvent> _historyToken;
         private QueueSlim<TEvent> _buffer;
         private State _state;
@@ -269,9 +269,9 @@ public class HistoryEventPublisher<TEvent> : EventPublisher<TEvent>, IHistoryEve
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
 
         private enum State : byte

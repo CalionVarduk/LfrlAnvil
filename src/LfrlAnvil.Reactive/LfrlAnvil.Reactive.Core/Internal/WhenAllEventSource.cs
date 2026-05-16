@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
@@ -69,7 +69,7 @@ public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
 
     private sealed class EventListener : DecoratedEventListener<ReadOnlyMemory<TEvent?>, ReadOnlyMemory<TEvent?>>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly IEventSubscriber _subscriber;
         private readonly TEvent?[] _result;
         private readonly int _streamCount;
@@ -191,15 +191,15 @@ public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 
     private sealed class InnerEventListener : EventListener<TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly int _index;
         private readonly EventListener _outerListener;
         private TEvent? _lastEvent;
@@ -237,9 +237,9 @@ public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 }

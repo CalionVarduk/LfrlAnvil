@@ -15,7 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -51,7 +51,7 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly IEventSubscriber _subscriber;
         private readonly LazyDisposable<IEventSubscriber> _targetSubscriber;
         private readonly Func<TEvent, TTargetEvent, TNextEvent> _selector;
@@ -137,9 +137,9 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 

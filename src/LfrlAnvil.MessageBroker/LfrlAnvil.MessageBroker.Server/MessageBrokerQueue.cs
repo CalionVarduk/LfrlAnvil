@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -38,7 +38,7 @@ public sealed class MessageBrokerQueue
     internal QueueMessageStore MessageStore;
     internal int EventHeapIndex;
     internal int DeadLetterQueryCounter;
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private ServerStorage.Client.Queue _storage;
     private MessageBrokerQueueState _state;
     private TaskCompletionSource? _deactivated;
@@ -845,9 +845,9 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -869,7 +869,7 @@ public sealed class MessageBrokerQueue
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
+    private Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerQueueDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsDisposed )

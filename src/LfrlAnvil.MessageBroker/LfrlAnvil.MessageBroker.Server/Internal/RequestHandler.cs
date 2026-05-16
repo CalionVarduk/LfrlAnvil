@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
@@ -2508,7 +2509,7 @@ internal struct RequestHandler
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static ExclusiveLock AcquireActiveServerLock(
+    private static Lock.Scope AcquireActiveServerLock(
         MessageBrokerRemoteClient client,
         ulong traceId,
         out MessageBrokerServerDisposedException? exception)

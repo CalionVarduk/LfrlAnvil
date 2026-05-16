@@ -16,7 +16,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
@@ -51,7 +51,7 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
     private sealed class EventListener : DecoratedEventListener<TEvent, ReadOnlyMemory<TEvent>>
     {
         internal readonly LazyDisposable<IEventSubscriber> TargetSubscriber;
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly IEventSubscriber _subscriber;
         private ListSlim<TEvent> _buffer;
         private bool _isDisposing;
@@ -148,9 +148,9 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 

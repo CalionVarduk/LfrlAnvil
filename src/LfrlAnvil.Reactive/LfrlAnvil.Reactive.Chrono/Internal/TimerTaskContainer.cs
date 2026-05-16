@@ -15,8 +15,8 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
@@ -26,6 +26,7 @@ namespace LfrlAnvil.Reactive.Chrono.Internal;
 internal sealed class TimerTaskContainer<TKey>
     where TKey : notnull
 {
+    private readonly Lock _lock = new Lock();
     private readonly Action<Task> _onActiveTaskCompleted;
     private readonly ITimerTask<TKey> _source;
     private TaskCompletionSource? _disposalCompletion;
@@ -44,7 +45,7 @@ internal sealed class TimerTaskContainer<TKey>
 
         _onActiveTaskCompleted = t =>
         {
-            using ( ExclusiveLock.Enter( this ) )
+            using ( AcquireLock() )
             {
                 if ( ! _info.AreActiveTasksInitialized )
                     return;
@@ -79,7 +80,7 @@ internal sealed class TimerTaskContainer<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void BeginDispose(Duration disposalTimeout)
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _disposed )
                 return;
@@ -97,7 +98,7 @@ internal sealed class TimerTaskContainer<TKey>
     internal Task WaitForDisposalAsync(Duration timeout)
     {
         TaskCompletionSource? source;
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
             source = _disposalCompletion;
 
         return source?.Task.WaitAsync( timeout ) ?? Task.CompletedTask;
@@ -106,7 +107,7 @@ internal sealed class TimerTaskContainer<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void EnqueueInvocation(Timestamp timestamp)
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _disposed )
                 return;
@@ -161,7 +162,7 @@ internal sealed class TimerTaskContainer<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ReactiveTaskSnapshot<ITimerTask<TKey>> CreateStateSnapshot()
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
             return _info.CreateSnapshot( _source );
     }
 
@@ -293,5 +294,11 @@ internal sealed class TimerTaskContainer<TKey>
         }
 
         return null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

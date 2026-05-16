@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
@@ -72,7 +72,7 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly ReadOnlyArray<IEventStream<TEvent>> _streams;
         private readonly IEventSubscriber _subscriber;
         private InnerSubscribersCollection _innerSubscribers;
@@ -170,9 +170,9 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
 
         private bool TryReserveNextStream(out int nodeId, [MaybeNullWhen( false )] out IEventStream<TEvent> stream)

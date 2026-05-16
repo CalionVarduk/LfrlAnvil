@@ -18,7 +18,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.MessageBroker.Server.Events;
@@ -474,7 +473,7 @@ internal struct PacketListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static ExclusiveLock AcquireActiveLock(MessageBrokerRemoteClient client, out bool acquired)
+    private static Lock.Scope AcquireActiveLock(MessageBrokerRemoteClient client, out bool acquired)
     {
         var @lock = client.AcquireLock();
         if ( ! client.IsInactive )

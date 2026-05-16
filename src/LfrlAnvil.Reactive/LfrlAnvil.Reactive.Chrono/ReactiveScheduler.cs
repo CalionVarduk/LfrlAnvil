@@ -19,7 +19,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Collections;
@@ -34,6 +33,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
 {
     private static Duration MaxDelay => Duration.FromMilliseconds( int.MaxValue );
 
+    private readonly Lock _lock = new Lock();
     private readonly DictionaryHeap<TKey, ReactiveSchedulerEntry<TKey>> _queue;
     private readonly TaskCompletionSource _disposed;
     private DelaySource _delaySource;
@@ -101,7 +101,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     {
         get
         {
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
                 return _state;
         }
     }
@@ -111,7 +111,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     {
         get
         {
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
             {
                 if ( _queue.Count == 0 )
                     return Array.Empty<TKey>();
@@ -136,7 +136,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public async ValueTask DisposeAsync()
     {
         TaskCompletionSource? disposed = null;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state >= ReactiveSchedulerState.Disposing )
                 disposed = _disposed;
@@ -158,7 +158,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public ScheduleTaskState<TKey>? TryGetTaskState(TKey key)
     {
         ReactiveSchedulerEntry<TKey> entry;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! _queue.TryGetValue( key, out entry ) )
                 return null;
@@ -175,7 +175,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public bool Start()
     {
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state != ReactiveSchedulerState.Created )
                 return false;
@@ -189,7 +189,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         }
 
         var task = RunCore();
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state == ReactiveSchedulerState.Running )
                 _task = task;
@@ -222,7 +222,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public bool SetInterval(TKey key, Duration interval)
     {
         Ensure.IsGreaterThan( interval, Duration.Zero );
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! TryGetMutableEntry( key, out var entry ) )
                 return false;
@@ -241,7 +241,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public bool SetRepetitions(TKey key, int repetitions)
     {
         Ensure.IsGreaterThan( repetitions, 0 );
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! TryGetMutableEntry( key, out var entry ) )
                 return false;
@@ -259,7 +259,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public bool MakeInfinite(TKey key)
     {
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! TryGetMutableEntry( key, out var entry ) )
                 return false;
@@ -277,7 +277,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public bool SetNextTimestamp(TKey key, Timestamp timestamp)
     {
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! TryGetMutableEntry( key, out var entry ) )
                 return false;
@@ -298,7 +298,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public bool Remove(TKey key)
     {
         ReactiveSchedulerEntry<TKey> entry;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( ! _queue.TryGetValue( key, out entry ) )
                 return false;
@@ -315,7 +315,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     public void Clear()
     {
         ReactiveSchedulerEntry<TKey>[] entries;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state >= ReactiveSchedulerState.Disposing )
                 return;
@@ -337,7 +337,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         Assume.NotEquals( repetitions, 0 );
 
         var key = task.Key;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state >= ReactiveSchedulerState.Disposing )
                 return false;
@@ -388,7 +388,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
             ValueTaskDelaySource? ownedDelaySource;
             ReactiveSchedulerEntry<TKey>[] entries;
 
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
             {
                 Assume.Equals( _state, ReactiveSchedulerState.Disposing );
                 ownedDelaySource = _delaySource.DiscardOwnedSource();
@@ -428,7 +428,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
                 }
             }
 
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
             {
                 _state = ReactiveSchedulerState.Disposed;
                 _reset.Dispose();
@@ -484,7 +484,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     {
         bool exists;
         exception = null;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state >= ReactiveSchedulerState.Disposing
                 || ! _queue.TryGetValue( container.Key, out var entry )
@@ -512,7 +512,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
 
         if ( exists )
         {
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
                 _queue.Remove( container.Key );
         }
 
@@ -520,9 +520,9 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireScheduleLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _queue );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -554,7 +554,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         {
             if ( timestamp - lockAcquiredAt > lockAcquisitionInterval )
             {
-                using ( AcquireScheduleLock() )
+                using ( AcquireLock() )
                 {
                     if ( _state >= ReactiveSchedulerState.Disposing )
                         return false;
@@ -580,7 +580,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         Duration delay;
         Timestamp timestamp;
         Timestamp nextEventTimestamp;
-        using ( AcquireScheduleLock() )
+        using ( AcquireLock() )
         {
             if ( _state >= ReactiveSchedulerState.Disposing )
                 return;
@@ -594,7 +594,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
             var result = await _reset.WaitAsync( delay ).ConfigureAwait( false );
             if ( result == AsyncManualResetEventResult.Disposed )
             {
-                using ( AcquireScheduleLock() )
+                using ( AcquireLock() )
                 {
                     if ( _state >= ReactiveSchedulerState.Disposing )
                         return;
@@ -611,7 +611,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
             else if ( ! TrySpinUntilTimestampReached( nextEventTimestamp, out timestamp ) )
                 return;
 
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
             {
                 if ( _state >= ReactiveSchedulerState.Disposing )
                     return;
@@ -627,7 +627,7 @@ public sealed class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
             EnqueueInvocations( ref eventBuffer );
             eventBuffer.Clear();
 
-            using ( AcquireScheduleLock() )
+            using ( AcquireLock() )
             {
                 if ( _state >= ReactiveSchedulerState.Disposing )
                     return;

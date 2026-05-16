@@ -23,10 +23,6 @@ Core:
 
 - could add expression extensions for generating a lambda from a collection of members and a target
   - would have to be null-aware
-- migrate to dotnet10 once most refinements are implemented
-  - swap to System.Threading.Lock instead of ExclusiveLock
-    - ExclusiveLock may stay for legacy Monitor usage
-  - use directory.packages.props + slnx
 
 ### Terminal
 
@@ -135,6 +131,8 @@ Low priority/probably won't do:
 
 ### MessageBroker: Refinements
 
+- use Lock for memory pool instead of ExclusiveLock
+  - for server, will require storing Lock along with pool token in messages
 - Allow server to send messages
   - stream class would have to expose a public method, with SenderId = 0
   - SenderId = 0 would have to be supported everywhere, including storage

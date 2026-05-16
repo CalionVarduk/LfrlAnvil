@@ -29,7 +29,7 @@ namespace LfrlAnvil.Async;
 /// <remarks>Lock is not reentrant.</remarks>
 public sealed class AsyncReaderWriterLock
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private LinkedListSlim<Entry> _participants;
     private LinkedListSlim<Entry> _upgradeableReadNodes;
     private StackSlim<Entry> _entryCache;
@@ -1013,9 +1013,9 @@ public sealed class AsyncReaderWriterLock
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     internal enum EntryType : byte

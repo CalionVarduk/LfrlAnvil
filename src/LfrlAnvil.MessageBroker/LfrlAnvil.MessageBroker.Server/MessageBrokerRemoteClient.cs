@@ -22,7 +22,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
@@ -70,7 +69,7 @@ public sealed partial class MessageBrokerRemoteClient
     private bool _isEphemeral;
     private short _maxBatchPacketCount;
 
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private readonly ITimestampProvider _timestamps;
     private TcpClient? _tcp;
     private Stream? _stream;
@@ -1154,13 +1153,13 @@ public sealed partial class MessageBrokerRemoteClient
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerRemoteClientDeactivatedException? exception)
+    internal Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerRemoteClientDeactivatedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsInactive )

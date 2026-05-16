@@ -15,7 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Computable.Expressions;
 using LfrlAnvil.MessageBroker.Server.Internal;
@@ -27,7 +27,7 @@ namespace LfrlAnvil.MessageBroker.Server;
 /// </summary>
 public sealed class MessageBrokerQueueListenerBinding
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private Func<MessageBrokerFilterExpressionContext[], bool>? _filterPredicate;
     private string? _filterExpression;
     private int _prefetchHint;
@@ -752,9 +752,9 @@ public sealed class MessageBrokerQueueListenerBinding
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     [Pure]

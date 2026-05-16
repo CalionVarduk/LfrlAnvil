@@ -18,7 +18,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
-using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
 
@@ -32,6 +31,7 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     private static Timestamp MaxTimestamp => new Timestamp( long.MaxValue );
     private static Duration MaxScheduleDelay => Duration.FromMilliseconds( int.MaxValue );
 
+    private readonly Lock _lock = new Lock();
     private readonly ManualResetEventSlim _reset;
     private readonly ITimestampProvider _timestamps;
     private StackSlim<Node> _nodeCache;
@@ -189,9 +189,9 @@ public sealed class ValueTaskDelaySource : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _reset );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.NoInlining )]

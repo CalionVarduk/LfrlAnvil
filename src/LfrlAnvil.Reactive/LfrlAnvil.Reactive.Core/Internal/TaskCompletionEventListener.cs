@@ -15,13 +15,12 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent>
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource<TEvent?> _completionSource;
     private readonly LazyDisposable<CancellationTokenRegistration> _cancellationTokenRegistration;
     private CancellationToken? _cancelledToken;
@@ -79,8 +78,8 @@ internal sealed class TaskCompletionEventListener<TEvent> : EventListener<TEvent
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 }

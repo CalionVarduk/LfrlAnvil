@@ -119,7 +119,7 @@ public abstract class ReactiveSchedulerBatch<TKey, T> : Batch<T>
 
     private sealed class ScheduleTask : ScheduleTask<TKey>
     {
-        private readonly object _lock = new object();
+        private readonly Lock _lock = new Lock();
         private ReactiveSchedulerBatch<TKey, T>? _owner;
         private bool _scheduled;
 
@@ -212,9 +212,9 @@ public abstract class ReactiveSchedulerBatch<TKey, T> : Batch<T>
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _lock );
+            return _lock.EnterScope();
         }
     }
 }

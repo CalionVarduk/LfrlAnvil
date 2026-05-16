@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
@@ -29,7 +29,7 @@ namespace LfrlAnvil.MessageBroker.Client;
 /// </summary>
 public sealed class MessageBrokerPublisher
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private MessageBrokerPublisherState _state;
 
     internal MessageBrokerPublisher(
@@ -219,8 +219,8 @@ public sealed class MessageBrokerPublisher
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 }

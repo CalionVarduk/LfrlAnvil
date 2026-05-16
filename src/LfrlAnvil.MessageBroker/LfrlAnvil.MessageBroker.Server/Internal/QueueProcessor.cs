@@ -15,6 +15,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
@@ -758,7 +759,7 @@ internal struct QueueProcessor
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static ExclusiveLock AcquireActiveClientLock(
+    private static Lock.Scope AcquireActiveClientLock(
         MessageBrokerQueue queue,
         ulong traceId,
         out MessageBrokerRemoteClientDeactivatedException? exception)

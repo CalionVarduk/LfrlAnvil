@@ -32,6 +32,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 {
     private readonly NamedDependencyScopeStore _namedScopes;
     private readonly UlongSequenceGenerator _idGenerator;
+    private readonly Lock _idGeneratorLock = new Lock();
 
     internal DependencyContainer(
         UlongSequenceGenerator idGenerator,
@@ -128,7 +129,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ulong GenerateResolverId()
     {
-        using ( ExclusiveLock.Enter( _idGenerator ) )
+        using ( _idGeneratorLock.EnterScope() )
             return _idGenerator.Generate();
     }
 

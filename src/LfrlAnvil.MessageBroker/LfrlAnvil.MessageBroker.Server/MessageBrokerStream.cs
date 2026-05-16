@@ -16,8 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
@@ -39,6 +39,7 @@ public sealed class MessageBrokerStream
     internal readonly MessageBrokerStreamLogger Logger;
     internal readonly ServerStorage.Stream Storage;
 
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource _disposed;
     private MessageBrokerStreamState _state;
     private ulong _nextTraceId;
@@ -436,9 +437,9 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _disposed );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -448,7 +449,7 @@ public sealed class MessageBrokerStream
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerStreamDisposedException? exception)
+    private Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerStreamDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsDisposed )

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -32,7 +32,7 @@ public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDec
 
     private sealed class EventListener : DecoratedEventListener<IEventStream<TEvent>, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private LazyDisposable<IEventSubscriber>? _innerSubscriber;
         private InnerEventListener? _innerListener;
         private State _state;
@@ -107,9 +107,9 @@ public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDec
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
 
         private enum State : byte

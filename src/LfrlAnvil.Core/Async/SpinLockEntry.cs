@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -20,9 +21,8 @@ namespace LfrlAnvil.Async;
 /// <summary>
 /// A lightweight, disposable object representing an acquired spin lock.
 /// </summary>
-public ref struct SpinLockEntry
+public ref struct SpinLockEntry : IDisposable
 {
-    // TODO: implement IDisposable
     private ref SpinLock _lock;
     private readonly bool _taken;
 

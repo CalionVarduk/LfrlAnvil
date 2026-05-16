@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LfrlAnvil.Async;
@@ -22,6 +23,7 @@ namespace LfrlAnvil.Async;
 /// <inheritdoc cref="IBatch{T}" />
 public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
 {
+    private readonly Lock _lock = new Lock();
     private readonly ManualResetValueTaskSource<bool> _flushContinuation;
     private readonly TaskCompletionSource _disposed;
     private QueueSlim<T> _items;
@@ -528,8 +530,8 @@ public abstract class Batch<T> : IBatch<T>, IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _flushContinuation );
+        return _lock.EnterScope();
     }
 }

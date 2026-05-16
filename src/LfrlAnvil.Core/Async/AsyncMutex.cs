@@ -29,7 +29,7 @@ namespace LfrlAnvil.Async;
 /// <remarks>Lock is not reentrant.</remarks>
 public sealed class AsyncMutex
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private LinkedListSlim<Entry> _participants;
     private StackSlim<Entry> _entryCache;
 
@@ -213,9 +213,9 @@ public sealed class AsyncMutex
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ExclusiveLock AcquireLock()
+    private Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _sync );
+        return _lock.EnterScope();
     }
 
     internal sealed class Entry : IValueTaskSource<bool>

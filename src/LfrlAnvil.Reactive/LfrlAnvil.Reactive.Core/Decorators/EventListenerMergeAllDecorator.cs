@@ -14,7 +14,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Reactive.Internal;
 
@@ -50,7 +50,7 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
 
     private sealed class EventListener : DecoratedEventListener<IEventStream<TEvent>, TEvent>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly int _maxConcurrency;
         private InnerSubscribersCollection _innerSubscribers;
         private QueueSlim<IEventStream<TEvent>> _pendingStreams;
@@ -155,9 +155,9 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
     }
 

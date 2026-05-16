@@ -642,7 +642,7 @@ internal struct PacketListener
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static ExclusiveLock AcquireActiveLock(MessageBrokerClient client, out bool acquired)
+    private static Lock.Scope AcquireActiveLock(MessageBrokerClient client, out bool acquired)
     {
         var @lock = client.AcquireLock();
         if ( ! client.ShouldCancel )

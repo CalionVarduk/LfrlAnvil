@@ -21,7 +21,6 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Async;
 using LfrlAnvil.Computable.Expressions;
@@ -58,6 +57,7 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     internal readonly MessageBrokerServerLogger Logger;
     internal readonly int MaxNetworkMessagePacketBytes;
 
+    private readonly Lock _lock = new Lock();
     private readonly TcpListener _listener;
     private readonly TaskCompletionSource _disposed;
     private FileStream? _storageLock;
@@ -474,13 +474,13 @@ public sealed class MessageBrokerServer : IDisposable, IAsyncDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireLock()
+    internal Lock.Scope AcquireLock()
     {
-        return ExclusiveLock.Enter( _listener );
+        return _lock.EnterScope();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ExclusiveLock AcquireActiveLock(ulong traceId, out MessageBrokerServerDisposedException? exception)
+    internal Lock.Scope AcquireActiveLock(ulong traceId, out MessageBrokerServerDisposedException? exception)
     {
         var @lock = AcquireLock();
         if ( ! IsDisposed )

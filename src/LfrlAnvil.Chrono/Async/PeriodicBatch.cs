@@ -14,6 +14,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 
@@ -89,7 +90,7 @@ public abstract class PeriodicBatch<T> : Batch<T>
 
     private sealed class AutoFlush : IDisposable
     {
-        private readonly object _lock = new object();
+        private readonly Lock _lock = new Lock();
         private readonly AsyncManualResetEvent _reset;
         private PeriodicBatch<T>? _owner;
         private bool _scheduled;
@@ -138,9 +139,9 @@ public abstract class PeriodicBatch<T> : Batch<T>
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ExclusiveLock AcquireLock()
+        private Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _lock );
+            return _lock.EnterScope();
         }
 
         private async ValueTask DisposeOwnerAsync()

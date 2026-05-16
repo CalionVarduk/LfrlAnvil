@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LfrlAnvil.Async;
@@ -22,6 +24,7 @@ namespace LfrlAnvil.Async;
 /// </summary>
 public sealed class CounterTask : IDisposable
 {
+    private readonly Lock _lock = new Lock();
     private readonly TaskCompletionSource _source;
     private int _count;
 
@@ -63,7 +66,7 @@ public sealed class CounterTask : IDisposable
     {
         get
         {
-            using ( ExclusiveLock.Enter( _source ) )
+            using ( AcquireLock() )
                 return _count;
         }
     }
@@ -78,7 +81,7 @@ public sealed class CounterTask : IDisposable
     /// <remarks>If the <see cref="Task"/> isn't completed yet, then it will get cancelled instead.</remarks>
     public void Dispose()
     {
-        using ( ExclusiveLock.Enter( _source ) )
+        using ( AcquireLock() )
         {
             if ( ! _source.Task.IsCompleted )
                 _source.SetCanceled();
@@ -96,7 +99,7 @@ public sealed class CounterTask : IDisposable
     /// <remarks>Equivalent to <see cref="Add(int)"/> with <b>count</b> equal to <b>1</b>.</remarks>
     public bool Increment()
     {
-        using ( ExclusiveLock.Enter( _source ) )
+        using ( AcquireLock() )
         {
             if ( _source.Task.IsCompleted )
                 return true;
@@ -123,7 +126,7 @@ public sealed class CounterTask : IDisposable
         if ( count <= 0 )
             return false;
 
-        using ( ExclusiveLock.Enter( _source ) )
+        using ( AcquireLock() )
         {
             if ( _source.Task.IsCompleted )
                 return true;
@@ -135,5 +138,11 @@ public sealed class CounterTask : IDisposable
             _source.SetResult();
             return true;
         }
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

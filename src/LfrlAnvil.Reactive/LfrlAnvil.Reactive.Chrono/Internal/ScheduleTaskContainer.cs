@@ -17,7 +17,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Diagnostics;
 using LfrlAnvil.Extensions;
@@ -27,6 +26,7 @@ namespace LfrlAnvil.Reactive.Chrono.Internal;
 internal sealed class ScheduleTaskContainer<TKey>
     where TKey : notnull
 {
+    private readonly Lock _lock = new Lock();
     private readonly Action<Task> _onActiveTaskCompleted;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private TaskCompletionSource? _disposalCompletion;
@@ -45,7 +45,7 @@ internal sealed class ScheduleTaskContainer<TKey>
 
         _onActiveTaskCompleted = t =>
         {
-            using ( ExclusiveLock.Enter( this ) )
+            using ( AcquireLock() )
             {
                 if ( ! _info.AreActiveTasksInitialized )
                     return;
@@ -76,7 +76,7 @@ internal sealed class ScheduleTaskContainer<TKey>
 
     internal void BeginDispose(Duration disposalTimeout)
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _disposed )
                 return;
@@ -116,7 +116,7 @@ internal sealed class ScheduleTaskContainer<TKey>
     internal Task WaitForDisposalAsync(Duration timeout)
     {
         TaskCompletionSource? source;
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
             source = _disposalCompletion;
 
         return source?.Task.WaitAsync( timeout ) ?? Task.CompletedTask;
@@ -124,7 +124,7 @@ internal sealed class ScheduleTaskContainer<TKey>
 
     internal void EnqueueInvocation(Timestamp timestamp, Timestamp expectedTimestamp)
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
         {
             if ( _disposed )
                 return;
@@ -178,7 +178,7 @@ internal sealed class ScheduleTaskContainer<TKey>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal ReactiveTaskSnapshot<IScheduleTask<TKey>> CreateStateSnapshot()
     {
-        using ( ExclusiveLock.Enter( this ) )
+        using ( AcquireLock() )
             return _info.CreateSnapshot( Source );
     }
 
@@ -316,5 +316,11 @@ internal sealed class ScheduleTaskContainer<TKey>
         }
 
         return null;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

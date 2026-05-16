@@ -17,7 +17,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Async;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Memory;
 
@@ -72,7 +72,7 @@ public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
 
     private sealed class EventListener : DecoratedEventListener<ReadOnlyMemory<TEvent>, ReadOnlyMemory<TEvent>>
     {
-        private readonly object _sync = new object();
+        private readonly Lock _lock = new Lock();
         private readonly int _streamCount;
         private readonly IEventSubscriber _subscriber;
         private InnerSubscribersCollection _innerSubscribers;
@@ -195,9 +195,9 @@ public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal ExclusiveLock AcquireLock()
+        internal Lock.Scope AcquireLock()
         {
-            return ExclusiveLock.Enter( _sync );
+            return _lock.EnterScope();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
