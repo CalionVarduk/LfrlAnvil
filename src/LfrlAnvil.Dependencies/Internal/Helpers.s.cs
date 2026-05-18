@@ -19,7 +19,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
@@ -101,19 +100,11 @@ internal static class Helpers
         Assume.True( scope.Lock.IsWriteLockHeld );
 
         var scopedInstancesByResolverId = scope.GetScopedInstancesByResolverId();
-        ref var result = ref CollectionsMarshal.GetValueRefOrAddDefault( scopedInstancesByResolverId, resolver.Id, out var exists )!;
-        if ( exists )
+        if ( scopedInstancesByResolverId.TryGetValue( resolver.Id, out var result ) )
             return result;
 
-        try
-        {
-            result = resolver.InvokeFactory( factory, scope, dependencyType );
-        }
-        catch
-        {
-            scopedInstancesByResolverId.Remove( resolver.Id );
-            throw;
-        }
+        result = resolver.InvokeFactory( factory, scope, dependencyType );
+        scopedInstancesByResolverId[resolver.Id] = result;
 
         var disposer = resolver.DisposalStrategy.TryCreateDisposer( result );
         if ( disposer is not null )

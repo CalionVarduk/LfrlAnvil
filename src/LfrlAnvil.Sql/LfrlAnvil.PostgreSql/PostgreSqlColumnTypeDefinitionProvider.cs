@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
@@ -31,7 +33,7 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
     private readonly PostgreSqlColumnTypeDefinitionString _defaultVarChar;
     private readonly PostgreSqlColumnTypeDefinitionObject _defaultObject;
     private readonly Dictionary<string, SqlColumnTypeDefinition> _defaultDefinitionsByTypeName;
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
 
     internal PostgreSqlColumnTypeDefinitionProvider(PostgreSqlColumnTypeDefinitionProviderBuilder builder)
         : base( builder )
@@ -54,7 +56,7 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
     [Pure]
     public SqlColumnTypeDefinition GetByDataType(PostgreSqlDataType dataType)
     {
-        lock ( _sync )
+        using ( AcquireLock() )
         {
             if ( _defaultDefinitionsByTypeName.TryGetValue( dataType.Name, out var definition ) )
                 return definition;
@@ -103,5 +105,11 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
     {
         return new PostgreSqlColumnTypeEnumDefinition<TEnum, TUnderlying>(
             ReinterpretCast.To<PostgreSqlColumnTypeDefinition<TUnderlying>>( underlyingTypeDefinition ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

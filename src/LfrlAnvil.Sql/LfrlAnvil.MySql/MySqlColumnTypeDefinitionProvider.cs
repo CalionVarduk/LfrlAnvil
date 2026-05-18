@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2026 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using LfrlAnvil.MySql.Internal.TypeDefinitions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
@@ -32,7 +34,7 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
     private readonly MySqlColumnTypeDefinitionByteArray _defaultBlob;
     private readonly MySqlColumnTypeDefinitionObject _defaultObject;
     private readonly Dictionary<string, SqlColumnTypeDefinition> _defaultDefinitionsByTypeName;
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
 
     internal MySqlColumnTypeDefinitionProvider(MySqlColumnTypeDefinitionProviderBuilder builder)
         : base( builder )
@@ -56,7 +58,7 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
     [Pure]
     public SqlColumnTypeDefinition GetByDataType(MySqlDataType dataType)
     {
-        lock ( _sync )
+        using ( AcquireLock() )
         {
             if ( _defaultDefinitionsByTypeName.TryGetValue( dataType.Name, out var definition ) )
                 return definition;
@@ -121,5 +123,11 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
     {
         return new MySqlColumnTypeEnumDefinition<TEnum, TUnderlying>(
             ReinterpretCast.To<MySqlColumnTypeDefinition<TUnderlying>>( underlyingTypeDefinition ) );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 }

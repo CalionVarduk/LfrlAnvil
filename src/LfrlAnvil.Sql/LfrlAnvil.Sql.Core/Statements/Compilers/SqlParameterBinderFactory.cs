@@ -21,6 +21,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Visitors;
@@ -31,7 +32,7 @@ namespace LfrlAnvil.Sql.Statements.Compilers;
 /// <inheritdoc cref="ISqlParameterBinderFactory" />
 public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private Toolbox _toolbox;
 
     internal SqlParameterBinderFactory(
@@ -105,10 +106,10 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     [Pure]
     private Expression CreateLambdaExpressionBody(ParameterExpression source, in SqlParameterBinderCreationOptions options)
     {
-        lock ( _sync )
+        using ( AcquireLock() )
         {
             if ( ! _toolbox.IsInitialized )
-                _toolbox = Toolbox.Create( Dialect, CommandType, _sync );
+                _toolbox = Toolbox.Create( Dialect, CommandType, _lock );
         }
 
         var parameterSources = CreateParameterSources( source.Type, in options );
@@ -525,10 +526,16 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         return parameter;
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
+    }
+
     private readonly struct Toolbox
     {
         internal readonly bool IsInitialized;
-        internal readonly object Sync;
+        internal readonly Lock Lock;
         internal readonly NullabilityInfoContext NullContext;
         internal readonly ParameterExpression AbstractCommand;
         internal readonly BinaryExpression CommandAssignment;
@@ -551,10 +558,10 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
         private readonly Dictionary<Type, TypeDefinitionInfo> _typeDefinitions;
 
-        private Toolbox(SqlDialect dialect, Type commandType, object sync)
+        private Toolbox(SqlDialect dialect, Type commandType, Lock @lock)
         {
             IsInitialized = true;
-            Sync = sync;
+            Lock = @lock;
             _typeDefinitions = new Dictionary<Type, TypeDefinitionInfo>();
             NullContext = new NullabilityInfoContext();
             AbstractCommand = Expression.Parameter( typeof( IDbCommand ), "command" );
@@ -676,9 +683,9 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         internal ParameterExpression Parameter => BlockParameters[2];
 
         [Pure]
-        internal static Toolbox Create(SqlDialect dialect, Type commandType, object sync)
+        internal static Toolbox Create(SqlDialect dialect, Type commandType, Lock @lock)
         {
-            return new Toolbox( dialect, commandType, sync );
+            return new Toolbox( dialect, commandType, @lock );
         }
 
         [Pure]
@@ -913,7 +920,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private TypeDefinitionInfo GetOrAddTypeDefinition(Type type, ISqlColumnTypeDefinitionProvider typeDefinitions)
         {
-            lock ( Sync )
+            using ( AcquireLock() )
             {
                 ref var typeDef = ref CollectionsMarshal.GetValueRefOrAddDefault( _typeDefinitions, type, out var exists );
                 if ( ! exists )
@@ -921,6 +928,12 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
                 return typeDef;
             }
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private Lock.Scope AcquireLock()
+        {
+            return Lock.EnterScope();
         }
 
         private readonly struct TypeDefinitionInfo

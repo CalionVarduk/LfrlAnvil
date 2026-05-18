@@ -35,7 +35,7 @@ namespace LfrlAnvil.Sql.Statements.Compilers;
 /// <inheritdoc cref="ISqlQueryReaderFactory" />
 public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 {
-    private readonly object _sync = new object();
+    private readonly Lock _lock = new Lock();
     private Toolbox _toolbox;
     private ResultSetToolbox _resultSetToolbox;
     private MethodInfo? _createAsyncQueryReaderExpressionMethod;
@@ -656,7 +656,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void InitializeToolbox()
     {
-        lock ( _sync )
+        using ( AcquireLock() )
         {
             if ( ! _toolbox.IsInitialized )
                 _toolbox = Toolbox.Create( DataReaderType, Dialect );
@@ -666,7 +666,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void InitializeResultSetToolbox()
     {
-        lock ( _sync )
+        using ( AcquireLock() )
         {
             if ( ! _resultSetToolbox.IsInitialized )
                 _resultSetToolbox = ResultSetToolbox.Create( in _toolbox );
@@ -790,6 +790,12 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 
         var value = dbReader.GetValue( 0 );
         return new SqlScalarQueryResult( ReferenceEquals( value, DBNull.Value ) ? null : value );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private Lock.Scope AcquireLock()
+    {
+        return _lock.EnterScope();
     }
 
     private interface IOrdinalsCollection

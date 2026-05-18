@@ -93,6 +93,16 @@ probably won't do:
 
 ### Dependencies: Refinements
 
+- ServiceKeyAttribute support
+  - for keyed registrations, allows to inject locator's key
+  - could extend current ConstructorParameterKeyProvider/MemberKeyProvider and change their intent
+  - so that they either return the locator's key to resolve from (FromKeyedServicesAttribute)
+  - or return locator key as value to inject
+  - requires additional 'object? locatorKey' parameter
+- configurable option that allows to change keyed registrations behavior
+  - currently, they automatically resolve from the same keyed locator by default
+  - configuration could allow to globally change this behavior by resolving from global locator by default
+
 Low priority/probably won't do:
 - add possibility to disable captive dependency checks for specific implementors
   - might be useful for registrations marked as global
